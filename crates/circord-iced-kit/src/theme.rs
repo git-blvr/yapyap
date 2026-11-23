@@ -465,7 +465,8 @@ macro_rules! declare_theme {
             /// other themes).
             pub nav_read: Color,
             pub nav_open: Color,
-            /// Text selected in the timeline and fields: the accent at 35%.
+            /// Text selected in a field: the accent at 35%. The timeline's
+            /// own selection lifts the words instead (see `Piece`).
             pub selection: Color,
             /// A mention's colour without one of its own.
             pub mention: Color,

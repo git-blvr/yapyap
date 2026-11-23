@@ -3726,14 +3726,15 @@ pub fn surface<'a>(
     surface: ArtSurface,
 ) -> Element<'a, Message> {
     // Settings → Customize's background lies where the conversation's
-    // ground would, over a package's own paint but under its art, as the
-    // window's clear colour under everything is its middle.
-    let custom = matches!(
-        surface,
-        ArtSurface::Window | ArtSurface::Chat | ArtSurface::Aside
-    )
-    .then(|| crate::customize::background(&ctx.layout.customize))
-    .flatten();
+    // ground would, over a package's own paint but under its art. The
+    // window paints it once, under everything, and the panes it runs
+    // behind draw only their share of it, so a see-through gradient
+    // stays even.
+    let custom = match surface {
+        ArtSurface::Window => crate::customize::background(&ctx.layout.customize),
+        ArtSurface::Chat | ArtSurface::Aside => crate::customize::pane(&ctx.layout.customize),
+        _ => None,
+    };
     let Some(under) = Under::of(ctx, surface) else {
         return match custom {
             Some(background) => iced::widget::container(content)
@@ -3815,7 +3816,7 @@ pub fn surface<'a>(
         }
     }
     if let Some(bottom) = under.reserve {
-        let ground = ctx.look.theme.surface_paint(surface.ground());
+        let ground = background;
         decorated = decorated.push_under(
             iced::widget::column![
                 iced::widget::Space::new().height(Length::Fill),
@@ -3834,7 +3835,7 @@ pub fn surface<'a>(
     if let Some(pane) = glass.filter(|_| under.glass) {
         decorated = decorated.push_under(Glass {
             pane,
-            ground: ctx.look.theme.surface_paint(surface.ground()),
+            ground: background,
             own: false,
             radius: corner_radius(ctx, surface),
         });

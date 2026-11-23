@@ -1029,8 +1029,8 @@ fn the_customized_accent_background_and_font_show_at_once_and_are_kept() {
     assert_eq!(app.theme.accent, crate::style::hex(0x102030));
     assert_eq!(app.theme.selection.a, 0.35, "worked out from it");
     assert_eq!(app.layout.customize.accent.as_deref(), Some("#102030"));
-    // The background's colour stands for the whole ground; the gradient's
-    // two colours meet in their middle.
+    // The background's colour stands for the whole ground; the gradient
+    // tints the theme's own instead.
     let _ = app.update(event(crate::settings::CustomizeEvent::Background(1)));
     let _ = app.update(event(crate::settings::CustomizeEvent::Colour(
         0,
@@ -1055,15 +1055,7 @@ fn the_customized_accent_background_and_font_show_at_once_and_are_kept() {
         }
         other => panic!("a gradient, not {other:?}"),
     }
-    assert_eq!(
-        app.theme.chat,
-        crate::theme::mix(
-            crate::style::hex(0x000000),
-            crate::style::hex(0xffffff),
-            0.5
-        ),
-        "the gradient's middle"
-    );
+    assert_eq!(app.theme.chat, chat_before, "the theme's own, tinted");
     // The font's key is kept; the theme's own face is "".
     let _ = app.update(event(crate::settings::CustomizeEvent::Font(1)));
     assert_eq!(app.layout.customize.font, "atkinson");

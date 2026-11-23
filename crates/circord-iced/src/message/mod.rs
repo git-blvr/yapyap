@@ -1282,7 +1282,7 @@ fn author_line<'a>(
     .selection(
         ctx.selected(index, 0),
         ctx.lanes.timeline.selecting,
-        theme.token_colour("selection", theme.selection),
+        theme.token_colour("selection", theme.wash(0.2)),
     );
     if let Some(effect) = hover {
         name = name.hover_effect(effect);
@@ -1379,7 +1379,7 @@ fn author_line<'a>(
     .selection(
         ctx.selected(index, 1),
         ctx.lanes.timeline.selecting,
-        theme.token_colour("selection", theme.selection),
+        theme.token_colour("selection", theme.wash(0.2)),
     );
     line.push(time).height(AUTHOR_LINE).into()
 }

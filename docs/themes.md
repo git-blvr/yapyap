@@ -3,7 +3,8 @@
 Settings → Appearance offers the themes Circord comes with, the person's own
 and installed packages as quick choices, with the chosen package's own
 options under them. Settings → Customize sits beside it: the window's font,
-its background — one colour or a two-colour gradient — and the accent colour
+its background — one colour or a two-colour gradient, which tints the
+theme's own ground rather than covering it — and the accent colour
 set over whatever theme shows, kept as `layout.json`'s `customize`, with a
 theme's Performance and Motion choices beside them. Installing packages from
 GitHub or the marketplace catalog stays engine-side — `circord theme` and

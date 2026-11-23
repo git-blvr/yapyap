@@ -13,9 +13,10 @@ use crate::{
     theme::{self, Theme},
 };
 
-/// `theme` with Customize's colour choices over it: the accent, and the
-/// background's base colour as `chat`, so derivations drawn against the
-/// ground (danger text, the window's clear colour) keep reading right.
+/// `theme` with Customize's colour choices over it: the accent, and a solid
+/// background's colour as `chat`, so derivations drawn against the ground
+/// (danger text, the window's clear colour) keep reading right. A gradient
+/// leaves `chat` the theme's own: it's a tint over it, not a ground.
 pub fn applied(theme: Theme, customize: &Customize) -> Theme {
     let mut theme = theme;
     let mut changed = false;
@@ -45,30 +46,24 @@ fn on_accent(accent: Color) -> Color {
     theme::readable_on(start, accent, 4.5)
 }
 
-/// The colour `chat` shows as: a solid's, a gradient's middle.
+/// The colour `chat` shows as: a solid's. A gradient has none: it's a tint
+/// over the theme's own ground, which stays `chat`'s.
 fn base_colour(background: Option<&CustomBackground>) -> Option<Color> {
     match background? {
         CustomBackground::Solid { colour } => palette::parse(colour).map(crate::themes::color),
-        CustomBackground::Gradient { from, to, .. } => {
-            let from = palette::parse(from).map(crate::themes::color);
-            let to = palette::parse(to).map(crate::themes::color);
-            match (from, to) {
-                (Some(from), Some(to)) => Some(theme::mix(from, to, 0.5)),
-                (one, other) => one.or(other),
-            }
-        }
+        CustomBackground::Gradient { .. } => None,
     }
 }
 
 /// What a ground that would fill with `theme.chat` draws while Customize
-/// sets a background: its paint, else `theme.chat` itself.
+/// sets a background: its share of it, else `theme.chat` itself.
 pub fn chat_fill(customize: &Customize, theme: &Theme) -> iced::Background {
-    background(customize).unwrap_or_else(|| theme.chat.into())
+    pane(customize).unwrap_or_else(|| theme.chat.into())
 }
 
 /// The window's whole ground under everything, as Customize set it: a
-/// colour or the gradient, drawn under the app's surfaces instead of
-/// `chat`'s clear colour.
+/// colour, or the gradient as a tint over `chat`, drawn under the app's
+/// surfaces instead of `chat`'s clear colour.
 pub fn background(customize: &Customize) -> Option<iced::Background> {
     match customize.background.as_ref()? {
         CustomBackground::Solid { colour } => {
@@ -79,13 +74,29 @@ pub fn background(customize: &Customize) -> Option<iced::Background> {
                 palette::parse(from).map(crate::themes::color)?,
                 palette::parse(to).map(crate::themes::color)?,
             );
+            // Half strength over the theme's own ground: the colour reads
+            // without the wall of paint, and what's written on it stays
+            // readable.
+            let tint = |colour: Color| Color { a: 0.5, ..colour };
             Some(
                 iced::gradient::Linear::new(iced::Radians(angle.to_radians()))
-                    .add_stop(0.0, from)
-                    .add_stop(1.0, to)
+                    .add_stop(0.0, tint(from))
+                    .add_stop(1.0, tint(to))
                     .into(),
             )
         }
+    }
+}
+
+/// What a pane over the window's ground draws while Customize sets a
+/// background: a colour again (a second coat changes nothing) or, under the
+/// see-through gradient, nothing, so it shows once and even.
+pub fn pane(customize: &Customize) -> Option<iced::Background> {
+    match customize.background.as_ref()? {
+        CustomBackground::Solid { colour } => {
+            palette::parse(colour).map(|colour| crate::themes::color(colour).into())
+        }
+        CustomBackground::Gradient { .. } => Some(iced::Color::TRANSPARENT.into()),
     }
 }
 

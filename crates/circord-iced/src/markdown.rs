@@ -924,7 +924,7 @@ impl<'c> crate::ctx::Ctx<'c> {
                 .selection(
                     self.lanes.selected(row, number),
                     self.lanes.timeline.selecting,
-                    theme.token_colour("selection", theme.selection),
+                    theme.token_colour("selection", theme.wash(0.2)),
                 )
                 .spot(self.link_spot)
                 .link_menu(|link| Message::Timeline(crate::timeline::Event::RowLink(link)));
