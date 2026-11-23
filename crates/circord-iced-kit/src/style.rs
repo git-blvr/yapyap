@@ -64,6 +64,14 @@ pub fn fill(color: Color) -> container::Style {
     }
 }
 
+/// A container filled with `background`: a colour, or a gradient.
+pub fn paint(background: impl Into<Background>) -> container::Style {
+    container::Style {
+        background: Some(background.into()),
+        ..Default::default()
+    }
+}
+
 /// A container filled with `color`, its corners rounded by `radius`.
 pub fn rounded(color: Color, radius: impl Into<border::Radius>) -> container::Style {
     container::Style {

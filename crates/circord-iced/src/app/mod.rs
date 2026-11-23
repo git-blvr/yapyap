@@ -4,8 +4,8 @@
 
 use std::{sync::Arc, time::Duration};
 
-use iced::{Point, Size, Task, keyboard, widget::operation};
 use circord_core::application::Action;
+use iced::{Point, Size, Task, keyboard, widget::operation};
 
 use crate::{
     after,
@@ -255,7 +255,11 @@ impl App {
         let layout = crate::layout::Layout::open(client.root(), &crate::build().version);
         let themes = Themes::at_start(client.root(), &layout, size);
         let theme = themes.shown();
-        crate::fonts::set_default_family(view::body_family(&theme));
+        crate::fonts::set_default_family(
+            crate::customize::font_family(&layout.customize.font)
+                .or_else(|| view::body_family(&theme)),
+        );
+        let theme = crate::customize::applied(theme, &layout.customize);
         let theme_icons = themes.icons(&theme.id);
         crate::themes::register_cue_handler();
         themes.apply_sounds(&theme.id);
@@ -565,52 +569,8 @@ impl App {
                 }
                 Task::none()
             }
-            Message::ThemeTrialTick(now) => {
-                if self.themes.expire_trial(now).is_some() {
-                    self.layout.theme_sounds.remove("trial");
-                    self.layout.theme_content.remove("trial");
-                    self.show_wanted_theme();
-                }
-                // The countdown is only drawn: the view this message brings
-                // shows it, with no sync of the window.
-                Task::none()
-            }
             Message::ThemeDevTick => {
                 if self.themes.dev_saved(&self.layout) {
-                    self.show_wanted_theme();
-                }
-                Task::none()
-            }
-            Message::ThemeTrial(keep) => {
-                // Settings, when open, does it as its own Keep or Revert.
-                if self.win.settings.get().is_some() {
-                    let event = if keep {
-                        crate::settings::theme_marketplace::Event::KeepTrial
-                    } else {
-                        crate::settings::theme_marketplace::Event::RevertTrial
-                    };
-                    return self.settings_event(crate::settings::Event::Marketplace(event));
-                }
-                let root = self.client.root().to_owned();
-                let changed = if keep {
-                    match crate::settings::theme_marketplace::keep_trial(
-                        &mut self.themes,
-                        &mut self.layout,
-                        &root,
-                    ) {
-                        Ok(kept) => kept.is_some(),
-                        Err(reason) => {
-                            tracing::warn!(%reason, "the theme on trial couldn't be kept");
-                            false
-                        }
-                    }
-                } else {
-                    crate::settings::theme_marketplace::revert_trial(
-                        &mut self.themes,
-                        &mut self.layout,
-                    )
-                };
-                if changed {
                     self.show_wanted_theme();
                 }
                 Task::none()

@@ -82,4 +82,6 @@ png = "0.18"
 [dev-dependencies]
 # The headless simulator for the UI tests; see docs/client/tests.md.
 iced_test = "=0.14.0"
+# Sets a folder's own mtime in a test; std can't open folders on Windows.
+filetime = "0.2"
 circord-core = { path = "../circord-core", default-features = false, features = ["discord", "test-fixtures"] }

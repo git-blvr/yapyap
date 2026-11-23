@@ -5,16 +5,16 @@
 
 use std::time::{Duration, Instant};
 
-use iced::advanced::{
-    Clipboard, Layout, Shell, Widget, layout, mouse, renderer, text,
-    widget::{self, Operation, Tree},
-};
-use iced::{Background, Color, Element, Length, Point, Rectangle, Size, Theme, Vector};
 use circord_core::themes::Performance;
 use circord_core::themes::layout::{Border as ThemeBorder, BorderPlace, Gel, Stroke};
 use circord_core::themes::package::art::{
     ArtSurface, Depth, Emitter, Fit, Overlay, OverlayKind, Preset, Trigger,
 };
+use iced::advanced::{
+    Clipboard, Layout, Shell, Widget, layout, mouse, renderer, text,
+    widget::{self, Operation, Tree},
+};
+use iced::{Background, Color, Element, Length, Point, Rectangle, Size, Theme, Vector};
 
 use crate::{
     app::Message,
@@ -3725,8 +3725,27 @@ pub fn surface<'a>(
     ctx: crate::ctx::Ctx<'a>,
     surface: ArtSurface,
 ) -> Element<'a, Message> {
+    // Settings → Customize's background lies where the conversation's
+    // ground would, over a package's own paint but under its art, as the
+    // window's clear colour under everything is its middle.
+    let custom = matches!(
+        surface,
+        ArtSurface::Window | ArtSurface::Chat | ArtSurface::Aside
+    )
+    .then(|| crate::customize::background(&ctx.layout.customize))
+    .flatten();
     let Some(under) = Under::of(ctx, surface) else {
-        return content.into();
+        return match custom {
+            Some(background) => iced::widget::container(content)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .style(move |_| iced::widget::container::Style {
+                    background: Some(background),
+                    ..Default::default()
+                })
+                .into(),
+            None => content.into(),
+        };
     };
     let layers = ctx.themes.art(&ctx.look.theme.id, surface);
     let glass = ctx.themes.glass(&ctx.look.theme.id, surface);
@@ -3746,8 +3765,9 @@ pub fn surface<'a>(
     // A package brush may be a gradient, and the theme's extra surface
     // colours do not fit in Wired's intentionally stable Theme struct.
     // Put the effective theme ground below art and content. When no package
-    // paint exists, `surface_paint` is exactly the prior Wired solid.
-    let background = ctx.look.theme.surface_paint(surface.ground());
+    // paint exists, `surface_paint` is exactly the prior Wired solid;
+    // Customize's own background goes before them both.
+    let background = custom.unwrap_or_else(|| ctx.look.theme.surface_paint(surface.ground()));
     // Inside a floating pane the ground takes the corners it shares with
     // the pane, as Slint's pane clips it.
     // A message's hover bar floats over the rows inside the conversation's

@@ -19,7 +19,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use iced::{Color, Size};
 use circord_core::themes::package::art::{self, ArtSurface, Source};
 use circord_core::{
     ring,
@@ -30,6 +29,7 @@ use circord_core::{
         layout as theme_layout, media, options, package,
     },
 };
+use iced::{Color, Size};
 
 use crate::{
     layout::{self, Layout},
@@ -41,7 +41,12 @@ const DEFAULT: &str = "bonfire";
 /// Installed package ids are kept apart from built-in and custom ids.
 pub const INSTALLED: &str = "installed:";
 
-/// An installed package as Settings → Themes and Appearance need it.
+/// An installed package as Settings → Customize and Appearance need it;
+/// the fields a themes page's cards showed stay recorded for the engine.
+#[allow(
+    dead_code,
+    reason = "the themes page's card fields; the engine still records them"
+)]
 pub struct Installed {
     /// Its id as `layout.json` keeps it, including [`INSTALLED`].
     pub id: String,
@@ -57,7 +62,7 @@ pub struct Installed {
     pub previous: Option<String>,
     /// What this theme remixes, if named in `theme.json`.
     pub based_on: Option<String>,
-    /// Core's cost summary line for Settings → Themes.
+    /// Core's cost summary line, as a theme's card shows it.
     pub cost: String,
     /// Decoded thumbnail of `package.preview[0]`, if present and readable.
     pub preview: Option<iced::advanced::image::Handle>,
@@ -67,8 +72,8 @@ pub struct Installed {
     package: package::Package,
     /// Whether its fonts, icons, sounds and art are loaded: only while it
     /// shows (chosen, on trial, in the creator's preview). The others
-    /// keep what Settings → Themes lists them with, so six installed
-    /// themes don't hold six themes' pictures and sounds.
+    /// keep what they were listed with, so six installed themes don't
+    /// hold six themes' pictures and sounds.
     live: bool,
     /// Its theme, carrying `metrics` as they were last set.
     shown: Theme,
@@ -210,8 +215,8 @@ impl Default for SoundPrefs {
 }
 
 /// An entry in the installed-theme lock that could not safely be opened.
-/// It remains visible in Settings → Themes with the core's exact reason
-/// instead of disappearing from the list.
+/// It remains visible with the core's exact reason instead of
+/// disappearing from the list.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Refused {
     pub id: String,
@@ -526,6 +531,11 @@ pub struct Themes {
     /// Package companions of creator-made custom themes. They use their
     /// `custom:` layout ids but do not appear a second time in Installed.
     companions: Vec<Installed>,
+    /// Packages that failed their checks, kept to tell why.
+    #[allow(
+        dead_code,
+        reason = "kept for the themes page's refused list; the engine still records it"
+    )]
     pub refused: Vec<Refused>,
     pub chosen: Option<String>,
     previous: Option<String>,
@@ -1142,6 +1152,10 @@ impl Themes {
     /// [`Self::choose`] keeps those directly as well as queuing their
     /// `layout.json` writes, so the `Layout` borrowed by the caller can
     /// briefly still contain the values from before that choice.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn refresh(&mut self, root: &Path, layout: &Layout) {
         let chosen = self.chosen.clone();
         let previous = self.previous.clone();
@@ -1196,6 +1210,10 @@ impl Themes {
     /// Re-reads installed packages after their store changes. Creator saves
     /// should call [`Self::refresh`] directly because it also rebuilds custom
     /// package companions.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn refresh_installed(&mut self, root: &Path, layout: &Layout) {
         self.refresh(root, layout);
     }
@@ -1203,6 +1221,10 @@ impl Themes {
     /// Installs checked repository bytes, then re-reads and resolves every
     /// installed package. Choosing the new theme remains the review UI's
     /// explicit next action, as in the Slint build.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn install_fetched(
         &mut self,
         root: &Path,
@@ -1221,6 +1243,10 @@ impl Themes {
     /// preferences while resolving that earlier version again.
     ///
     /// `id` is the package id in `theme.json`, without [`INSTALLED`].
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn roll_back(&mut self, root: &Path, layout: &Layout, id: &str) -> Result<(), String> {
         install::Themes::open(root)
             .roll_back(id)
@@ -1236,6 +1262,10 @@ impl Themes {
     ///
     /// Returns whether what shows changed: it was chosen or on trial. `id`
     /// is the package id in `theme.json`, without [`INSTALLED`].
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn uninstall(
         &mut self,
         root: &Path,
@@ -1372,9 +1402,9 @@ impl Themes {
         palette::chosen(self.chosen.as_deref().or(Some(DEFAULT)), &self.custom).0
     }
 
-    /// The theme Settings → Themes' Back action would restore, and its
-    /// display name. A missing package or deleted custom theme is not
-    /// offered, nor is the theme already shown.
+    /// The theme a Back action would restore, and its display name. A
+    /// missing package or deleted custom theme is not offered, nor is the
+    /// theme already shown.
     pub fn previous(&self) -> Option<(&str, &str)> {
         let id = self
             .previous
@@ -1405,6 +1435,10 @@ impl Themes {
     /// Resolves a checked creator draft into the ordinary package registry
     /// without choosing or persisting it. All package consumers can read it
     /// through [`CREATOR_PREVIEW_ID`] until [`Self::clear_creator_preview`].
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn preview_creator(&mut self, folder: &Path, layout: &Layout) -> Result<Theme, String> {
         self.clear_creator_preview();
         let files = check::Files::read(folder)?;
@@ -1573,9 +1607,13 @@ impl Themes {
         self.settle_live();
     }
 
-    /// Restores Settings → Themes' Back target. Going back between two
-    /// chosen themes swaps them; restoring after Turn off clears Back, as
-    /// in the Slint build.
+    /// Restores the Back target. Going back between two chosen themes
+    /// swaps them; restoring after Turn off clears Back, as in the Slint
+    /// build.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn revert(&mut self, root: &Path) -> bool {
         self.trial = None;
         let Some(previous) = self.previous().map(|(id, _)| id.to_owned()) else {
@@ -1587,6 +1625,10 @@ impl Themes {
 
     /// Shows an installed package for 30 seconds without changing
     /// `layout.json`.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn try_installed(&mut self, id: &str) -> Result<(), String> {
         let package = self
             .installed
@@ -1613,6 +1655,10 @@ impl Themes {
     /// Shows checked review bytes for 30 seconds without installing them.
     /// Their files live only in a private temporary folder held by the
     /// trial, so fonts and art remain available until Keep or Revert.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn try_reviewed(
         &mut self,
         fetched: &install::Fetched,
@@ -1674,6 +1720,10 @@ impl Themes {
     }
 
     /// Whether the theme on trial came from a review, not installed.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn trial_reviewed(&self) -> bool {
         self.trial
             .as_ref()
@@ -1694,6 +1744,10 @@ impl Themes {
 
     /// Keeps the current trial. Reviewed bytes are installed only here;
     /// callers then choose the returned layout id through the normal path.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn keep_trial(&mut self, root: &Path, layout: &Layout) -> Result<Option<String>, String> {
         let Some(trial) = self.trial.take() else {
             return Ok(None);
@@ -1721,6 +1775,10 @@ impl Themes {
 
     /// Reverts an expired trial. Settings calls this from its countdown
     /// tick; accepting `now` keeps expiry deterministic in tests.
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn expire_trial(&mut self, now: Instant) -> Option<Option<String>> {
         if self.trial.as_ref().is_some_and(|trial| now >= trial.until) {
             self.revert_trial()
@@ -1895,10 +1953,18 @@ impl Themes {
         self.update_cue_sounds(id);
     }
 
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn sound_prefs(&self, id: &str) -> Option<SoundPrefs> {
         self.package(id).map(|installed| installed.sound_prefs)
     }
 
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn set_sound_prefs(&mut self, id: &str, prefs: SoundPrefs) -> bool {
         let Some(installed) = self.package_mut(id) else {
             return false;
@@ -1913,6 +1979,10 @@ impl Themes {
         true
     }
 
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn has_sounds(&self, id: &str) -> Option<(bool, bool)> {
         let sounds = &self.package(id)?.sounds;
         Some((
@@ -2037,6 +2107,10 @@ impl Themes {
             .flatten()
     }
 
+    #[allow(
+        dead_code,
+        reason = "the theme engine keeps the verb; the page that drove it was replaced by Customize"
+    )]
     pub fn content_phrase(&self, id: &str) -> Option<String> {
         self.package(id)?.content.phrase()
     }
@@ -4646,9 +4720,7 @@ mod tests {
         }
         let long_ago = std::time::SystemTime::now() - Duration::from_secs(2 * 60 * 60);
         for folder in [&left, &other] {
-            std::fs::File::open(folder)
-                .unwrap()
-                .set_modified(long_ago)
+            filetime::set_file_mtime(folder, filetime::FileTime::from_system_time(long_ago))
                 .unwrap();
         }
         sweep_trials(temp.path(), Duration::from_secs(60 * 60));

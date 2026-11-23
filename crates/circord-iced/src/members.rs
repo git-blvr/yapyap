@@ -4,16 +4,16 @@
 //! someone's card, a right click their menu (`person_menu.rs`).
 
 use crate::widgets::scroll_view;
+use circord_core::{
+    application::{Action, AppState},
+    chat::{ActivityKind, ChatMember, Presence},
+    themes::content::Nameplates,
+};
 use iced::{
     Alignment, Color, Element, Length, Padding, Point, Rectangle, Size, Task, Vector,
     widget::{
         Space, column, container, mouse_area, row, scrollable::Viewport, stack, text, tooltip,
     },
-};
-use circord_core::{
-    application::{Action, AppState},
-    chat::{ActivityKind, ChatMember, Presence},
-    themes::content::Nameplates,
 };
 
 use crate::{
@@ -795,7 +795,7 @@ pub fn activity_cards(
     now_ms: u64,
 ) -> Vec<ActivityCard> {
     use circord_core::{
-        chat::FeedEntry, discord::parse_room, circord_discord::activity_feed::Kind,
+        chat::FeedEntry, circord_discord::activity_feed::Kind, discord::parse_room,
     };
     let Some((asked, people)) = &state.activity_people else {
         return Vec::new();
@@ -1238,7 +1238,10 @@ impl<'a> View<'a> {
             );
         }
         // The chat's ground, an outline down its left edge.
-        let (ground, edge) = (self.cx.look.theme.chat, self.cx.look.theme.outline_chat);
+        let (ground, edge) = (
+            crate::customize::chat_fill(&self.cx.layout.customize, self.cx.look.theme),
+            self.cx.look.theme.outline_chat,
+        );
         let list = crate::widgets::Settle::new(
             scroll_view(rows)
                 .on_scroll(|viewport| Message::Members(Event::Scrolled(viewport)))
@@ -1292,7 +1295,7 @@ impl<'a> View<'a> {
                 if bare {
                     container::Style::default()
                 } else {
-                    fill(ground)
+                    crate::style::paint(ground)
                 }
             });
         // Its edge drags it wider or narrower, over the line.
@@ -1380,7 +1383,12 @@ impl<'a> View<'a> {
         let panel = container(list)
             .width(56)
             .height(Length::Fill)
-            .style(move |_| fill(theme.chat));
+            .style(move |_| {
+                crate::style::paint(crate::customize::chat_fill(
+                    &self.cx.layout.customize,
+                    theme,
+                ))
+            });
         mouse_area(panel)
             .on_enter(Message::Members(Event::Collapsed(true)))
             .into()
@@ -1439,7 +1447,10 @@ impl<'a> View<'a> {
                 if bare {
                     container::Style::default()
                 } else {
-                    fill(theme.chat)
+                    crate::style::paint(crate::customize::chat_fill(
+                        &self.cx.layout.customize,
+                        theme,
+                    ))
                 }
             });
         let splitter = crate::widgets::Splitter::new(
@@ -2825,8 +2836,8 @@ fn group_name(heading: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use iced::Color;
     use circord_core::themes::content::Nameplates;
+    use iced::Color;
 
     use super::{
         dot_at, finished_ago, keeps_decoration, policy_palette, running_for, show_nameplate,

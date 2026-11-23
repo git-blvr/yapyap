@@ -3,8 +3,8 @@
 
 use std::sync::{Arc, Mutex};
 
-use iced::{Point, keyboard};
 use circord_core::chat::{ChatMessage, Event};
+use iced::{Point, keyboard};
 
 use crate::{
     mfa,
@@ -89,10 +89,6 @@ pub enum Message {
     FontsLoaded,
     /// The desktop's light/dark window preference, initially and on change.
     SystemTheme(iced::theme::Mode),
-    /// The quarter-second theme trial countdown.
-    ThemeTrialTick(std::time::Instant),
-    /// The trial banner's Keep (`true`) or Revert (`false`).
-    ThemeTrial(bool),
     /// Twice a second while `--theme-dev` watches a folder.
     ThemeDevTick,
     /// Frame tick for declared `Slot::Accent` colour animations.

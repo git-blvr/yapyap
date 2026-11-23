@@ -76,6 +76,77 @@ pub fn set_default_family(family: Option<&'static str>) {
     fonts.load_font(Cow::Owned(vec![0]));
 }
 
+/// Atkinson Hyperlegible Next, Circord's bundled alternative body face:
+/// drawn wider and plainer for eyes that find DM Sans hard to read.
+const ATKINSON: &[u8] = include_bytes!("../fonts/AtkinsonHyperlegibleNext-Regular.ttf");
+
+/// The Customize page's font `choice` as a loaded family: "atkinson" and
+/// "display:<family>" come from the kit's own fonts, "system" and "mono"
+/// the system's, "file:<path>" a font file of the person's. "" keeps the
+/// app's own, and a choice that resolves to nothing keeps it too. Each
+/// choice resolves once, by its text.
+pub fn custom_family(choice: &str) -> Option<&'static str> {
+    static CACHE: Mutex<Option<HashMap<String, Option<&'static str>>>> = Mutex::new(None);
+    let mut cache = CACHE
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let cache = cache.get_or_insert_with(HashMap::new);
+    if let Some(family) = cache.get(choice) {
+        return *family;
+    }
+    let family = resolve_custom_family(choice);
+    cache.insert(choice.to_owned(), family);
+    family
+}
+
+fn resolve_custom_family(choice: &str) -> Option<&'static str> {
+    let bytes: Option<Vec<u8>> = match choice {
+        "atkinson" => Some(ATKINSON.to_vec()),
+        "system" => system_ui_file().and_then(|path| std::fs::read(path).ok()),
+        "mono" => return monospace_family(),
+        _ => choice
+            .strip_prefix("display:")
+            .and_then(name_font_bytes)
+            .map(<[u8]>::to_vec)
+            .or_else(|| {
+                choice
+                    .strip_prefix("file:")
+                    .and_then(|path| std::fs::read(path).ok())
+            }),
+    };
+    bytes
+        .and_then(|bytes| load_theme_font(bytes).ok())
+        .map(|font| font.family)
+}
+
+/// The system body face's file: Segoe UI on Windows, what fontconfig calls
+/// sans-serif elsewhere.
+#[cfg(windows)]
+fn system_ui_file() -> Option<String> {
+    std::env::var("WINDIR")
+        .ok()
+        .map(|windows| format!("{windows}\\Fonts\\segoeui.ttf"))
+        .filter(|path| std::path::Path::new(path).exists())
+}
+
+/// The system body face's file: Segoe UI on Windows, what fontconfig calls
+/// sans-serif elsewhere.
+#[cfg(not(windows))]
+fn system_ui_file() -> Option<String> {
+    fc_match(&["-f", "%{file}", "sans-serif"]).filter(|path| !path.is_empty())
+}
+
+/// The family's name the monospace face [`install`] found, leaked as the
+/// static a default family needs; none while it isn't loaded.
+fn monospace_family() -> Option<&'static str> {
+    let mut system = font_system().write().expect("font system");
+    let db = system.raw().db_mut();
+    let name = db.family_name(&cosmic_text::fontdb::Family::Monospace);
+    db.faces()
+        .any(|face| face.families.iter().any(|(family, _)| family == name))
+        .then(|| &*Box::leak(name.to_owned().into_boxed_str()))
+}
+
 /// Makes the window's font system: DM Sans and its italic, `twemoji` (the
 /// font `crates/circord-iced/build.rs` packs, or nothing), and the system's
 /// monospace face for code, with DM Sans then Twemoji as the fallback list,
@@ -657,7 +728,8 @@ fn char_fonts(chars: &[char]) -> Vec<(String, u32)> {
 }
 
 /// Windows has no fontconfig: the fonts it ships that may have `chars`, in
-/// the order they're tried ([`windows_char_files`]).
+/// the order they're tried ([`windows_char_files`]), each checked to have a
+/// glyph for every one as fontconfig's match would be.
 #[cfg(windows)]
 fn char_fonts(chars: &[char]) -> Vec<(String, u32)> {
     let Ok(windows) = std::env::var("WINDIR") else {
@@ -666,7 +738,12 @@ fn char_fonts(chars: &[char]) -> Vec<(String, u32)> {
     let fonts = std::path::Path::new(&windows).join("Fonts");
     windows_char_files(chars)
         .map(|&(file, index)| (fonts.join(file), index))
-        .filter(|(path, _)| path.exists())
+        .filter(|(path, index)| {
+            std::fs::read(path).ok().is_some_and(|bytes| {
+                ttf_parser::Face::parse(&bytes, *index)
+                    .is_ok_and(|face| chars.iter().all(|&c| face.glyph_index(c).is_some()))
+            })
+        })
         .map(|(path, index)| (path.to_string_lossy().into_owned(), index))
         .collect()
 }

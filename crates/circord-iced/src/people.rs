@@ -7,12 +7,12 @@
 
 use std::{borrow::Cow, collections::HashMap};
 
+use circord_core::themes::content::{NameColours, Names};
+use circord_core::{application::AppState, chat::ChatRoom};
 use iced::{
     Alignment, Color, Element, Font, Length,
     widget::{Space, button, column, container, row, text, tooltip},
 };
-use circord_core::themes::content::{NameColours, Names};
-use circord_core::{application::AppState, chat::ChatRoom};
 
 use crate::{
     app::Message,
@@ -368,7 +368,8 @@ impl<'a> crate::ctx::Ctx<'a> {
 
 impl<'a> crate::ctx::Ctx<'a> {
     /// What the theme does to people's names, pictures, cards and embeds,
-    /// when the person let it (Settings → Themes); none otherwise.
+    /// when the person let it (the theme's content permission); none
+    /// otherwise.
     pub fn theme_content(self) -> Option<&'a circord_core::themes::content::Content> {
         let id = &self.look.theme.id;
         self.themes

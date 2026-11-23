@@ -1,14 +1,14 @@
 # Themes
 
-Settings → Appearance offers the themes Circord comes with and the person's
-own as quick choices. Settings → Themes is the dedicated theme-management
-destination. It currently manages installed packages and custom themes, their
-options, content permission, performance and reduced motion. Its Marketplace
-and Add from URL tabs fetch public GitHub themes through the core's bounded,
-verified package pipeline, show a stock-themed permission/cost review, and do
-not persist anything until Install. An
-installed theme shown in Appearance links
-back to that page. Built-in and custom
+Settings → Appearance offers the themes Circord comes with, the person's own
+and installed packages as quick choices, with the chosen package's own
+options under them. Settings → Customize sits beside it: the window's font,
+its background — one colour or a two-colour gradient — and the accent colour
+set over whatever theme shows, kept as `layout.json`'s `customize`, with a
+theme's Performance and Motion choices beside them. Installing packages from
+GitHub or the marketplace catalog stays engine-side — `circord theme` and
+the bounded, verified fetch/check pipeline — without a settings page of its
+own. Built-in and custom
 themes are a full set of the colours of `Theme` in
 `circord_core::theme` (`crates/circord-core/src/theme.rs`), plus whether it's
 dark, which sets the scrollbars' shade and the colours worked out from the
@@ -22,29 +22,20 @@ choice is kept in `layout.json` as `theme`, the theme's id, and applied
 before the window's first frame, and again to a window made anew. With none
 kept, the window shows Bonfire. An id Circord doesn't know, or a deleted
 theme's, shows Circord. The window-control command `theme ID` chooses and keeps
-one as Appearance and Themes do.
+one as Appearance does.
 
 ## Installed themes
 
-Settings → Themes reads installed packages from `<data>/themes` through
+Installed packages live in `<data>/themes`, read through
 `circord_core::themes::install::Themes`. Their layout ids are
 `installed:<package-id>`, keeping them separate from built-in and `custom:`
-ids. The page reads as the other settings pages: a title, what themes are,
-and underlined tabs (Installed, Marketplace, Add from URL, Create). Installed
-shows cards two to a row, or a list (toggled on the INSTALLED line), each with
-its preview, modes tag, authors and cost in plain words with Details. A card
-offers **Apply**, or **Turn off theme** on the applied one (ringed and tagged),
-and behind **…** **Try for 30 seconds**, **Roll back** when core has retained an
-earlier revision, and **Remove**. The applied theme's own settings (options,
-people's content, sounds) follow under its name, then Performance and Motion.
-A trial shows as a pill over Settings' foot. Try shows the package for 30
-seconds without changing `layout.json`; its banner offers **Keep** and
-**Revert**, and expiry reverts automatically. A reviewed remote package can be
-tried from checked files in a private temporary folder and is installed only
-if Keep is chosen. The applied row offers **Turn off theme**, which keeps
+ids. The engine still knows how to install, remove, roll back and try a
+package — `circord theme install`, and the review pipeline a management page
+drove — though only choosing, a package's own options and turn-off have a
+window now, in Appearance. Turning a theme off keeps
 `theme: null` and returns to Bonfire immediately and on
 the next start. Each actual change also keeps the replaced id as
-`previous_theme`; Settings → Themes offers **Back to _name_** while that
+`previous_theme`; a Back action offers it while that
 theme still exists. Re-choosing the current theme leaves the existing Back
 target intact, and restoring a theme after Turn off consumes that target.
 `Ctrl+Shift+T` is the emergency turn-off shortcut for a theme package (a
@@ -162,9 +153,9 @@ below); magnify list motion is not applied.
 Package icon replacements are decoded once and flow through the kit's existing
 glyph calls. Package app/ring sounds replace the corresponding core samples;
 menu, popup, toggle, send, reaction and theme-applied cues use the interface
-sound slots. Settings → Themes separately lets each applied package replace
-notification sounds, enable its interface sounds and set their interface
-volume. The defaults (notifications on, interface sounds off, 50% interface
+sound slots. A package may separately replace notification sounds, enable
+its interface sounds and set their interface volume (`theme_sounds`, set by
+the management UI the engine still serves). The defaults (notifications on, interface sounds off, 50% interface
 volume) need no `theme_sounds` entry; only differences are kept. The package's
 built-in `theme-sounds` option still participates in its own resolved sound
 levels. `theme_transitions` keeps a separate Transitions between channels

@@ -4,12 +4,12 @@
 
 use std::{cell::Cell, time::Instant};
 
+use circord_core::application::Action;
 use iced::{
     Task,
     keyboard::{self, key},
     widget::operation,
 };
-use circord_core::application::Action;
 
 use crate::{
     app::{App, Message},
@@ -538,23 +538,6 @@ impl App {
                 crate::call::update(self, crate::call::Event::Switch(true))
             }
             (Layer::Leaving, Some(key::Named::Enter)) => crate::dialogs::leave(self, true),
-            // Settings → Themes from the keyboard.
-            (
-                Layer::Settings,
-                Some(named @ (key::Named::Tab | key::Named::Enter | key::Named::Space)),
-            ) if self
-                .win
-                .settings
-                .get()
-                .is_some_and(|settings| settings.section() == crate::settings::Section::Themes) =>
-            {
-                let key = match named {
-                    key::Named::Tab if modifiers.shift() => crate::settings::ThemeKey::Previous,
-                    key::Named::Tab => crate::settings::ThemeKey::Next,
-                    _ => crate::settings::ThemeKey::Activate,
-                };
-                self.settings_event(crate::settings::Event::ThemeKey(key))
-            }
             (_, Some(key::Named::Escape)) => self.shut(layer),
             _ => Task::none(),
         }

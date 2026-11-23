@@ -2,8 +2,8 @@
 //! custom themes, preferences are kept across a restart, a device is chosen
 //! in Voice & video, and push to talk's key is recorded and kept.
 
-use iced::keyboard::{Key, Location, key};
 use circord_core::voice;
+use iced::keyboard::{Key, Location, key};
 
 use super::{change, interact, local, preview, shows, start};
 use crate::{
@@ -128,7 +128,7 @@ fn ctrl_shift_t_turns_a_package_off_even_over_settings() {
     let mut app = start(&folder, true);
     assert!(app.choose_theme("installed:dev.example.small"));
     assert!(app.theme.packaged());
-    open(&mut app, Section::Themes);
+    open(&mut app, Section::Customize);
     ctrl_shift_t(&mut app);
     assert_eq!(app.theme.id, "bonfire");
     assert!(!app.theme.packaged());
@@ -196,45 +196,26 @@ fn ctrl_shift_t_stops_the_dev_theme_and_keeps_the_palette_theme() {
     assert_eq!(stored(&folder)["theme"], "sakura");
 }
 
-/// The creator's preview is a package too: the key lets go of it, and
-/// the palette theme chosen shows again.
 #[test]
-fn ctrl_shift_t_lets_go_of_the_creators_preview() {
-    use crate::settings::theme_creator::Event as CreatorEvent;
-    use crate::settings::{ThemeEvent, appearance_event as theme};
-
-    let (mut app, folder) = preview();
-    assert!(app.choose_theme("sakura"));
-    open(&mut app, Section::Themes);
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Open)));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::AccentPreset(
-        0xff6b6b,
-    ))));
-    assert_eq!(app.theme.id, crate::themes::CREATOR_PREVIEW_ID);
-    assert!(app.theme.packaged());
-    ctrl_shift_t(&mut app);
-    assert_eq!(app.theme.id, "sakura");
-    assert!(!app.theme.packaged());
-    assert!(app.themes.find(crate::themes::CREATOR_PREVIEW_ID).is_none());
-    assert!(shows(&app, "Save theme"), "the creator stays open");
-    assert_eq!(stored(&folder)["theme"], "sakura");
-}
-
-#[test]
-fn themes_is_its_own_settings_section_while_appearance_keeps_shortcuts() {
+fn customize_is_its_own_settings_section_while_appearance_keeps_the_tiles() {
     let (mut app, _folder) = preview();
     open(&mut app, Section::Appearance);
-    assert!(shows(&app, "Catppuccin Latte"), "Appearance's shortcuts");
-    assert!(!shows(&app, "Marketplace"));
+    assert!(shows(&app, "Catppuccin Latte"), "Appearance's tiles");
+    assert!(!shows(&app, "ACCENT"));
     assert!(!shows(&app, "PERFORMANCE"));
     interact(&mut app, |ui| {
-        ui.click("Themes").expect("the Themes section");
+        ui.click("Customize").expect("the Customize section");
     });
-    assert!(shows(&app, "Marketplace"), "the page's tabs");
-    assert!(shows(&app, "PERFORMANCE"));
-    assert!(shows(&app, "No themes yet"), "what to do with none");
+    assert!(shows(&app, "FONT") && shows(&app, "BACKGROUND"));
+    assert!(shows(&app, "ACCENT"), "the accent's group");
+    assert!(
+        shows(&app, "PERFORMANCE"),
+        "moved from the page it replaces"
+    );
 }
 
+/// A package installed by hand applies through the control command or the
+/// engine, and the options its manifest names show in Appearance.
 #[test]
 fn an_installed_theme_applies_and_turns_off_from_themes() {
     let folder = tempfile::tempdir_in(local()).expect("test folder");
@@ -318,10 +299,7 @@ fn an_installed_theme_applies_and_turns_off_from_themes() {
         .unwrap();
 
     let mut app = start(&folder, true);
-    open(&mut app, Section::Themes);
-    assert!(shows(&app, "Plum package"));
-    assert!(shows(&app, "by Ada, Lin · v1.0.0"));
-    assert!(shows(&app, "Dark and light"), "its tag");
+    open(&mut app, Section::Appearance);
     // The package's ignored-field note is retained and shown verbatim.
     let ignored = "\"future_sparkle\" isn't something this Circord reads; ignored";
     assert!(
@@ -330,17 +308,10 @@ fn an_installed_theme_applies_and_turns_off_from_themes() {
             .iter()
             .any(|note| note == ignored)
     );
-    // What this Circord leaves out shows with the rest of the cost.
-    interact(&mut app, |ui| {
-        ui.click("Details").expect("Details");
-    });
-    assert!(shows(&app, "Left out by this Circord"));
-    assert!(shows(&app, ignored));
-    interact(&mut app, |ui| {
-        ui.click("Apply").expect("Apply");
-    });
+    let _ = app.update(Message::Control("theme installed:dev.example.plum".into()));
     assert_eq!(app.theme.id, "installed:dev.example.plum");
     assert_eq!(app.theme.chat, crate::style::hex(0x2a1a3a));
+    assert!(shows(&app, "Roomy messages"), "the package's own option");
     let particle_events = std::sync::Arc::clone(
         app.themes
             .particles("installed:dev.example.plum")
@@ -350,7 +321,7 @@ fn an_installed_theme_applies_and_turns_off_from_themes() {
     particle_events.lock().unwrap().clear();
     app.timeline.heights = vec![1234.0];
     let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::ThemeOption(
+        crate::settings::AppearanceEvent::ThemeOption(
             "installed:dev.example.plum".into(),
             "roomy".into(),
             serde_json::Value::Bool(true),
@@ -409,78 +380,16 @@ fn an_installed_theme_applies_and_turns_off_from_themes() {
     );
     assert!(!members.activity);
     assert_eq!(stored(&folder)["theme"], "installed:dev.example.plum");
-    assert!(shows(&app, "Plum package"), "the applied theme's group");
-    assert!(shows(&app, "Notification sounds"));
-    let interface = "Interface sounds — clicks, hovers, menus, send";
-    assert!(shows(&app, interface));
-    // The volume shows once the sounds it sets are on.
-    assert!(!shows(&app, "Interface sound volume"));
-    interact(&mut app, |ui| {
-        ui.click("Notification sounds")
-            .expect("notification sounds");
-        ui.click(interface).expect("interface sounds");
-        ui.click("Transitions between channels")
-            .expect("theme transitions");
-    });
-    assert!(shows(&app, "Interface sound volume"));
-    let id = "installed:dev.example.plum";
-    let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::ThemeInterfaceVolume(id.into(), 73),
+    let _ = app.update(crate::settings::customize_event(
+        crate::settings::CustomizeEvent::ThemeTransitions(true),
     ));
-    assert!(
-        app.theme.has_hover_cue(),
-        "the theme shown takes the cue armed"
-    );
-    assert!(!app.layout.theme_sounds[id].on);
-    assert!(app.layout.theme_sounds[id].interface);
-    assert_eq!(app.layout.theme_sounds[id].volume, 73);
-    assert!(app.layout.theme_transitions);
-    let kept = stored(&folder);
-    assert_eq!(kept["theme_sounds"][id]["on"], false);
-    assert_eq!(kept["theme_sounds"][id]["interface"], true);
-    assert_eq!(kept["theme_sounds"][id]["volume"], 73);
-    assert_eq!(kept["theme_transitions"], true);
-
-    // Returning every sound choice to its theme default removes this
-    // package's map entry instead of keeping redundant settings.
-    for event in [
-        crate::settings::ThemeEvent::ThemeNotificationSounds(id.into(), true),
-        crate::settings::ThemeEvent::ThemeInterfaceSounds(id.into(), false),
-        crate::settings::ThemeEvent::ThemeInterfaceVolume(id.into(), 50),
-    ] {
-        let _ = app.update(crate::settings::appearance_event(event));
-    }
-    assert!(!app.layout.theme_sounds.contains_key(id));
-    assert!(!app.theme.has_hover_cue());
-    assert!(
-        stored(&folder)["theme_sounds"]
-            .as_object()
-            .unwrap()
-            .is_empty()
-    );
-
-    interact(&mut app, |ui| {
-        ui.click("Turn off theme").expect("Turn off theme");
-    });
-    assert_eq!(app.theme.id, "bonfire");
-    assert!(stored(&folder)["theme"].is_null());
-    assert_eq!(start(&folder, true).theme.id, "bonfire");
-
-    assert!(
-        shows(&app, "Back to Plum package"),
-        "Turn off names the theme Back will restore"
-    );
-    interact(&mut app, |ui| {
-        ui.click("Back to Plum package").expect("Back to theme");
-    });
-    assert_eq!(app.theme.id, "installed:dev.example.plum");
-    let layout = stored(&folder);
-    assert_eq!(layout["theme"], "installed:dev.example.plum");
-    assert!(layout["previous_theme"].is_null());
+    assert_eq!(stored(&folder)["theme_transitions"], true);
 }
 
+/// A package whose files changed since it was installed isn't opened:
+/// the engine counts it refused with the precise reason.
 #[test]
-fn a_refused_installed_theme_stays_visible_with_the_precise_reason() {
+fn a_refused_installed_theme_is_counted_with_the_precise_reason() {
     let folder = tempfile::tempdir_in(local()).expect("test folder");
     let source = folder.path().join("changed-source");
     std::fs::create_dir(&source).unwrap();
@@ -502,566 +411,38 @@ fn a_refused_installed_theme_stays_visible_with_the_precise_reason() {
     let stored_manifest = installed[0].folder.join(circord_core::themes::MANIFEST);
     std::fs::write(stored_manifest, "{}").unwrap();
 
-    let mut app = start(&folder, true);
-    open(&mut app, Section::Themes);
+    let app = start(&folder, true);
     assert!(app.themes.installed.is_empty());
-    assert_eq!(app.themes.refused.len(), 1);
-    assert!(shows(&app, "THEMES THAT COULDN'T BE OPENED"));
-    assert!(shows(&app, "dev.example.changed"));
-    assert!(shows(&app, "its theme.json changed since it was installed"));
+    let refused = app.themes.refused.first().expect("a refused theme");
+    assert_eq!(refused.id, "dev.example.changed");
+    assert_eq!(
+        refused.reason,
+        "its theme.json changed since it was installed"
+    );
 }
 
+/// The person's own themes show as tiles in Appearance, choose, and go on
+/// the bin's second press.
 #[test]
-fn a_custom_theme_is_made_edited_and_deleted_in_themes() {
-    use crate::settings::appearance_event as theme;
-    let (mut app, folder) = preview();
+fn a_custom_theme_chooses_and_deletes_from_its_tile() {
+    use crate::settings::{AppearanceEvent, appearance_event};
+    let folder = tempfile::tempdir_in(local()).expect("test folder");
+    std::fs::write(
+        folder.path().join("layout.json"),
+        r##"{"theme": "custom:1", "custom_themes": [{"id": "custom:1", "name": "Harbour",
+            "base": "circord", "colours": {"chat": "#2a1a3a"}}]}"##,
+    )
+    .expect("the layout");
+    let mut app = start(&folder, true);
+    assert_eq!(app.theme.id, "custom:1");
     open(&mut app, Section::Appearance);
-    interact(&mut app, |ui| {
-        ui.click("New theme").expect("New theme");
-    });
-    assert_eq!(
-        app.win.settings.get().map(|settings| settings.section()),
-        Some(Section::Themes),
-        "Appearance's shortcut opens the Themes creator"
-    );
-    assert!(shows(&app, "START FROM") && shows(&app, "EVERY COLOUR"));
-    // A colour typed shows at once; one that isn't a colour says so.
-    let chat = circord_core::theme::Theme::NAMES
-        .iter()
-        .position(|name| *name == "chat")
-        .expect("chat");
-    let _ = app.update(theme(crate::settings::ThemeEvent::Colour(
-        chat,
-        "#102030".into(),
-    )));
-    assert_eq!(app.theme.chat, crate::style::hex(0x102030));
-    let _ = app.update(theme(crate::settings::ThemeEvent::Colour(
-        chat,
-        "#1020".into(),
-    )));
-    assert!(shows(&app, "Not a colour"));
-    assert_eq!(
-        app.theme.chat,
-        crate::style::hex(0x102030),
-        "the last good one"
-    );
-    let _ = app.update(theme(crate::settings::ThemeEvent::Colour(
-        chat,
-        "#203040".into(),
-    )));
-    let _ = app.update(theme(crate::settings::ThemeEvent::Name("Harbour".into())));
-    interact(&mut app, |ui| {
-        ui.click("Save theme").expect("Save theme");
-    });
-    assert_eq!(app.theme.id, "custom:1", "chosen once saved");
-    let layout = stored(&folder);
-    assert_eq!(layout["theme"], "custom:1");
-    assert_eq!(layout["custom_themes"][0]["name"], "Harbour");
-    assert_eq!(layout["custom_themes"][0]["colours"]["chat"], "#203040");
     assert!(shows(&app, "Harbour"), "among the tiles");
-    // Edited, then cancelled: the theme from before comes back.
-    let _ = app.update(theme(crate::settings::ThemeEvent::Edit("custom:1".into())));
-    assert!(shows(&app, "EVERY COLOUR") && shows(&app, "Save"));
-    let _ = app.update(theme(crate::settings::ThemeEvent::Colour(
-        chat,
-        "#ffffff".into(),
-    )));
-    assert_eq!(app.theme.chat, crate::style::hex(0xffffff));
-    interact(&mut app, |ui| {
-        ui.click("Cancel").expect("Cancel");
-    });
-    assert_eq!(app.theme.chat, crate::style::hex(0x203040));
     // Deleted, asked once more: the chosen theme goes, and Circord shows.
-    let _ = app.update(theme(crate::settings::ThemeEvent::Edit("custom:1".into())));
-    interact(&mut app, |ui| {
-        ui.click("Delete theme").expect("Delete theme");
-    });
-    assert!(shows(&app, "Delete it for good"));
-    interact(&mut app, |ui| {
-        ui.click("Delete it for good").expect("Delete it for good");
-    });
+    let _ = app.update(appearance_event(AppearanceEvent::Delete("custom:1".into())));
+    assert_eq!(app.theme.id, "custom:1", "armed only");
+    let _ = app.update(appearance_event(AppearanceEvent::Delete("custom:1".into())));
     assert_eq!(app.theme.id, "circord");
     assert_eq!(stored(&folder)["custom_themes"], serde_json::json!([]));
-}
-
-#[test]
-fn the_guided_creator_previews_undoes_exports_and_keeps_its_recipe() {
-    use crate::settings::theme_creator::{Event as CreatorEvent, PictureArrival, Step};
-    use crate::settings::{ThemeEvent, appearance_event as theme};
-    use circord_core::themes::creator::{Density, Messages};
-
-    let (mut app, folder) = preview();
-    open(&mut app, Section::Themes);
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Open)));
-    assert!(shows(&app, "Save theme"));
-    assert!(shows(&app, "START FROM A THEME"));
-    let generation = app
-        .win
-        .settings
-        .get()
-        .and_then(|settings| settings.creator.as_ref())
-        .map(|creator| creator.generation())
-        .expect("creator generation");
-
-    let opened_accent = app.theme.accent;
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::AccentPreset(
-        0xff6b6b,
-    ))));
-    assert_ne!(
-        app.theme.accent, opened_accent,
-        "the window previews colours"
-    );
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Undo)));
-    assert_eq!(app.theme.accent, opened_accent, "Undo restores the preview");
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::AccentPreset(
-        0xff6b6b,
-    ))));
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Step(Step::Shape))));
-    assert!(shows(&app, "MESSAGES") && shows(&app, "CORNERS"));
-    for event in [
-        CreatorEvent::Messages(Messages::Cards),
-        CreatorEvent::Corners(80),
-        CreatorEvent::Density(Density::Roomy),
-        CreatorEvent::Outline(2),
-        CreatorEvent::Glass(true),
-    ] {
-        let _ = app.update(theme(ThemeEvent::Creator(event)));
-    }
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Step(Step::Fonts))));
-    assert!(shows(&app, "FONT") && shows(&app, "Headings"));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Body(
-        "tech".into(),
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Headings(Some(
-        "slab".into(),
-    )))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::FontReady(
-        generation,
-        true,
-        Ok(
-            include_bytes!("../../../../crates/circord-iced-kit/fonts/DisplayName-Medieval.otf")
-                .to_vec(),
-        ),
-    ))));
-    let imported_font = app
-        .win
-        .settings
-        .get()
-        .and_then(|settings| settings.creator.as_ref())
-        .and_then(|creator| creator.spec.fonts.first())
-        .map(|font| font.file.clone())
-        .expect("the imported font");
-
-    let picture =
-        PictureArrival::prepare(include_bytes!("../../../../themes/template/preview.png"))
-            .expect("the example picture");
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::PictureReady(
-        generation,
-        Ok(picture),
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Blur(62))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Dim(47))));
-    assert_eq!(app.theme.id, crate::themes::CREATOR_PREVIEW_ID);
-    let stock = crate::themes::theme("stock", &circord_core::theme::CIRCORD);
-    assert_ne!(
-        app.theme.surface_radius("button", 6.0),
-        stock.surface_radius("button", 6.0),
-        "shape tokens preview before Save"
-    );
-    assert_ne!(
-        app.theme.header_font(crate::fonts::BOLD).family,
-        crate::fonts::BOLD.family,
-        "the imported heading font previews before Save"
-    );
-    assert!(
-        app.themes
-            .glass(
-                crate::themes::CREATOR_PREVIEW_ID,
-                circord_core::themes::package::art::ArtSurface::Sidebar,
-            )
-            .is_some(),
-        "picture glass previews before Save"
-    );
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Step(
-        Step::Advanced,
-    ))));
-    assert!(shows(&app, "EVERY COLOUR"));
-    let chat = circord_core::theme::Theme::NAMES
-        .iter()
-        .position(|name| *name == "chat")
-        .expect("chat");
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::AdvancedColour(
-        chat,
-        "#102030".into(),
-    ))));
-    assert_eq!(app.theme.chat, crate::style::hex(0x102030));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Name(
-        "Guided Plum".into(),
-    ))));
-
-    let exported = tempfile::tempdir_in(local()).expect("export folder");
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::ExportTo(
-        generation,
-        Some(exported.path().to_owned()),
-    ))));
-    let exported = exported.path().join("guided-plum");
-    assert!(exported.join("theme.json").is_file());
-    assert!(exported.join("LICENSE").is_file());
-    assert!(exported.join("fonts/DisplayName-Mainframe.ttf").is_file());
-    assert!(exported.join(&imported_font).is_file());
-    assert!(exported.join("art/picture.jpg").is_file());
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Save)));
-    assert_eq!(app.theme.id, "custom:1", "the saved theme is chosen");
-    assert_ne!(
-        app.theme.surface_radius("button", 6.0),
-        stock.surface_radius("button", 6.0),
-        "the saved creator shape applies without a restart"
-    );
-    assert!(
-        app.themes
-            .glass(
-                "custom:1",
-                circord_core::themes::package::art::ArtSurface::Sidebar,
-            )
-            .is_some(),
-        "the saved creator glass applies without a restart"
-    );
-    let layout = stored(&folder);
-    let custom = &layout["custom_themes"][0];
-    assert_eq!(custom["name"], "Guided Plum");
-    assert_eq!(custom["folder"], "themes/creator/1");
-    assert_eq!(custom["creator"]["messages"], "cards");
-    assert_eq!(custom["creator"]["corners"], 80);
-    assert_eq!(custom["creator"]["density"], "roomy");
-    assert_eq!(custom["creator"]["outline"], 2);
-    assert_eq!(custom["creator"]["glass"], true);
-    assert_eq!(custom["creator"]["body"], "tech");
-    assert_eq!(custom["creator"]["headings"], imported_font);
-    assert_eq!(custom["creator"]["background"], "picture");
-    assert_eq!(custom["creator"]["blur"], 62);
-    assert_eq!(custom["creator"]["dim"], 47);
-    assert_eq!(custom["colours"]["chat"], "#102030");
-    assert!(folder.path().join("themes/creator/1/theme.json").is_file());
-    assert!(folder.path().join("themes/creator/1/LICENSE").is_file());
-
-    let mut restarted = start(&folder, true);
-    assert_eq!(restarted.theme.id, "custom:1");
-    assert_ne!(
-        restarted.theme.surface_radius("button", 6.0),
-        stock.surface_radius("button", 6.0),
-        "the creator shape resolves after restart"
-    );
-    assert!(
-        restarted
-            .themes
-            .glass(
-                "custom:1",
-                circord_core::themes::package::art::ArtSurface::Sidebar,
-            )
-            .is_some(),
-        "the creator picture/glass assets resolve after restart"
-    );
-    assert_eq!(
-        restarted.themes.custom[0].creator.as_ref().unwrap().corners,
-        80
-    );
-    assert_eq!(
-        restarted.themes.custom[0].folder.as_deref(),
-        Some("themes/creator/1")
-    );
-
-    open(&mut restarted, Section::Themes);
-    let _ = restarted.update(theme(ThemeEvent::Edit("custom:1".into())));
-    assert!(
-        restarted
-            .win
-            .settings
-            .get()
-            .is_some_and(|settings| settings.creator.is_some() && settings.editor.is_none()),
-        "a creator theme reopens in the guided creator"
-    );
-    let _ = restarted.update(theme(ThemeEvent::Creator(CreatorEvent::Corners(20))));
-    let _ = restarted.update(theme(ThemeEvent::Creator(CreatorEvent::Name(
-        "Guided Plum edited".into(),
-    ))));
-    let _ = restarted.update(theme(ThemeEvent::Creator(CreatorEvent::Save)));
-    assert_eq!(
-        restarted.themes.custom.len(),
-        1,
-        "Edit updates, not duplicates"
-    );
-    assert_eq!(restarted.themes.custom[0].id, "custom:1");
-    assert_eq!(restarted.themes.custom[0].name, "Guided Plum edited");
-    assert_eq!(
-        restarted.themes.custom[0].creator.as_ref().unwrap().corners,
-        20
-    );
-    assert!(
-        folder
-            .path()
-            .join("themes/creator/1/art/picture.jpg")
-            .is_file()
-    );
-
-    let _ = restarted.update(theme(ThemeEvent::Edit("custom:1".into())));
-    let _ = restarted.update(theme(ThemeEvent::Creator(CreatorEvent::Delete)));
-    let _ = restarted.update(theme(ThemeEvent::Creator(CreatorEvent::Delete)));
-    assert!(restarted.themes.custom.is_empty());
-    assert_eq!(restarted.theme.id, "circord");
-    assert!(stored(&folder)["previous_theme"].is_null());
-    assert!(
-        !folder.path().join("themes/creator/1").exists(),
-        "Delete removes only the creator-owned package folder"
-    );
-}
-
-#[test]
-fn creator_assets_follow_undo_start_over_and_async_generations() {
-    use crate::settings::theme_creator::{Event as CreatorEvent, PictureArrival, Step, Suggested};
-    use crate::settings::{ThemeEvent, appearance_event as theme};
-
-    let (mut app, folder) = preview();
-    open(&mut app, Section::Themes);
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Open)));
-    let generation = app
-        .win
-        .settings
-        .get()
-        .and_then(|settings| settings.creator.as_ref())
-        .map(|creator| creator.generation())
-        .unwrap();
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Cancel)));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Open)));
-    let current = app
-        .win
-        .settings
-        .get()
-        .and_then(|settings| settings.creator.as_ref())
-        .map(|creator| creator.generation())
-        .unwrap();
-    assert_ne!(generation, current);
-    let suggested = Suggested::read(
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../themes/template/preview.png"),
-    )
-    .expect("suggested picture thumbnail");
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Suggestions(
-        current,
-        vec![suggested],
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Step(Step::Start))));
-    assert!(shows(&app, "OR FROM A PICTURE"));
-
-    let old_picture =
-        PictureArrival::prepare(include_bytes!("../../../../themes/template/preview.png")).unwrap();
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::PictureReady(
-        generation,
-        Ok(old_picture),
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::FontReady(
-        generation,
-        false,
-        Ok(
-            include_bytes!("../../../../crates/circord-iced-kit/fonts/DisplayName-Medieval.otf")
-                .to_vec(),
-        ),
-    ))));
-    let creator = app.win.settings.get().unwrap().creator.as_ref().unwrap();
-    assert!(creator.spec.picture.is_none() && creator.spec.fonts.is_empty());
-    assert!(
-        !folder
-            .path()
-            .join("themes/creator/draft/art/picture.jpg")
-            .exists()
-    );
-
-    let picture =
-        PictureArrival::prepare(include_bytes!("../../../../themes/template/preview.png")).unwrap();
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::PictureReady(
-        current,
-        Ok(picture),
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::FontReady(
-        current,
-        false,
-        Ok(
-            include_bytes!("../../../../crates/circord-iced-kit/fonts/DisplayName-Medieval.otf")
-                .to_vec(),
-        ),
-    ))));
-    let font = app
-        .win
-        .settings
-        .get()
-        .unwrap()
-        .creator
-        .as_ref()
-        .unwrap()
-        .spec
-        .fonts[0]
-        .file
-        .clone();
-    assert!(
-        folder
-            .path()
-            .join("themes/creator/draft/art/picture.jpg")
-            .is_file()
-    );
-    assert!(
-        folder
-            .path()
-            .join("themes/creator/draft")
-            .join(&font)
-            .is_file()
-    );
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Start(0))));
-    assert!(
-        !folder
-            .path()
-            .join("themes/creator/draft/art/picture.jpg")
-            .exists()
-    );
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Undo)));
-    let restored = app.win.settings.get().unwrap().creator.as_ref().unwrap();
-    assert!(restored.spec.picture.is_some());
-    assert_eq!(restored.spec.body, font);
-    assert!(
-        folder
-            .path()
-            .join("themes/creator/draft/art/picture.jpg")
-            .is_file()
-    );
-    assert!(
-        folder
-            .path()
-            .join("themes/creator/draft")
-            .join(&font)
-            .is_file()
-    );
-
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::StartOver)));
-    let reset = app.win.settings.get().unwrap().creator.as_ref().unwrap();
-    assert!(reset.spec.picture.is_none() && reset.spec.fonts.is_empty());
-    assert!(
-        !folder
-            .path()
-            .join("themes/creator/draft/art/picture.jpg")
-            .exists()
-    );
-    assert!(
-        !folder
-            .path()
-            .join("themes/creator/draft")
-            .join(font)
-            .exists()
-    );
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Corners(90))));
-    let preview = app.theme.clone();
-    assert_eq!(preview.id, crate::themes::CREATOR_PREVIEW_ID);
-    let stock = crate::themes::theme("stock", &circord_core::theme::CIRCORD);
-    assert_ne!(preview.surface_radius("button", 6.0), stock.radius(6.0));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Cancel)));
-    assert!(
-        app.themes.find(crate::themes::CREATOR_PREVIEW_ID).is_none(),
-        "cancel removes the draft package"
-    );
-    assert_eq!(
-        app.theme.surface_radius("button", 6.0),
-        stock.radius(6.0),
-        "the window lets go of the preview's metrics"
-    );
-    assert!(!app.theme.packaged());
-}
-
-#[test]
-fn creator_delete_refuses_a_folder_outside_its_owned_tree() {
-    use crate::settings::theme_creator::Event as CreatorEvent;
-    use crate::settings::{ThemeEvent, appearance_event as theme};
-    use circord_core::theme::Custom;
-
-    let folder = tempfile::tempdir_in(local()).unwrap();
-    std::fs::create_dir_all(folder.path().join("themes/creator")).unwrap();
-    let external = tempfile::tempdir_in(local()).unwrap();
-    std::fs::write(external.path().join("keep"), b"mine").unwrap();
-    let custom = Custom {
-        id: "custom:1".into(),
-        name: "Outside".into(),
-        base: "circord",
-        theme: circord_core::theme::CIRCORD,
-        creator: Some(circord_core::themes::creator::Spec::default()),
-        folder: Some(external.path().display().to_string()),
-    };
-    crate::layout::store(folder.path(), "custom_themes", [&custom]);
-    crate::layout::store(folder.path(), "theme", "custom:1");
-    crate::layout::flush(folder.path());
-
-    let mut app = start(&folder, true);
-    open(&mut app, Section::Themes);
-    let _ = app.update(theme(ThemeEvent::Edit("custom:1".into())));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Delete)));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Delete)));
-    assert_eq!(
-        app.themes.custom.len(),
-        1,
-        "refused deletion keeps the theme"
-    );
-    assert!(
-        external.path().join("keep").is_file(),
-        "external data is untouched"
-    );
-    assert!(
-        app.win
-            .settings
-            .get()
-            .and_then(|settings| settings.creator.as_ref())
-            .and_then(|creator| creator.note.as_ref())
-            .is_some_and(|(note, bad)| *bad && note.contains("not owned by the theme creator"))
-    );
-}
-
-#[test]
-fn creator_save_migrates_an_external_folder_without_touching_it() {
-    use crate::settings::theme_creator::Event as CreatorEvent;
-    use crate::settings::{ThemeEvent, appearance_event as theme};
-    use circord_core::theme::Custom;
-
-    let folder = tempfile::tempdir_in(local()).unwrap();
-    let external = tempfile::tempdir_in(local()).unwrap();
-    std::fs::write(external.path().join("keep"), b"mine").unwrap();
-    let custom = Custom {
-        id: "custom:1".into(),
-        name: "Outside".into(),
-        base: "circord",
-        theme: circord_core::theme::CIRCORD,
-        creator: Some(circord_core::themes::creator::Spec::default()),
-        folder: Some(external.path().display().to_string()),
-    };
-    crate::layout::store(folder.path(), "custom_themes", [&custom]);
-    crate::layout::store(folder.path(), "theme", "custom:1");
-    crate::layout::flush(folder.path());
-
-    let mut app = start(&folder, true);
-    open(&mut app, Section::Themes);
-    let _ = app.update(theme(ThemeEvent::Edit("custom:1".into())));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Name(
-        "Migrated".into(),
-    ))));
-    let _ = app.update(theme(ThemeEvent::Creator(CreatorEvent::Save)));
-    assert!(
-        external.path().join("keep").is_file(),
-        "external data is untouched"
-    );
-    assert_eq!(app.themes.custom.len(), 1);
-    assert_eq!(
-        app.themes.custom[0].folder.as_deref(),
-        Some("themes/creator/1")
-    );
-    assert!(folder.path().join("themes/creator/1/theme.json").is_file());
 }
 
 #[test]
@@ -1341,22 +722,6 @@ fn keybinds_are_added_chosen_recorded_and_removed() {
 }
 
 #[test]
-fn closing_settings_lets_go_of_an_edited_theme() {
-    let (mut app, _folder) = preview();
-    open(&mut app, Section::Themes);
-    let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::New,
-    ));
-    let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::Dark(false),
-    ));
-    assert!(!app.theme.dark, "shown while edited");
-    let _ = app.update(crate::app::settings(Event::Close));
-    assert!(!app.win.settings.is_open());
-    assert_eq!(app.theme.id, "bonfire", "the theme from before");
-}
-
-#[test]
 fn a_new_setting_is_tagged_until_its_page_is_left() {
     use crate::settings::{Event as Settings, Section};
     // A layout from before the tags: everything tagged since is new.
@@ -1472,15 +837,15 @@ fn the_theme_command_switches_the_colours_and_keeps_the_choice() {
 #[test]
 fn theme_performance_reduced_motion_and_readable_text_are_kept_in_the_layout() {
     let (mut app, folder) = preview();
-    open(&mut app, Section::Themes);
-    let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::Performance(2),
+    open(&mut app, Section::Customize);
+    let _ = app.update(crate::settings::customize_event(
+        crate::settings::CustomizeEvent::Performance(2),
+    ));
+    let _ = app.update(crate::settings::customize_event(
+        crate::settings::CustomizeEvent::ReduceMotion(true),
     ));
     let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::ReduceMotion(true),
-    ));
-    let _ = app.update(crate::settings::appearance_event(
-        crate::settings::ThemeEvent::ReadableText(true),
+        crate::settings::AppearanceEvent::ReadableText(true),
     ));
     assert_eq!(
         app.layout.theme_performance,
@@ -1641,68 +1006,79 @@ fn the_mic_test_without_a_call_deafens_nothing() {
     assert_eq!(call(&app), before);
 }
 
+/// Settings → Customize's accent, background and font: each shows at
+/// once and is kept, a colour still being typed changes nothing, and
+/// emptying the accent takes the theme's own again.
 #[test]
-fn themes_page_shows_empty_state_actions_and_gallery_toggle_with_cost() {
-    let (mut app, _folder) = preview();
-    open(&mut app, Section::Themes);
-    assert!(shows(&app, "Browse the Marketplace"));
-    assert!(shows(&app, "Add from URL"));
-    assert!(shows(&app, "Create"));
-
-    let _ = app.update(crate::app::settings(Event::Marketplace(
-        crate::settings::theme_marketplace::Event::ToggleGallery(true),
+fn the_customized_accent_background_and_font_show_at_once_and_are_kept() {
+    let (mut app, folder) = preview();
+    open(&mut app, Section::Customize);
+    let accent_before = app.theme.accent;
+    let chat_before = app.theme.chat;
+    let event = |event| crate::settings::customize_event(event);
+    // A wrong colour still being typed changes nothing.
+    let _ = app.update(event(crate::settings::CustomizeEvent::Accent(
+        "#notacolor".into(),
     )));
-    assert!(
-        app.win
-            .settings
-            .get()
-            .is_some_and(|s| s.marketplace.gallery),
-        "gallery view state toggles cleanly"
+    assert_eq!(app.theme.accent, accent_before);
+    assert!(app.layout.customize.accent.is_none());
+    // One that parses shows at once and is kept.
+    let _ = app.update(event(crate::settings::CustomizeEvent::Accent(
+        "#102030".into(),
+    )));
+    assert_eq!(app.theme.accent, crate::style::hex(0x102030));
+    assert_eq!(app.theme.selection.a, 0.35, "worked out from it");
+    assert_eq!(app.layout.customize.accent.as_deref(), Some("#102030"));
+    // The background's colour stands for the whole ground; the gradient's
+    // two colours meet in their middle.
+    let _ = app.update(event(crate::settings::CustomizeEvent::Background(1)));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Colour(
+        0,
+        "#203040".into(),
+    )));
+    assert_eq!(app.theme.chat, crate::style::hex(0x203040));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Background(2)));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Colour(
+        1,
+        "#000000".into(),
+    )));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Colour(
+        2,
+        "#ffffff".into(),
+    )));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Angle(90)));
+    match app.layout.customize.background.as_ref() {
+        Some(crate::layout::CustomBackground::Gradient { from, to, angle }) => {
+            assert_eq!(from, "#000000");
+            assert_eq!(to, "#ffffff");
+            assert_eq!(*angle, 90.0);
+        }
+        other => panic!("a gradient, not {other:?}"),
+    }
+    assert_eq!(
+        app.theme.chat,
+        crate::theme::mix(
+            crate::style::hex(0x000000),
+            crate::style::hex(0xffffff),
+            0.5
+        ),
+        "the gradient's middle"
     );
-    let _ = app.update(crate::app::settings(Event::Marketplace(
-        crate::settings::theme_marketplace::Event::ToggleCostDetails("review".into()),
+    // The font's key is kept; the theme's own face is "".
+    let _ = app.update(event(crate::settings::CustomizeEvent::Font(1)));
+    assert_eq!(app.layout.customize.font, "atkinson");
+    // Back to the theme's own.
+    let _ = app.update(event(crate::settings::CustomizeEvent::AccentReset));
+    let _ = app.update(event(crate::settings::CustomizeEvent::Background(0)));
+    assert_eq!(app.theme.accent, accent_before);
+    assert_eq!(app.theme.chat, chat_before);
+    // And all of it again on the next start.
+    let _ = app.update(event(crate::settings::CustomizeEvent::Accent(
+        "#102030".into(),
     )));
-    assert!(
-        app.win
-            .settings
-            .get()
-            .is_some_and(|s| s.marketplace.cost_details.contains("review")),
-        "cost details disclosure state toggles cleanly"
-    );
-}
-
-/// A theme's review shows the whole window in the stock look, not only its
-/// card: the applied theme's art and overlays can't draw over it. Closing
-/// the review shows the theme again.
-#[test]
-fn a_theme_review_shows_the_whole_window_in_the_stock_look() {
-    use crate::settings::theme_marketplace::{Event as Market, Review};
-    let (mut app, _folder) = preview();
-    assert!(app.choose_theme("nord"));
-    open(&mut app, Section::Themes);
-    let fetched = circord_core::themes::install::Fetched::new(
-        "https://github.com/ada/plum".into(),
-        String::new(),
-        "main".into(),
-        "0123456789abcdef0123456789abcdef01234567".into(),
-        circord_core::themes::check::Files {
-            manifest: r##"{ "theme_api": 1, "id": "com.example.plum", "name": "Plum",
-                "version": "1.0.0", "variants": { "dark": { "base": "circord" } } }"##
-                .into(),
-            ..Default::default()
-        },
-    )
-    .expect("a package");
-    app.win
-        .settings
-        .get_mut()
-        .expect("Settings")
-        .marketplace
-        .review = Some(Review::new(fetched, Vec::new()));
-    let _ = app.update(Message::Nothing);
-    assert_eq!(app.theme.id, crate::themes::stock_theme().id);
-    let _ = app.update(crate::app::settings(Event::Marketplace(
-        Market::CancelReview,
-    )));
-    assert_eq!(app.theme.id, "nord");
+    let again = start(&folder, true);
+    assert_eq!(again.theme.accent, crate::style::hex(0x102030));
+    let layout = stored(&folder);
+    assert_eq!(layout["customize"]["accent"], "#102030");
+    assert_eq!(layout["customize"]["font"], "atkinson");
 }

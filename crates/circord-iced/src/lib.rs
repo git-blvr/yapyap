@@ -48,6 +48,7 @@ mod control_file;
 use circord_iced_kit::controls;
 mod conversation;
 mod ctx;
+mod customize;
 mod desktop;
 mod slot;
 use circord_iced_kit::dialog;
@@ -121,6 +122,12 @@ mod theme_art;
 mod theme_chrome;
 pub mod theme_cli;
 mod theme_effects;
+/// Fetching and checking themes from GitHub and the marketplace catalog:
+/// the machinery the replaced Themes page drove, kept for the engine.
+#[allow(
+    dead_code,
+    reason = "the page that fetched themes was replaced by Customize; the machinery stays"
+)]
 mod theme_remote;
 mod theme_transition;
 mod themes;
@@ -144,8 +151,8 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use iced::Task;
 use circord_core::{application::Action, runtime::BackgroundRuntime};
+use iced::Task;
 
 use crate::{app::App, client::Client};
 pub use desktop::{

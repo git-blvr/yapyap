@@ -12,6 +12,7 @@
 use crate::widgets::scroll_view;
 use std::{sync::Arc, time::Instant};
 
+use circord_core::application::{Action, ThreadFrom};
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{
@@ -19,7 +20,6 @@ use iced::{
         stack, text,
     },
 };
-use circord_core::application::{Action, ThreadFrom};
 
 use crate::{
     app::{App, Message, Messages, key},
@@ -899,7 +899,7 @@ pub fn aside_view<'a>(ctx: crate::ctx::Ctx<'a>) -> Option<Element<'a, Message>> 
 
 /// The panel's frame: the edge on its left, its ground.
 fn panel<'a>(ctx: crate::ctx::Ctx<'a>, body: Element<'a, Message>) -> Element<'a, Message> {
-    let ground = ctx.look.theme.chat;
+    let ground = crate::customize::chat_fill(&ctx.layout.customize, ctx.look.theme);
     let theme = ctx.look.theme;
     // Its edge drags it wider or narrower.
     let edge = crate::widgets::Splitter::new(
@@ -915,7 +915,7 @@ fn panel<'a>(ctx: crate::ctx::Ctx<'a>, body: Element<'a, Message>) -> Element<'a
         container(body)
             .width(Length::Fill)
             .height(Length::Fill)
-            .style(move |_| crate::style::fill(ground)),
+            .style(move |_| crate::style::paint(ground)),
     ]
     .width(ctx.aside_width)
     .height(Length::Fill)

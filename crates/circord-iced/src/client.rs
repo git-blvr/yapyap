@@ -8,7 +8,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use tokio::sync::mpsc::UnboundedReceiver;
 use circord_core::{
     application::{Action, AppState, Application, Effect},
     backend::Backend,
@@ -16,6 +15,7 @@ use circord_core::{
     discord_link::Progress,
     runtime::{BackgroundRuntime, BackgroundTask},
 };
+use tokio::sync::mpsc::UnboundedReceiver;
 
 /// Rows reported beyond each end of those in view, so the core decodes
 /// their previews before they show.
@@ -83,6 +83,10 @@ impl Client {
 
     /// A shared handle for iced tasks which hand work to the backend's
     /// runtime and may outlive the Settings update that started them.
+    #[allow(
+        dead_code,
+        reason = "the theme fetchers' handle; their page was replaced by Customize"
+    )]
     pub fn shared_runtime(&self) -> Arc<BackgroundRuntime> {
         self.runtime.clone()
     }

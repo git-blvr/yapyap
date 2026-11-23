@@ -124,7 +124,7 @@ fn install(mut arguments: Vec<String>) -> Result<String, Stop> {
         .install(&fetched)
         .map_err(|error| format!("{error:#}"))?;
     Ok(format!(
-        "Installed {}. Apply it in Settings → Themes.\n",
+        "Installed {}. Apply it in Settings → Appearance.\n",
         fetched.package().id
     ))
 }
@@ -193,7 +193,7 @@ fn export(mut arguments: Vec<String>) -> Result<String, Stop> {
             .collect();
         return Err(Stop::Failed(if mine.is_empty() {
             format!(
-                "there are no themes of your own in {}: make one with New theme in Settings → Themes",
+                "there are no themes of your own in {}: make one with `circord theme new`",
                 data.display()
             )
         } else {
@@ -230,7 +230,7 @@ fn export(mut arguments: Vec<String>) -> Result<String, Stop> {
     let written = package::write_export(&folder, &text, source.as_deref())?;
     let report = check::check(&Files::read(&folder)?, Strictness::Install);
     Ok(format!(
-        "Exported {} to {} ({} files).\n{}Put it in a GitHub repository with a preview, and it installs with Add from URL in Settings → Themes.\n",
+        "Exported {} to {} ({} files).\n{}Put it in a GitHub repository with a preview, and it installs with `circord theme install`.\n",
         custom.name,
         folder.display(),
         written.len(),

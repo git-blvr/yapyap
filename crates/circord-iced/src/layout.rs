@@ -17,7 +17,6 @@ use std::{
     time::Duration,
 };
 
-use serde::Deserialize;
 use circord_core::{
     application::{Application, StickerUse},
     chat::Sticker,
@@ -25,6 +24,7 @@ use circord_core::{
     theme::Custom,
     themes::Performance,
 };
+use serde::Deserialize;
 
 pub use circord_core::layout_file::LAYOUT;
 
@@ -62,6 +62,9 @@ pub struct Layout {
     /// Settings → Appearance → Readable text: reading roles use Wired's
     /// stock face and weight while the rest of an installed theme remains.
     pub readable_text: bool,
+    /// What Settings → Customize sets of the window's look over the theme
+    /// shown: the font, the window's background and the accent colour.
+    pub customize: Customize,
     /// The rail's open folders, by folder id.
     pub open_folders: BTreeSet<String>,
     /// The one folder open in a theme's server tree that opens one at a
@@ -143,6 +146,35 @@ pub struct Placement {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub position: Option<[i32; 2]>,
     pub maximized: bool,
+}
+
+/// Settings → Customize's choices over the theme shown: all empty or
+/// unset, the theme's own.
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+pub struct Customize {
+    /// The font everything draws in: "", "atkinson", "display:<family>",
+    /// "system", "mono" or "file:<path>"; "" is the theme's or the app's own.
+    pub font: String,
+    /// The accent colour as `#rrggbb`; unset, the theme's.
+    pub accent: Option<String>,
+    /// The window's background; unset, the theme's.
+    pub background: Option<CustomBackground>,
+}
+
+/// The window's background as Customize sets it: one colour, or a
+/// two-colour gradient at `angle` degrees.
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CustomBackground {
+    Solid {
+        colour: String,
+    },
+    Gradient {
+        from: String,
+        to: String,
+        angle: f32,
+    },
 }
 
 /// A sticker this device sent or keeps, as `layout.json` holds it.

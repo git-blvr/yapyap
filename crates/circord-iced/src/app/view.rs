@@ -580,10 +580,6 @@ impl App {
         if let Some(prompt) = crate::mfa::view(&self.mfa, self.ctx()) {
             layers = layers.push(self.popup(L(Layer::Mfa), prompt));
         }
-        // A theme on trial's banner, over everything as Slint's is.
-        if let Some(banner) = crate::settings::trial_banner(self.ctx()) {
-            layers = layers.push(banner);
-        }
         // While the keys are on the messages a press says so, for one off
         // the list to take them (`timeline::keys::follow_press`).
         let layers: Element<'_, Message> = layers.width(Length::Fill).height(Length::Fill).into();
@@ -716,65 +712,48 @@ impl App {
         );
     }
 
-    /// Whether a protected screen is up: sign-in, a link's confirmation
-    /// (leaving, OAuth, a gift) or a theme's review. While one is, the window
-    /// shows the stock look with no theme's palette, faces, icons, art,
-    /// overlays, tint or particles, so a theme can't dress up or paint over
-    /// what it asks the person to judge.
+    /// Whether a protected screen is up: sign-in or a link's confirmation
+    /// (leaving, OAuth, a gift). While one is, the window shows the stock
+    /// look with no theme's palette, faces, icons, art, overlays, tint or
+    /// particles, so nothing dresses up or paints over what it asks the
+    /// person to judge.
     pub fn protected(&self) -> bool {
         let state = self.client.state();
         !crate::signin::workspace(self)
             || self.leaving.is_some()
             || state.oauth.is_some()
             || state.gift.is_some()
-            || self
-                .win
-                .settings
-                .get()
-                .is_some_and(crate::settings::Settings::protected)
     }
 
     /// The theme the window should show now: the stock look on a protected
-    /// screen, else what Settings previews, else the theme chosen or tried.
+    /// screen, else the theme chosen or tried with Customize's choices
+    /// over it.
     pub fn wanted_theme(&self) -> Theme {
         if self.protected() {
             return crate::themes::stock_theme();
         }
-        let mut theme = self
-            .win
-            .settings
-            .get()
-            .and_then(crate::settings::Settings::preview)
-            .cloned()
-            .unwrap_or_else(|| self.themes.shown());
-        // A preview kept since may have older metrics than its package.
+        let mut theme = self.themes.shown();
+        // A theme kept since may have older metrics than its package.
         self.themes.refresh_metrics(&mut theme);
-        theme
+        crate::customize::applied(theme, &self.layout.customize)
     }
 
     /// Ctrl+Shift+T: the way back from a theme package that made the
     /// window hard to use. A trial ends as Revert ends it, `--theme-dev`'s
-    /// theme stops, a draft Settings previews goes, and a package chosen
-    /// is turned off and kept off, so no package shows. A palette theme
-    /// chosen stays as it is.
+    /// theme stops, and a package chosen is turned off and kept off, so no
+    /// package shows. A palette theme chosen stays as it is.
     pub(crate) fn turn_package_off(&mut self) {
         let chosen = self.themes.chosen_package();
         let tried = self.themes.trial().is_some();
         let dev = self.themes.dev_shown();
-        let previewed = self
-            .win
-            .settings
-            .get()
-            .and_then(crate::settings::Settings::preview)
-            .is_some_and(Theme::packaged);
-        if !chosen && !tried && !dev && !previewed {
+        if !chosen && !tried && !dev {
             return;
         }
-        if let Some(settings) = self.win.settings.get_mut() {
-            settings.drop_preview();
-        }
         self.themes.clear_creator_preview();
-        crate::settings::theme_marketplace::revert_trial(&mut self.themes, &mut self.layout);
+        if self.themes.revert_trial().is_some() {
+            self.layout.theme_sounds.remove("trial");
+            self.layout.theme_content.remove("trial");
+        }
         self.themes.turn_dev_off();
         if chosen {
             self.themes.turn_off(self.client.root());
@@ -824,7 +803,10 @@ impl App {
         // Two resolutions of a package can share every colour while
         // their fonts, spacing, shapes, layout or art differ, so what's
         // laid out or cached always goes after a theme is shown.
-        crate::fonts::set_default_family(body_family(&theme));
+        crate::fonts::set_default_family(
+            crate::customize::font_family(&self.layout.customize.font)
+                .or_else(|| body_family(&theme)),
+        );
         // What the theme before made for its art goes with it.
         if theme.id != self.theme.id {
             crate::theme_art::forget_pictures();

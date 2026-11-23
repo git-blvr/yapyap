@@ -3,13 +3,13 @@
 
 use std::sync::{Arc, Mutex};
 
+use circord_core::application::Navigation;
 use iced::{
     Point,
     keyboard::{Key, key},
     window,
 };
 use iced_test::simulator::click;
-use circord_core::application::Navigation;
 
 use super::{change, interact, preview, shows, unread};
 use crate::{
@@ -79,19 +79,18 @@ fn closing_with_a_tray_drops_the_window_and_the_tray_brings_it_back() {
     );
 }
 
-/// A theme being edited in Themes, a colour changed: what the window
-/// shows until it's saved or cancelled; and the colour it had.
+/// Settings open on Customize with the accent changed: kept at once, the
+/// window shows it; and the chat's colour, which the accent doesn't move.
 fn editing_a_theme(app: &mut App) -> iced::Color {
-    use crate::settings::{ThemeEvent, appearance_event};
+    use crate::settings::{CustomizeEvent, customize_event};
     let before = app.theme.chat;
-    let _ = app.open_settings(Section::Themes);
-    let _ = app.update(appearance_event(ThemeEvent::New));
-    let chat = circord_core::theme::Theme::NAMES
-        .iter()
-        .position(|name| *name == "chat")
-        .expect("chat");
-    let _ = app.update(appearance_event(ThemeEvent::Colour(chat, "#102030".into())));
-    assert_eq!(app.theme.chat, crate::style::hex(0x102030), "shown at once");
+    let _ = app.open_settings(Section::Customize);
+    let _ = app.update(customize_event(CustomizeEvent::Accent("#102030".into())));
+    assert_eq!(
+        app.theme.accent,
+        crate::style::hex(0x102030),
+        "shown at once"
+    );
     before
 }
 

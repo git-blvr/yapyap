@@ -79,10 +79,6 @@ impl App {
                 .map(|()| Message::ThemeDevTick),
             );
         }
-        if self.themes.trial().is_some() && !self.shell.minimized {
-            subscriptions
-                .push(iced::time::every(Duration::from_millis(250)).map(Message::ThemeTrialTick));
-        }
         let ctx = self.ctx();
         // A theme's status line or top bar with the time looks at the clock
         // every ten seconds, as Slint's does.
@@ -253,8 +249,8 @@ fn shows_time(chrome: &circord_core::themes::chrome::Chrome) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use iced::keyboard::{Key, key};
     use circord_core::themes::chrome::{Chrome, TopBar};
+    use iced::keyboard::{Key, key};
 
     use super::is_letter;
 

@@ -1,4 +1,4 @@
-//! A theme's cost in plain words, for Settings → Themes: how heavy it is to
+//! A theme's cost in plain words, for a theme's card: how heavy it is to
 //! run, in a phrase, and its cost line sorted into rows to show on request.
 //!
 //! It reads the line [`Cost::text`] writes, since that line is what an

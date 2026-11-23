@@ -2,8 +2,9 @@
 //! avatars, names, profiles, embeds and activity — rather than Circord's own
 //! surfaces.
 //!
-//! It only shows when the person lets it: Settings → Themes → *Let the theme
-//! style people's profiles and media*, off unless turned on, for each theme.
+//! It only shows when the person lets it: the theme's own *let the theme
+//! style people's profiles and media* permission, off unless turned on, for
+//! each theme (`layout.json`'s `theme_content`).
 //! Off, everyone's pictures, colours and cosmetics show as they made them.
 //!
 //! Every field picks from a closed list, and `keep` (or leaving it out) draws
