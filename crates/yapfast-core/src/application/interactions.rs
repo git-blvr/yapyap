@@ -491,8 +491,8 @@ impl Application {
                     channel_types,
                     min_values,
                     max_values,
-                } if id == &custom_id => Some((
-                    text.clone(),
+                } if &**id == custom_id => Some((
+                    text.to_string(),
                     *kind,
                     options.clone(),
                     defaults.clone(),
@@ -509,19 +509,19 @@ impl Application {
         let mut choices: Vec<SelectChoice> = options
             .into_iter()
             .map(|option| SelectChoice {
-                label: option.label,
-                value: option.value,
-                description: option.description.unwrap_or_default(),
+                label: option.label.into(),
+                value: option.value.into(),
+                description: option.description.unwrap_or_default().into(),
                 selected: option.default,
-                emoji: option.emoji.unwrap_or_default(),
+                emoji: option.emoji.unwrap_or_default().into(),
             })
             .collect();
         choices.extend(self.entity_choices(kind, &room, &channel_types));
         for value in &defaults {
-            if !choices.iter().any(|choice| &choice.value == value) {
+            if !choices.iter().any(|choice| choice.value == **value) {
                 choices.push(SelectChoice {
-                    label: value.clone(),
-                    value: value.clone(),
+                    label: value.to_string(),
+                    value: value.to_string(),
                     description: String::new(),
                     selected: true,
                     ..Default::default()
@@ -529,7 +529,7 @@ impl Application {
             }
         }
         for choice in &mut choices {
-            choice.selected |= defaults.contains(&choice.value);
+            choice.selected |= defaults.iter().any(|default| &**default == choice.value);
         }
         let mut seen = std::collections::HashSet::new();
         choices.retain(|choice| seen.insert(choice.value.clone()));
@@ -556,9 +556,9 @@ impl Application {
         if matches!(kind, 5 | 7) {
             if let Some(Ok(members)) = &self.state.members {
                 choices.extend(members.iter().map(|member| SelectChoice {
-                    label: member.name.clone(),
-                    value: member.id.clone(),
-                    description: member.username.clone().unwrap_or_default(),
+                    label: member.name.to_string(),
+                    value: member.id.to_string(),
+                    description: member.username.clone().unwrap_or_default().into(),
                     selected: false,
                     ..Default::default()
                 }));
@@ -566,7 +566,7 @@ impl Application {
             choices.extend(self.state.messages.iter().filter_map(|message| {
                 let id = message.sender.strip_prefix("discord:")?;
                 (!message.bot).then(|| SelectChoice {
-                    label: message.author.clone(),
+                    label: message.author.to_string(),
                     value: id.to_owned(),
                     description: String::new(),
                     selected: false,
@@ -574,9 +574,9 @@ impl Application {
                 })
             }));
             choices.extend(self.state.found_members.iter().map(|member| SelectChoice {
-                label: member.name.clone(),
-                value: member.id.clone(),
-                description: member.username.clone().unwrap_or_default(),
+                label: member.name.to_string(),
+                value: member.id.to_string(),
+                description: member.username.clone().unwrap_or_default().into(),
                 selected: false,
                 ..Default::default()
             }));
@@ -698,11 +698,11 @@ impl Application {
             return;
         }
         for member in members {
-            if !menu.choices.iter().any(|choice| choice.value == member.id) {
+            if !menu.choices.iter().any(|choice| choice.value == *member.id) {
                 menu.choices.push(SelectChoice {
-                    label: member.name.clone(),
-                    value: member.id.clone(),
-                    description: member.username.clone().unwrap_or_default(),
+                    label: member.name.to_string(),
+                    value: member.id.to_string(),
+                    description: member.username.clone().unwrap_or_default().into(),
                     selected: false,
                     ..Default::default()
                 });
@@ -1150,10 +1150,10 @@ mod tests {
                 rows: vec![chat::CardRow::Buttons(
                     ids.iter()
                         .map(|id| chat::CardButton {
-                            label: id.to_string(),
+                            label: (*id).into(),
                             style: chat::ButtonStyle::Primary,
                             url: None,
-                            custom_id: Some(id.to_string()),
+                            custom_id: Some((*id).into()),
                             sku_id: None,
                             disabled: false,
                         })
@@ -1348,7 +1348,7 @@ mod tests {
             item: item.into(),
             sender: "discord:3".into(),
             bot: true,
-            application_id: application.map(str::to_owned),
+            application_id: application.map(Into::into),
             flags: 1 << 15,
             cards: vec![chat::Card {
                 rows: vec![chat::CardRow::Buttons(vec![chat::CardButton {
@@ -1732,7 +1732,7 @@ mod tests {
     fn with_menu(app: &mut Application, id: &str, max: u64) {
         app.state.selected = Some("discord:10:7".into());
         let option = |value: &str| chat::CardOption {
-            label: value.to_uppercase(),
+            label: value.to_uppercase().into(),
             value: value.into(),
             description: None,
             default: value == "a",

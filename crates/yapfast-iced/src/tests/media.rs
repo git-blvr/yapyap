@@ -516,7 +516,7 @@ fn a_store_button_on_a_bots_message_without_its_app_opens_the_bots_store() {
                 framed: false,
                 color: None,
                 rows: vec![CardRow::Buttons(vec![CardButton {
-                    label: String::new(),
+                    label: "".into(),
                     style: ButtonStyle::Premium,
                     url: None,
                     custom_id: None,

@@ -27,19 +27,19 @@ impl Application {
             Role::Member => None,
         };
         let profile = Profile {
-            id: member.id.clone(),
-            name: member.name.clone(),
+            id: member.id.to_string(),
+            name: member.name.to_string(),
             // A Discord username comes with the profile.
             handle: if discord {
                 String::new()
             } else {
-                member.id.clone()
+                member.id.to_string()
             },
-            avatar: member.avatar.clone(),
+            avatar: member.avatar.clone().map(|avatar| avatar.to_string()),
             decoration: member.decoration.clone(),
             style: member.style.clone(),
             presence: member.presence,
-            activity: member.activity.clone(),
+            activity: member.activity.clone().map(|activity| activity.to_string()),
             activities: member.activities.clone(),
             // Discord's roles come with the profile too.
             roles: role

@@ -91,7 +91,7 @@ pub fn found_view<'a>(
     let mut words = column![
         container(
             row![
-                elide(message.author.clone())
+                elide(&*message.author)
                     .size(theme.type_size("names", 15.0))
                     .font(theme.font("names", SEMIBOLD))
                     .color(name_ink),
@@ -164,7 +164,7 @@ pub fn found_view<'a>(
         .filter(|(index, attachment)| {
             attachment.placement == Placement::Message && !shown.contains(index)
         })
-        .map(|(_, attachment)| attachment.name.as_str())
+        .map(|(_, attachment)| attachment.name.as_ref())
         .collect();
     if !files.is_empty() {
         words = words.push(

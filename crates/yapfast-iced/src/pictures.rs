@@ -211,6 +211,8 @@ pub struct Pictures {
     /// Whether each picture shown in a box is opaque all over, looked at
     /// once: one that is hides the box's ground, which isn't drawn then.
     opaque: RefCell<Converted<bool>>,
+    /// Each picture's dominant colour, worked out once.
+    dominant: RefCell<Converted<Option<u32>>>,
 }
 
 impl Pictures {
@@ -223,6 +225,7 @@ impl Pictures {
             players: Players::default(),
             fitter: RefCell::new(fitter),
             opaque: Default::default(),
+            dominant: Default::default(),
         }
     }
 
@@ -230,6 +233,15 @@ impl Pictures {
     pub fn opaque(&self, picture: &Arc<Picture>) -> bool {
         self.opaque.borrow_mut().get(picture, |picture| {
             picture.rgba.chunks_exact(4).all(|pixel| pixel[3] == 255)
+        })
+    }
+
+    /// `picture`'s dominant colour, worked out once: as a profile's banner
+    /// takes it (`dominant_colour::dominant`), in the picture's own byte
+    /// order.
+    pub fn dominant(&self, picture: &Arc<Picture>) -> Option<u32> {
+        self.dominant.borrow_mut().get(picture, |picture| {
+            yapfast_core::dominant_colour::dominant(&picture.rgba, byte_order(picture))
         })
     }
 
@@ -260,6 +272,7 @@ impl Pictures {
     pub fn prune(&self) {
         self.previews.borrow_mut().prune(1);
         self.opaque.borrow_mut().prune(0);
+        self.dominant.borrow_mut().prune(0);
         self.scaled.borrow_mut().retain(|_, converted| {
             converted.prune(0);
             !converted.is_empty()
@@ -270,6 +283,7 @@ impl Pictures {
     pub fn forget(&self) {
         *self.previews.borrow_mut() = Default::default();
         *self.opaque.borrow_mut() = Default::default();
+        *self.dominant.borrow_mut() = Default::default();
         self.scaled.borrow_mut().clear();
         self.marks.borrow_mut().clear();
         self.emoji.borrow_mut().clear();
@@ -282,6 +296,7 @@ impl Pictures {
     pub fn is_empty(&self) -> bool {
         self.previews.borrow().is_empty()
             && self.opaque.borrow().is_empty()
+            && self.dominant.borrow().is_empty()
             && self.scaled.borrow().is_empty()
             && self.marks.borrow().is_empty()
             && self.emoji.borrow().is_empty()
@@ -903,6 +918,17 @@ impl<'a> crate::ctx::Ctx<'a> {
             .center(size)
             .style(move |_| rounded(tint, radius))
             .into()
+    }
+
+    /// The ground under `key`'s avatar, as a call tile shows it: the
+    /// picture's dominant colour once it has come, `key`'s tint until
+    /// then, muted toward `ground` so it stays a ground, not a light.
+    pub fn avatar_ground(self, url: Option<&str>, key: &str, ground: Color) -> Color {
+        let colour = url
+            .and_then(|url| self.state.pictures.get(url))
+            .and_then(|picture| self.pictures.dominant(picture))
+            .unwrap_or_else(|| tint(key));
+        crate::theme::mix(hex(colour), ground, 0.45)
     }
 
     /// An avatar of `size` with the decoration round it (a fifth larger,

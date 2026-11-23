@@ -58,7 +58,7 @@ pub fn member_server(alice: &[&str]) -> Application {
     }))
     .unwrap();
     let marks = ServerMarks {
-        roles: alice.iter().map(|role| (*role).to_owned()).collect(),
+        roles: alice.iter().map(|role| (*role).into()).collect(),
         ..Default::default()
     };
     let mut names = Names::default();

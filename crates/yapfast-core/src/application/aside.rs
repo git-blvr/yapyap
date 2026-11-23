@@ -87,7 +87,7 @@ impl AppState {
     /// channel, or the selected room.
     pub fn room_of(&self, item: &str) -> Option<&String> {
         match &self.aside {
-            Some(aside) if aside.messages.iter().any(|message| message.item == item) => {
+            Some(aside) if aside.messages.iter().any(|message| &*message.item == item) => {
                 Some(&aside.room)
             }
             _ => self.selected.as_ref(),
@@ -225,7 +225,7 @@ impl Application {
         // A thread is Discord's, ordered by snowflakes, so only one never
         // read needs its newest.
         if aside.seen.is_none() {
-            aside.seen = messages.last().map(|newest| newest.item.clone());
+            aside.seen = messages.last().map(|newest| newest.item.to_string());
         }
         aside.messages = Arc::new(messages);
         let room = aside.room.clone();

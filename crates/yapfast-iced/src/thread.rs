@@ -422,7 +422,13 @@ fn new_thread_sync(app: &mut App) -> Task<Message> {
                 app.drafts.name = form.name.clone();
             }
             let item = form.message.clone();
-            if app.drafts.starter.as_ref().map(|found| &found.message.item) != item.as_ref() {
+            if app
+                .drafts
+                .starter
+                .as_ref()
+                .map(|found| found.message.item.as_ref())
+                != item.as_deref()
+            {
                 let message = item.and_then(|item| app.client.state().message(&item).cloned());
                 app.drafts.starter =
                     message.map(|message| crate::found::found(app, Arc::new(message)));
@@ -594,7 +600,7 @@ fn tell_rows(app: &mut App) -> Told {
     let items = aside.messages
         [first.saturating_sub(REPORT_MARGIN).min(end)..=(last + REPORT_MARGIN).min(end)]
         .iter()
-        .map(|message| message.item.clone())
+        .map(|message| message.item.to_string())
         .collect();
     let room = aside.room.clone();
     app.client.dispatch(Action::VisibleMessages {
@@ -1033,7 +1039,7 @@ fn new_thread_view<'a>(ctx: crate::ctx::Ctx<'a>) -> Option<Element<'a, Message>>
         fields = fields.push(crate::found::found_view(
             ctx,
             starter,
-            Message::Thread(Event::Jump(starter.message.item.clone())),
+            Message::Thread(Event::Jump(starter.message.item.to_string())),
         ));
     }
     let placeholder = if form.default_name.is_empty() {

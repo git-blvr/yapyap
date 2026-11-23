@@ -130,13 +130,13 @@ impl Application {
                     .enumerate()
                     .map(|(i, (author, body))| {
                         Arc::new(ChatMessage {
-                            id: format!("{room}-{i}"),
-                            item: format!("{room}-{i}"),
+                            id: format!("{room}-{i}").into(),
+                            item: format!("{room}-{i}").into(),
                             author: author.into(),
                             sender: author.into(),
                             formatted: has_markdown(body),
                             body: body.into(),
-                            time: format!("19:{:02}", 20 + i),
+                            time: format!("19:{:02}", 20 + i).into(),
                             own: author == "You",
                             can_edit: author == "You",
                             can_delete: author == "You",
@@ -248,7 +248,7 @@ pub(super) fn preview_members(room: &str) -> Vec<ChatMember> {
         .iter()
         .map(|&(name, role)| ChatMember {
             bot: false,
-            id: format!("@{}:preview.local", name.to_lowercase()),
+            id: format!("@{}:preview.local", name.to_lowercase()).into(),
             name: name.into(),
             username: None,
             role,

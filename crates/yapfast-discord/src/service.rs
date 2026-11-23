@@ -535,8 +535,8 @@ pub enum Live {
     Reaction {
         channel: String,
         message: String,
-        key: String,
-        emoji: String,
+        key: Box<str>,
+        emoji: Box<str>,
         me: bool,
         added: bool,
     },
@@ -552,7 +552,7 @@ pub enum Live {
     ReactionsCleared {
         channel: String,
         message: String,
-        key: Option<String>,
+        key: Option<Box<str>>,
     },
     /// Someone else started typing; it lasts about ten seconds unless they type on.
     Typing {
@@ -2417,10 +2417,14 @@ impl Discord {
     pub async fn remove_role_member(&self, guild: &str, role: &str, user: &str) -> Result<()> {
         self.ask_members(guild, std::iter::once(user)).await;
         let held = self.roles(guild, user);
-        if !held.iter().any(|known| known == role) {
+        if !held.iter().any(|known| known.as_ref() == role) {
             bail!("Yapfast doesn't know that member's roles yet. Try again.");
         }
-        let kept: Vec<String> = held.iter().filter(|held| *held != role).cloned().collect();
+        let kept: Vec<Box<str>> = held
+            .iter()
+            .filter(|held| held.as_ref() != role)
+            .cloned()
+            .collect();
         self.api.set_member_roles(guild, user, &kept).await
     }
 
@@ -3970,7 +3974,7 @@ impl Discord {
 
     /// A member's roles in a server by id, as far as they're known, shared
     /// with what learned them.
-    pub fn roles(&self, guild: &str, user: &str) -> Arc<[String]> {
+    pub fn roles(&self, guild: &str, user: &str) -> Arc<[Box<str>]> {
         self.read_names()
             .shared_roles(guild, user)
             .unwrap_or_default()

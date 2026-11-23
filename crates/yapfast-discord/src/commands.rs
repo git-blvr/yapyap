@@ -300,7 +300,7 @@ pub struct Place<'a> {
     /// an owner or administrator. Not read outside a server.
     pub permissions: u64,
     /// This account's roles in the server.
-    pub roles: &'a [String],
+    pub roles: &'a [Box<str>],
     /// Age-restricted commands are offered here: the account may see
     /// age-restricted content, and the channel or server is age-restricted,
     /// or in a DM its settings offer them.
@@ -492,7 +492,7 @@ fn member_rule(permissions: &Permissions, guild: &str, place: &Place<'_>) -> Opt
     let mut roles = place
         .roles
         .iter()
-        .filter_map(|role| permissions.roles.get(role).copied())
+        .filter_map(|role| permissions.roles.get(role.as_ref()).copied())
         .peekable();
     if roles.peek().is_some() {
         return Some(roles.any(|allowed| allowed));
@@ -761,7 +761,7 @@ mod tests {
             .collect()
     }
 
-    fn channel(permissions: u64, roles: &[String]) -> Place<'_> {
+    fn channel(permissions: u64, roles: &[Box<str>]) -> Place<'_> {
         Place {
             guild: Some(GUILD),
             channel: "50",
@@ -810,9 +810,9 @@ mod tests {
     #[test]
     fn a_servers_commands_follow_its_permissions() {
         let index = index();
-        let none: Vec<String> = vec![];
+        let none: Vec<Box<str>> = vec![];
         assert_eq!(names(&index, &channel(MEMBER, &none)), ["ping", "config"]);
-        let mods = vec!["20".to_owned()];
+        let mods = vec!["20".into()];
         assert_eq!(
             names(&index, &channel(MEMBER, &mods)),
             ["ping", "config", "quiet"]
@@ -890,13 +890,13 @@ mod tests {
             }),
             false,
         );
-        let allowed = vec!["20".to_owned()];
+        let allowed = vec!["20".into()];
         assert_eq!(
             names(&index, &channel(MEMBER, &allowed)),
             ["kick", "ping"],
             "the app's allow leaves /ban to its default permissions"
         );
-        let denied = vec!["21".to_owned()];
+        let denied = vec!["21".into()];
         assert!(names(&index, &channel(MEMBER, &denied)).is_empty());
     }
 
@@ -931,7 +931,7 @@ mod tests {
             ["anywhere", "Quote"],
             "a group DM takes no command without contexts"
         );
-        let none: Vec<String> = vec![];
+        let none: Vec<Box<str>> = vec![];
         assert_eq!(
             names(&index, &channel(MEMBER, &none)),
             ["old", "nodm", "anywhere"]
@@ -966,7 +966,7 @@ mod tests {
             merged.command("1").unwrap().user_installed,
             "the account's copy"
         );
-        let none: Vec<String> = vec![];
+        let none: Vec<Box<str>> = vec![];
         let mut off = channel(MEMBER, &none);
         off.channel = "77";
         assert_eq!(
@@ -990,7 +990,7 @@ mod tests {
     #[test]
     fn age_restricted_commands_go_only_where_offered() {
         let index = index();
-        let none: Vec<String> = vec![];
+        let none: Vec<Box<str>> = vec![];
         assert!(!names(&index, &channel(permission::ALL, &none)).contains(&"spicy"));
         let mut adult = dm(Some("7"));
         adult.nsfw = true;

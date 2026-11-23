@@ -61,10 +61,7 @@ async fn lists_dms_and_notifies() {
         .await
         .unwrap()
         .messages;
-    let said: Vec<_> = history
-        .iter()
-        .map(|message| message.content.as_str())
-        .collect();
+    let said: Vec<_> = history.iter().map(|message| &*message.content).collect();
     assert_eq!(
         said,
         [
@@ -96,11 +93,7 @@ async fn lists_dms_and_notifies() {
         .await
         .unwrap();
     assert!(sent.reply.is_some());
-    let names: Vec<_> = sent
-        .attachments
-        .iter()
-        .map(|file| file.name.as_str())
-        .collect();
+    let names: Vec<_> = sent.attachments.iter().map(|file| &*file.name).collect();
     assert_eq!(names, ["map.txt", "list.txt"]);
     live_where(&mut live, |event| match event {
         Live::Created(message) if message.id == sent.id => Some(()),
@@ -146,7 +139,7 @@ async fn lists_dms_and_notifies() {
         _ => None,
     })
     .await;
-    assert_eq!(notified, (None, "Dave".to_owned()));
+    assert_eq!(notified, (None, "Dave".into()));
     // The server notifies for mentions only: Bob's photos don't, his mention does.
     for control_path in ["gallery", "mention"] {
         control
@@ -292,7 +285,7 @@ async fn opens_dms_and_searches_pins() {
     // the DM, newest first, and asks again as Discord's client does.
     let pinned: Vec<_> = discord.pins(PRIVATE, &dm_bob).await.unwrap();
     assert_eq!(pinned.len(), 1);
-    assert_eq!(pinned[0].content, "Did you see the trip notes?");
+    assert_eq!(&*pinned[0].content, "Did you see the trip notes?");
     let waits = std::sync::atomic::AtomicUsize::new(0);
     let waited = || {
         waits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -318,7 +311,7 @@ async fn opens_dms_and_searches_pins() {
     let said: Vec<_> = found
         .messages
         .iter()
-        .map(|message| message.content.as_str())
+        .map(|message| &*message.content)
         .collect();
     assert_eq!(said, ["See you at nine", "Did you see the trip notes?"]);
     assert_eq!(found.total, 2);
@@ -330,7 +323,7 @@ async fn opens_dms_and_searches_pins() {
         Sort::Oldest,
     )
     .await;
-    assert_eq!(oldest.messages[0].content, "Did you see the trip notes?");
+    assert_eq!(&*oldest.messages[0].content, "Did you see the trip notes?");
     // From Bob by username, with a key and its answer apart; someone
     // nobody knows is words.
     let from_bob = search(
@@ -344,7 +337,7 @@ async fn opens_dms_and_searches_pins() {
         from_bob
             .messages
             .iter()
-            .all(|message| message.author_id == bob)
+            .all(|message| *message.author_id == *bob)
     );
     assert_eq!(from_bob.total, 3);
     let asked: Vec<String> =
@@ -398,7 +391,7 @@ async fn opens_dms_and_searches_pins() {
     let said: Vec<_> = found
         .messages
         .iter()
-        .map(|message| message.content.as_str())
+        .map(|message| &*message.content)
         .collect();
     assert_eq!(said.len(), 2);
     assert_eq!(said[0], "The welcome has the plan");

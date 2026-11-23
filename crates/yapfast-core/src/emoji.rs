@@ -298,7 +298,7 @@ mod tests {
             id: id.into(),
             animated: false,
             usable,
-            picture: String::new(),
+            picture: Default::default(),
         }
     }
 

@@ -107,7 +107,7 @@ fn escape_from_anywhere_cancels_the_channels_reply_then_the_threads() {
         .last()
         .expect("the channel's messages")
         .item
-        .clone();
+        .to_string();
     app.client.dispatch(Action::Reply(channels));
     app.client.dispatch(Action::Reply("t0".into()));
     let _ = app.sync();

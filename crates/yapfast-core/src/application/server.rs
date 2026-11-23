@@ -181,7 +181,7 @@ impl Application {
     /// server a place names, as kicking, banning, timing out, renaming or
     /// changing the roles of someone requires; see
     /// [`yapfast_discord::ready::Server::outranks`].
-    pub fn outranks(&self, place: &str, user: &str, roles: &[String]) -> bool {
+    pub fn outranks(&self, place: &str, user: &str, roles: &[Box<str>]) -> bool {
         #[cfg(feature = "discord")]
         if let Some((server, _, me)) = self.discord_place(place) {
             return server.outranks(me, &server.marks.roles, user, roles);

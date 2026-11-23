@@ -244,7 +244,7 @@ impl Client {
         let items = messages
             [first.saturating_sub(VISIBLE_MARGIN)..=(last + VISIBLE_MARGIN).min(end)]
             .iter()
-            .map(|message| message.item.clone())
+            .map(|message| message.item.to_string())
             .collect();
         self.dispatch(Action::VisibleMessages {
             room,

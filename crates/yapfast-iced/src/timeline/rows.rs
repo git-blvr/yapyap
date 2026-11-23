@@ -145,7 +145,7 @@ pub fn row_looks<'a>(
                     look.time.clone(),
                 ),
                 None => (
-                    Arc::from(message.item.as_str()),
+                    Arc::from(message.item.as_ref()),
                     body(index),
                     yapfast_core::clock::date(message.timestamp),
                     clock.sent(message, now).into(),
@@ -154,7 +154,7 @@ pub fn row_looks<'a>(
             let new_day = date.is_some() && (before.is_none() || before_date != date);
             before_date = date;
             // The author shows again below the "New" divider.
-            let unread_start = marks.first_unread == Some(message.item.as_str());
+            let unread_start = marks.first_unread == Some(message.item.as_ref());
             let group = Arc::clone(&item);
             RowLook {
                 item,
@@ -206,8 +206,8 @@ pub fn same_text(a: &ChatMessage, b: &ChatMessage) -> bool {
         && a.body == b.body
         && a.mentions == b.mentions
         && a.emoji == b.emoji
-        && a.reply.as_ref().map(|reply| reply.body.as_str())
-            == b.reply.as_ref().map(|reply| reply.body.as_str())
+        && a.reply.as_ref().map(|reply| reply.body.as_ref())
+            == b.reply.as_ref().map(|reply| reply.body.as_ref())
         && a.cards == b.cards
         && a.embeds.len() == b.embeds.len()
         && a.embeds

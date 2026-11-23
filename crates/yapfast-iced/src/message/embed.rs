@@ -72,7 +72,7 @@ pub(super) fn embed<'a>(
     if !embed.provider.is_empty() {
         card = card.push(
             container(
-                text(embed.provider.as_str())
+                text(embed.provider.as_ref())
                     .size(theme.type_size("small", 12.0))
                     .font(theme.font("small", crate::fonts::REGULAR))
                     .color(theme.text),
@@ -82,7 +82,7 @@ pub(super) fn embed<'a>(
     }
     if !embed.author.is_empty() {
         card = card.push(
-            text(embed.author.as_str())
+            text(embed.author.as_ref())
                 .size(theme.type_size("names", 14.0))
                 .font(theme.font("names", MEDIUM))
                 .color(theme.text),
@@ -103,7 +103,7 @@ pub(super) fn embed<'a>(
                 };
                 button(title.color(link_ink))
                     .padding(0)
-                    .on_press(Message::Link(embed.url.clone(), Point::ORIGIN))
+                    .on_press(Message::Link(embed.url.to_string(), Point::ORIGIN))
                     .style(|_, _| button::Style::default())
                     .into()
             })
@@ -169,7 +169,7 @@ pub(super) fn embed<'a>(
     }
     if !embed.footer.is_empty() {
         card = card.push(
-            text(embed.footer.as_str())
+            text(embed.footer.as_ref())
                 .size(theme.type_size("small", 12.0))
                 .font(theme.font("small", REGULAR))
                 .color(theme.text),

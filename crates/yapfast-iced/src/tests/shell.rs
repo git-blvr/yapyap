@@ -745,3 +745,46 @@ fn a_window_opened_again_goes_back_to_the_messages_it_was_closed_on() {
         "{offset} px into it, was {into} px"
     );
 }
+
+/// The desktop that counts its memory given back. Installed for the whole
+/// test binary, whose other tests need no more of `desktop()` than its
+/// defaults do.
+struct Releasing;
+static RELEASED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+impl crate::desktop::Desktop for Releasing {
+    fn release_memory(&self) {
+        RELEASED.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+#[test]
+fn minimizing_gives_the_windows_memory_back_while_it_stays_minimized() {
+    crate::desktop::install(Arc::new(Releasing));
+    let (mut app, _folder) = preview();
+    let released = || RELEASED.load(std::sync::atomic::Ordering::Relaxed);
+    // The bar's button and the desktop's own read of it both saying it
+    // comes to one: the window is left, no second release asked.
+    let _ = app.update(Message::Bar(window_bar::Event::Minimize));
+    assert!(app.shell.minimized);
+    let _ = app.update(Message::Bar(window_bar::Event::Minimized(Some(true))));
+    assert!(app.shell.minimized);
+    // The release comes a while later, the window still put away.
+    let before = released();
+    let _ = app.update(Message::Shell(Event::MinimizeReleased));
+    assert_eq!(released(), before + 1);
+    // Back first, the release under way goes nowhere.
+    let _ = app.update(Message::Bar(window_bar::Event::Minimized(Some(false))));
+    assert!(!app.shell.minimized);
+    let _ = app.update(Message::Shell(Event::MinimizeReleased));
+    assert_eq!(released(), before + 1, "showing again");
+    // Minimized again, it asks again.
+    let _ = app.update(Message::Bar(window_bar::Event::Minimized(Some(true))));
+    let _ = app.update(Message::Shell(Event::MinimizeReleased));
+    assert_eq!(released(), before + 2);
+    // The desktop not saying (Wayland) keeps what it knew: still away,
+    // the release still comes.
+    let _ = app.update(Message::Bar(window_bar::Event::Minimized(None)));
+    assert!(app.shell.minimized);
+    let _ = app.update(Message::Shell(Event::MinimizeReleased));
+    assert_eq!(released(), before + 3);
+}

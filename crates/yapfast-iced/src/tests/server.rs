@@ -624,7 +624,7 @@ fn members_and_invites_list_as_discords_pages_do() {
             username: Some(name.to_lowercase()),
             avatar: String::new(),
         },
-        roles: roles.iter().map(|role| (*role).to_owned()).collect(),
+        roles: roles.iter().map(|role| (*role).into()).collect(),
         joined: now - 3 * 86_400_000,
         timed_out_until: 0,
         unusual_dms: false,

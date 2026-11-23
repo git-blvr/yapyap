@@ -88,7 +88,7 @@ fn a_voice_message_plays_and_pauses_one_at_a_time() {
     let recorded = |id: &str, voice: bool| {
         Arc::new(ChatMessage {
             id: id.into(),
-            item: format!("d:{id}"),
+            item: format!("d:{id}").into(),
             voice: voice.then(|| chat::VoiceMessage {
                 duration_ms: 5000,
                 waveform: [0, 128, 255].into(),

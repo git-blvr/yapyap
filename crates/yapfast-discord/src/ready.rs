@@ -598,7 +598,9 @@ impl Deletes {
         !message.undeletable
             && match self {
                 Deletes::Any => true,
-                Deletes::Own => message.author_id == me || message.invoker.as_deref() == Some(me),
+                Deletes::Own => {
+                    message.author_id.as_ref() == me || message.invoker.as_deref() == Some(me)
+                }
                 Deletes::None => false,
             }
     }
@@ -739,7 +741,7 @@ impl Server {
     /// or send in it for a text channel. Computed as Discord does: the roles'
     /// permissions, then the channel's overwrites for @everyone, for the roles,
     /// and for the member.
-    pub fn access(&self, channel: &Channel, user: &str, roles: &[String]) -> Access {
+    pub fn access(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> Access {
         // Without the server's roles there is nothing to decide with.
         if self.roles.is_empty() {
             return Access::Join;
@@ -799,13 +801,13 @@ impl Server {
     /// Whether `user`, holding `roles`, may send in `channel`'s text. A voice
     /// channel's chat asks this apart from [`Self::access`], which is about
     /// connecting to it.
-    pub fn may_send(&self, channel: &Channel, user: &str, roles: &[String]) -> bool {
+    pub fn may_send(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> bool {
         self.roles.is_empty() || self.channel_permissions(channel, user, roles) & SEND_MESSAGES != 0
     }
 
     /// Whether `user`, holding `roles`, waits out `channel`'s slowmode
     /// between messages, as those who may bypass it don't.
-    pub fn slowed(&self, channel: &Channel, user: &str, roles: &[String]) -> bool {
+    pub fn slowed(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> bool {
         use permission::{BYPASS_SLOWMODE, MANAGE_CHANNELS, MANAGE_MESSAGES};
         channel.slowmode > 0
             && self.channel_permissions(channel, user, roles)
@@ -817,7 +819,7 @@ impl Server {
     /// Discord's client allows: the server lets its messages be forwarded,
     /// and they may read the channel's history. Without the server's roles,
     /// only the first is known.
-    pub fn forwards_from(&self, channel: &Channel, user: &str, roles: &[String]) -> bool {
+    pub fn forwards_from(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> bool {
         !self.forwarding_disabled
             && (self.roles.is_empty()
                 || self.channel_permissions(channel, user, roles)
@@ -829,7 +831,7 @@ impl Server {
     /// Discord's client decides: anyone's with Manage Messages, and none in
     /// an archived thread that's locked, or that they couldn't open again
     /// by sending in it. Without the server's roles, their own.
-    pub fn deletes(&self, channel: &Channel, user: &str, roles: &[String]) -> Deletes {
+    pub fn deletes(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> Deletes {
         let permissions = self.channel_permissions(channel, user, roles);
         let reopens = SEND_MESSAGES | SEND_MESSAGES_IN_THREADS;
         match &channel.thread {
@@ -1069,18 +1071,18 @@ impl Server {
     /// What `user`, holding `roles`, may do in the server as a whole: the
     /// @everyone role's permissions and their roles'. The owner and
     /// administrators may do everything.
-    pub fn server_permissions(&self, user: &str, roles: &[String]) -> u64 {
+    pub fn server_permissions(&self, user: &str, roles: &[Box<str>]) -> u64 {
         self.timed_out(user, self.role_permissions(user, roles))
     }
 
     /// What `user`'s roles give them, before a timeout takes it away.
-    fn role_permissions(&self, user: &str, roles: &[String]) -> u64 {
+    fn role_permissions(&self, user: &str, roles: &[Box<str>]) -> u64 {
         if self.owner_id.as_deref() == Some(user) {
             return permission::ALL;
         }
         let mut base = self.roles.get(&self.id).copied().unwrap_or_default();
         for role in roles {
-            base |= self.roles.get(role).copied().unwrap_or_default();
+            base |= self.roles.get(role.as_ref()).copied().unwrap_or_default();
         }
         if base & ADMINISTRATOR != 0 {
             return permission::ALL;
@@ -1092,7 +1094,7 @@ impl Server {
     /// does: [`Self::server_permissions`], then the channel's overwrites for
     /// @everyone, for the roles, and for the member.
     /// A thread takes its channel's overwrites.
-    pub fn channel_permissions(&self, channel: &Channel, user: &str, roles: &[String]) -> u64 {
+    pub fn channel_permissions(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> u64 {
         let overwrites = match &channel.thread {
             Some(_) => self
                 .parent(channel)
@@ -1109,7 +1111,7 @@ impl Server {
         &self,
         category: &str,
         user: &str,
-        roles: &[String],
+        roles: &[Box<str>],
     ) -> Option<u64> {
         let category = self.categories.get(category)?;
         Some(self.overwritten(&category.overwrites, user, roles))
@@ -1118,7 +1120,7 @@ impl Server {
     /// [`Self::server_permissions`] with a channel's or category's
     /// overwrites applied: @everyone's, the roles', then the member's.
     /// Channel Permissions asks it of a draft's overwrites too.
-    pub fn overwritten(&self, overwrites: &[Overwrite], user: &str, roles: &[String]) -> u64 {
+    pub fn overwritten(&self, overwrites: &[Overwrite], user: &str, roles: &[Box<str>]) -> u64 {
         let mut permissions = self.role_permissions(user, roles);
         if permissions == permission::ALL {
             return permissions;
@@ -1135,7 +1137,9 @@ impl Server {
         }
         let (allow, deny) = overwrites
             .iter()
-            .filter(|overwrite| !overwrite.member && roles.contains(&overwrite.id))
+            .filter(|overwrite| {
+                !overwrite.member && roles.iter().any(|role| role.as_ref() == overwrite.id)
+            })
             .fold((0, 0), |(allow, deny), overwrite| {
                 (allow | overwrite.allow, deny | overwrite.deny)
             });
@@ -1163,10 +1167,10 @@ impl Server {
 
     /// The position of the highest of `roles`, which decides whom a member
     /// outranks; 0, @everyone's, with none.
-    pub fn top_position(&self, roles: &[String]) -> i64 {
+    pub fn top_position(&self, roles: &[Box<str>]) -> i64 {
         roles
             .iter()
-            .filter_map(|role| self.role_positions.get(role))
+            .filter_map(|role| self.role_positions.get(role.as_ref()))
             .copied()
             .max()
             .unwrap_or_default()
@@ -1181,9 +1185,9 @@ impl Server {
     pub fn outranks(
         &self,
         me: &str,
-        my_roles: &[String],
+        my_roles: &[Box<str>],
         target: &str,
-        target_roles: &[String],
+        target_roles: &[Box<str>],
     ) -> bool {
         let owner = self.owner_id.as_deref();
         if me == target || owner == Some(target) {
@@ -1196,7 +1200,7 @@ impl Server {
     /// it away: it takes [`permission::MANAGE_ROLES`] and a highest role
     /// above it, unless `me` owns the server. Nobody grants @everyone, a
     /// role an integration manages, or one the server doesn't have.
-    pub fn may_grant(&self, me: &str, my_roles: &[String], role: &str) -> bool {
+    pub fn may_grant(&self, me: &str, my_roles: &[Box<str>], role: &str) -> bool {
         let Some(position) = self.role_positions.get(role) else {
             return false;
         };
@@ -1280,7 +1284,7 @@ impl Server {
 
     /// Whether `user`, holding `roles`, may mention @everyone, @here and every role
     /// in `channel`.
-    pub fn may_mention_everyone(&self, channel: &Channel, user: &str, roles: &[String]) -> bool {
+    pub fn may_mention_everyone(&self, channel: &Channel, user: &str, roles: &[Box<str>]) -> bool {
         !self.roles.is_empty()
             && self.channel_permissions(channel, user, roles) & MENTION_EVERYONE != 0
     }
@@ -1306,14 +1310,18 @@ impl Server {
     }
 
     /// A member's named roles, highest first, each with its colour if it has one.
-    pub fn named_roles(&self, roles: &[String]) -> Vec<(String, Option<u32>)> {
+    pub fn named_roles(&self, roles: &[Box<str>]) -> Vec<(String, Option<u32>)> {
         let mut named: Vec<_> = roles
             .iter()
-            .filter(|role| **role != self.id)
+            .filter(|role| role.as_ref() != self.id)
             .filter_map(|role| {
-                let name = self.role_names.get(role)?;
-                let position = self.role_positions.get(role).copied().unwrap_or_default();
-                let color = self.role_colors.get(role).map(|(_, color)| *color);
+                let name = self.role_names.get(role.as_ref())?;
+                let position = self
+                    .role_positions
+                    .get(role.as_ref())
+                    .copied()
+                    .unwrap_or_default();
+                let color = self.role_colors.get(role.as_ref()).map(|(_, color)| *color);
                 Some((std::cmp::Reverse(position), name.clone(), color))
             })
             .collect();
@@ -1326,15 +1334,20 @@ impl Server {
 
     /// The picture of a member's highest role that has one, as Discord draws
     /// it by their name.
-    pub fn role_icon(&self, roles: &[String]) -> Option<Arc<str>> {
+    pub fn role_icon(&self, roles: &[Box<str>]) -> Option<Arc<str>> {
         if !self.role_icons_allowed {
             return None;
         }
         roles
             .iter()
-            .filter(|role| self.role_icons.contains_key(*role))
-            .max_by_key(|role| self.role_positions.get(*role).copied().unwrap_or_default())
-            .and_then(|role| self.role_icons.get(role).cloned())
+            .filter(|role| self.role_icons.contains_key(role.as_ref()))
+            .max_by_key(|role| {
+                self.role_positions
+                    .get(role.as_ref())
+                    .copied()
+                    .unwrap_or_default()
+            })
+            .and_then(|role| self.role_icons.get(role.as_ref()).cloned())
     }
 
     /// The picture beside a role's group in a member list, while the server
@@ -1346,10 +1359,10 @@ impl Server {
     }
 
     /// The colour Discord gives a member's name: their highest coloured role's.
-    pub fn color(&self, roles: &[String]) -> Option<u32> {
+    pub fn color(&self, roles: &[Box<str>]) -> Option<u32> {
         roles
             .iter()
-            .filter_map(|role| self.role_colors.get(role))
+            .filter_map(|role| self.role_colors.get(role.as_ref()))
             .max_by_key(|(position, _)| *position)
             .map(|(_, color)| *color)
     }
@@ -1895,7 +1908,7 @@ mod tests {
                 ],
             })
         };
-        let mine = ["20".to_owned()];
+        let mine = ["20".into()];
         for (tier, features, shown) in [
             (0, &[][..], false),
             (1, &["BANNER"][..], false),
@@ -2188,7 +2201,7 @@ mod tests {
             .into(),
             ..Default::default()
         };
-        let mods = ["20".to_owned()];
+        let mods = ["20".into()];
         assert_eq!(
             server.channel_permissions(&general, "1", &mods),
             VIEW_CHANNEL | READ_MESSAGE_HISTORY
@@ -2270,7 +2283,7 @@ mod tests {
         );
         let message = |author: &str, invoker: Option<&str>| crate::message::Message {
             author_id: author.into(),
-            invoker: invoker.map(str::to_owned),
+            invoker: invoker.map(Into::into),
             ..Default::default()
         };
         assert!(Deletes::Own.allow(&message("1", None), "1"));
@@ -2348,7 +2361,7 @@ mod tests {
                           ]}],
         }))
         .unwrap();
-        let sees = |server: &Server, roles: &[String]| {
+        let sees = |server: &Server, roles: &[Box<str>]| {
             server
                 .category_permissions("4", "1", roles)
                 .map(|held| held & VIEW_CHANNEL != 0)
@@ -2377,10 +2390,10 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(server.default_level, Level::All);
-        let mods = ["20".to_owned()];
-        let helpers = ["30".to_owned()];
-        let admins = ["40".to_owned()];
-        let may = |user: &str, roles: &[String], bit: u64| {
+        let mods = ["20".into()];
+        let helpers = ["30".into()];
+        let admins = ["40".into()];
+        let may = |user: &str, roles: &[Box<str>], bit: u64| {
             server.server_permissions(user, roles) & bit != 0
         };
         assert!(may("1", &mods, KICK_MEMBERS));
@@ -2411,7 +2424,7 @@ mod tests {
         assert!(!server.may_grant("1", &mods, "10"), "@everyone");
         assert!(!server.may_grant("2", &helpers, "50"));
         assert!(!server.may_grant("2", &helpers, "10"));
-        assert!(!server.may_grant("2", &["30".to_owned()], "10"));
+        assert!(!server.may_grant("2", &["30".into()], "10"));
         assert!(server.may_grant("99", &[], "40"), "the owner grants any");
         assert!(!server.may_grant("99", &[], "77"), "not one it lacks");
         assert!(server.may_grant("1", &admins, "20"));

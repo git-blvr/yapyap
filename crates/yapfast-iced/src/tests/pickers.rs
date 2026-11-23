@@ -74,7 +74,7 @@ fn server_with_emoji(count: usize) -> (App, tempfile::TempDir, Vec<String>) {
         .emoji_sets()
         .into_iter()
         .flat_map(|set| set.emoji)
-        .map(|emoji| emoji.picture)
+        .map(|emoji| emoji.picture.to_string())
         .collect();
     (app, folder, urls)
 }
@@ -374,7 +374,9 @@ fn the_emoji_pickers_animated_emoji_play_in_their_cells_until_it_closes() {
     change(&mut app, |state| {
         for emoji in emoji {
             let picture = if emoji.animated { &party } else { &calm };
-            state.pictures.insert(emoji.picture, picture.clone());
+            state
+                .pictures
+                .insert(emoji.picture.to_string(), picture.clone());
         }
     });
     let playing = |app: &App| {

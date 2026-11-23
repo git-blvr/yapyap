@@ -178,7 +178,7 @@ fn discord_text_channels_write_without_matrix_trust_and_read_once_read() {
     // sends it afresh.
     app.dispatch(Action::SelectRoom("discord:10:21".into()));
     assert!(app.state.room_ready);
-    assert_eq!(app.state.messages[0].body, "kept");
+    assert_eq!(app.state.messages[0].body.as_ref(), "kept");
     assert_eq!(app.state.members, Some(Ok(Arc::new(vec![]))));
     app.apply(Event::Timeline {
         room: "discord:10:21".into(),
@@ -676,7 +676,7 @@ fn a_dms_pins_load_when_shown_and_close_with_the_conversation() {
         result: Ok(vec![message("d:9", false)]),
     });
     let pinned = app.state.pins.as_ref().unwrap().messages.clone();
-    assert_eq!(pinned.unwrap().unwrap()[0].item, "d:9");
+    assert_eq!(pinned.unwrap().unwrap()[0].item.as_ref(), "d:9");
 
     app.dispatch(Action::ShowPins(false));
     assert!(app.state.pins.is_none());
@@ -805,7 +805,7 @@ fn a_dm_search_loads_its_results_a_page_at_a_time() {
     ));
     let search = app.state.search.as_ref().unwrap();
     assert_eq!(
-        (search.page, search.results[0].message.item.as_str()),
+        (search.page, search.results[0].message.item.as_ref()),
         (0, "d:5")
     );
     // A search from the box is the newest first again, and keeps its

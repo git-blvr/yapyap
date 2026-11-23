@@ -471,6 +471,62 @@ fn a_camera_without_a_frame_yet_shows_their_picture_and_name() {
     assert!(shows(&app, "Bob"), "his tile's name");
 }
 
+/// A person's tile takes their picture's colour, muted toward the
+/// theme's ground; until a picture comes, their name's tint.
+#[test]
+fn a_persons_tile_takes_their_pictures_colour() {
+    use yapfast_core::chat::{Picture, Pixels};
+    let (mut app, _folder, _) = in_call();
+    let red = std::sync::Arc::new(Picture {
+        width: 8,
+        height: 8,
+        rgba: Pixels::new(8, 8, [220, 40, 30, 255].repeat(8 * 8)),
+        ..Default::default()
+    });
+    super::change(&mut app, |state| {
+        let mut bob = state.voice.participants[0].clone();
+        bob.id = "preview-bob".into();
+        bob.person = "bob".into();
+        bob.user = "Bob".into();
+        bob.local = false;
+        bob.avatar = Some("https://example.invalid/bob.png".into());
+        state
+            .pictures
+            .insert("https://example.invalid/bob.png".into(), red);
+        state.voice.participants.push(bob);
+    });
+    // You first, then Bob; each tile's top middle is its ground.
+    let (_, _, tiles, _) = crate::call::stage::stage(&app);
+    assert_eq!(tiles.len(), 2);
+    let mut ui = iced_test::Simulator::with_size(
+        iced::Settings::default(),
+        app.shell.frame,
+        crate::call::stage::stage_view(&app),
+    );
+    let (width, _, rgba) = super::drawn(&mut ui);
+    let ground = |at: Rectangle| {
+        let at =
+            (((at.y + 8.0) * 2.0) as usize * width as usize + (at.center_x() * 2.0) as usize) * 4;
+        [rgba[at], rgba[at + 1], rgba[at + 2]]
+    };
+    let [r, g, b] = ground(tiles[1]);
+    assert!(
+        r > g + 40 && r > b + 40,
+        "Bob's tile takes his picture's red, muted: {r},{g},{b}"
+    );
+    let tint = crate::theme::mix(
+        crate::style::hex(crate::pictures::tint("You")),
+        app.theme.raised,
+        0.45,
+    );
+    let [r, g, b] = ground(tiles[0]);
+    let near = |was: u8, want: f32| (f32::from(was) - want * 255.0).abs() <= 2.0;
+    assert!(
+        near(r, tint.r) && near(g, tint.g) && near(b, tint.b),
+        "Your tile takes your name's tint: {r},{g},{b}"
+    );
+}
+
 #[test]
 fn the_call_this_account_is_in_lists_it_first_under_its_channel() {
     let (mut app, _folder, room) = in_call();

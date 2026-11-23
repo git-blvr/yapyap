@@ -70,13 +70,13 @@ fn picture(value: &Value, shown: Shown, thumbnail: bool) -> Option<Attachment> {
     let preview_url = scaled_url(value, width, height, animated)?;
     let name = file_name(value["url"].as_str().unwrap_or(proxy)).unwrap_or("image");
     Some(Attachment {
-        name: name.to_owned(),
+        name: name.into(),
         size: None,
         url: proxy.into(),
         image: !matches!(shown, Shown::Poster(_)),
         dimensions,
-        preview_url: Some(preview_url),
-        view_url: scaled_url(value, VIEW_WIDTH, VIEW_HEIGHT, animated),
+        preview_url: Some(preview_url.into()),
+        view_url: scaled_url(value, VIEW_WIDTH, VIEW_HEIGHT, animated).map(Into::into),
         still_url: None,
         video_url: None,
         link_url: None,
@@ -97,11 +97,11 @@ fn gif(picture: &mut Attachment, embed: &Value) {
     picture.animated = true;
     let video = &embed["video"];
     if let Some(proxy) = video["proxy_url"].as_str() {
-        picture.still_url = picture.preview_url.replace(proxy.to_owned());
-        picture.view_url = Some(proxy.to_owned());
+        picture.still_url = picture.preview_url.replace(proxy.into());
+        picture.view_url = Some(proxy.into());
         picture.url = proxy.into();
         if let Some(name) = file_name(video["url"].as_str().unwrap_or(proxy)) {
-            name.clone_into(&mut picture.name);
+            picture.name = name.into();
         }
     }
 }
@@ -194,7 +194,7 @@ pub fn parse(embeds: &Value) -> Parsed {
             };
             let mut poster = picture(source, Shown::Poster(index), false);
             if let Some(poster) = poster.as_mut() {
-                poster.video_url = playable.map(str::to_owned);
+                poster.video_url = playable.map(Into::into);
             }
             parsed.pictures.extend(poster);
         } else if image {
@@ -282,7 +282,7 @@ mod tests {
         let shown: Vec<_> = parsed
             .pictures
             .iter()
-            .map(|picture| (picture.name.as_str(), picture.shown, picture.image))
+            .map(|picture| (&*picture.name, picture.shown, picture.image))
             .collect();
         assert_eq!(
             shown,
@@ -311,7 +311,7 @@ mod tests {
         assert_eq!(gif.preview_url.as_deref(), Some(mp4));
         assert_eq!(gif.view_url.as_deref(), Some(mp4));
         assert!(gif.still_url.as_deref().unwrap().contains("cat.png?"));
-        assert_eq!((gif.name.as_str(), &*gif.url), ("cat.mp4", mp4));
+        assert_eq!((&*gif.name, &*gif.url), ("cat.mp4", mp4));
         assert_eq!(gif.link_url.as_deref(), Some("https://tenor.com/view/cat"));
         assert!(gif.animated);
         assert_eq!(parsed.hides, ["https://tenor.com/view/cat"]);
@@ -362,7 +362,7 @@ mod tests {
         assert!(parsed.embeds[0].video && !parsed.embeds[1].video);
         let poster = &parsed.pictures[0];
         assert_eq!(
-            (poster.name.as_str(), poster.shown, poster.image),
+            (&*poster.name, poster.shown, poster.image),
             ("thumb.jpg", Shown::Poster(0), false)
         );
         assert_eq!(

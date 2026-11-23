@@ -24,7 +24,7 @@ pub struct Profile {
     /// Their "About me", in Discord Markdown.
     pub bio: Option<String>,
     /// Their roles' ids in the server.
-    pub roles: Vec<String>,
+    pub roles: Vec<Box<str>>,
     /// When they joined the server, in Unix milliseconds.
     pub joined: Option<u64>,
     /// When their account was made, in Unix milliseconds.
@@ -452,7 +452,7 @@ pub fn parse(value: &Value, guild: Option<&str>) -> Option<Profile> {
             .as_array()
             .into_iter()
             .flatten()
-            .filter_map(|role| role.as_str().map(str::to_owned))
+            .filter_map(|role| role.as_str().map(Into::into))
             .collect(),
         joined: member["joined_at"].as_str().and_then(iso_ms),
         created: snowflake_ms(&id),
@@ -630,7 +630,7 @@ mod tests {
             "an empty server one falls back"
         );
         assert_eq!(profile.bio.as_deref(), Some("Hi, I'm **Ann**"));
-        assert_eq!(profile.roles, ["30", "31"]);
+        assert_eq!(profile.roles, ["30".into(), "31".into()]);
         assert_eq!(profile.joined, Some(1_788_253_200_000));
         assert_eq!(profile.created, 1_753_856_410_742);
         assert_eq!(

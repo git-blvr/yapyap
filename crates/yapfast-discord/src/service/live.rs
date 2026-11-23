@@ -369,7 +369,7 @@ mod tests {
             other => panic!("not an added reaction: {other:?}"),
         })
         .collect();
-        let reaction = |key: &str, me| ("10".to_owned(), "20".to_owned(), key.to_owned(), me);
+        let reaction = |key: &str, me| ("10".to_owned(), "20".to_owned(), key.into(), me);
         assert_eq!(
             added,
             [

@@ -53,7 +53,7 @@ impl Clock {
     /// words for one without a time.
     pub fn sent(self, message: &ChatMessage, now: u64) -> String {
         if message.timestamp == 0 {
-            return message.time.clone();
+            return message.time.to_string();
         }
         yapfast_core::clock::sent(message.timestamp, now, self.twelve_hour, self.seconds)
     }

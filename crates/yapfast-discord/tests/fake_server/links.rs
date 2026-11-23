@@ -344,7 +344,7 @@ async fn makes_invites() {
         .unwrap()
         .messages;
     assert_eq!(
-        in_dm.last().map(|message| message.content.as_str()),
+        in_dm.last().map(|message| &*message.content),
         Some(format!("https://discord.gg/{}", sent["code"].as_str().unwrap()).as_str())
     );
 }

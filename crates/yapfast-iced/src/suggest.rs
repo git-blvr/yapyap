@@ -195,8 +195,8 @@ pub fn caret_moved(app: &mut App, which: Writing, text: &str, caret: usize) {
                     let (_, id) = found.key.split_once(':')?;
                     sets.iter()
                         .flat_map(|set| &set.emoji)
-                        .find(|emoji| emoji.id == id)
-                        .map(|emoji| emoji.picture.clone())
+                        .find(|emoji| *emoji.id == *id)
+                        .map(|emoji| emoji.picture.to_string())
                 })
                 .collect();
         }
@@ -414,7 +414,7 @@ fn face<'a>(ctx: crate::ctx::Ctx<'a>, key: &str, size: u32, plays: bool) -> Elem
 /// A custom emoji's picture's address, by its id, among those this
 /// account has.
 pub fn custom_emoji(ctx: crate::ctx::Ctx<'_>, id: &str) -> Option<String> {
-    custom(ctx, id).map(|emoji| emoji.picture)
+    custom(ctx, id).map(|emoji| String::from(emoji.picture))
 }
 
 /// A custom emoji by its id, among those this account has.

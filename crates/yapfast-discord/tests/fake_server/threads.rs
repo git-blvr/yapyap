@@ -261,10 +261,10 @@ async fn posts_in_a_forum_as_discords_client_does() {
         .unwrap()
         .messages;
     assert_eq!(first.len(), 1);
-    assert_eq!(first[0].id, post, "the first message has the post's id");
-    assert_eq!(first[0].content, "It closes.");
+    assert_eq!(&*first[0].id, post, "the first message has the post's id");
+    assert_eq!(&*first[0].content, "It closes.");
     assert_eq!(first[0].attachments.len(), 1);
-    assert_eq!(first[0].attachments[0].name, "notes.txt");
+    assert_eq!(&*first[0].attachments[0].name, "notes.txt");
     let creates: serde_json::Value =
         serde_json::from_str(&control(server, "GET", "/_control/thread-creates", "")).unwrap();
     let body = creates.as_array().unwrap().last().unwrap();
@@ -422,7 +422,7 @@ async fn starts_threads_as_discords_client_does() {
         .await
         .unwrap()
         .messages;
-    let message = latest.last().unwrap().id.clone();
+    let message = latest.last().unwrap().id.to_string();
     // From a message: the thread takes its id, and she's in it.
     let thread = discord
         .start_thread(guild, general, Some(&message), "Snacks", false, "Message")

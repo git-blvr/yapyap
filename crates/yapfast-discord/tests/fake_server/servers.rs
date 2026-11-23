@@ -407,7 +407,7 @@ async fn acts_from_a_members_menu() {
             dave.is_some_and(|dave| {
                 dave.group.starts_with("Mods")
                     && dave.color == Some(3447003)
-                    && dave.roles.contains(&mods.to_owned())
+                    && dave.roles.contains(&mods.into())
             })
         })
     })

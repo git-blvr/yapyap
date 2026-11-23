@@ -48,7 +48,7 @@ async fn reads_history_and_member_lists() {
     assert!(oldest < latest[0].order());
     assert_eq!(
         last_read.to_string(),
-        latest[latest.len() - 6].id,
+        &*latest[latest.len() - 6].id,
         "read up to the fixture's last five messages"
     );
     let older = discord
@@ -224,7 +224,7 @@ async fn reads_history_and_member_lists() {
     let newest = latest.last().unwrap().id.clone();
     snapshot_where(&discord, |snapshot| {
         let general = snapshot.servers[0].text_channels().next().unwrap().marks;
-        !general.unread && general.last_read.to_string() == newest
+        !general.unread && general.last_read.to_string() == &*newest
     })
     .await;
 }
@@ -257,7 +257,7 @@ async fn a_reply_looks_up_the_original_discord_left_out() {
     let replied = history()
         .await
         .into_iter()
-        .find(|message| message.id == reply.trim())
+        .find(|message| &*message.id == reply.trim())
         .unwrap();
     assert_eq!(
         replied.reply,
@@ -309,7 +309,7 @@ async fn sends_edits_and_deletes_messages() {
         .send()
         .await
         .unwrap();
-    assert_eq!(message.author, "Bob");
+    assert_eq!(&*message.author, "Bob");
     assert!(message.content.starts_with("Live Message 0"));
     assert_eq!(
         discord.color(&snapshot.servers[0], &message.author_id),
@@ -359,7 +359,7 @@ async fn sends_edits_and_deletes_messages() {
     assert!(edited.edited);
     discord.delete(&general, &sent.id).await.unwrap();
     live_where(&mut live, |event| match event {
-        Live::Deleted { id, .. } if id == sent.id => Some(()),
+        Live::Deleted { id, .. } if *id == *sent.id => Some(()),
         _ => None,
     })
     .await;
@@ -388,7 +388,7 @@ async fn sends_edits_and_deletes_messages() {
                 .marks
                 .roles
                 .iter()
-                .any(|role| role == mods)
+                .any(|role| &**role == mods)
                 == add
         })
         .await;
@@ -400,7 +400,7 @@ async fn sends_edits_and_deletes_messages() {
         if add {
             discord.delete(&general, &bobs.id).await.unwrap();
             live_where(&mut live, |event| match event {
-                Live::Deleted { id, .. } if id == bobs.id => Some(()),
+                Live::Deleted { id, .. } if *id == *bobs.id => Some(()),
                 _ => None,
             })
             .await;
@@ -470,7 +470,7 @@ async fn votes_in_and_posts_polls() {
         _ => None,
     })
     .await;
-    assert_eq!(poll.id, posted.trim());
+    assert_eq!(&*poll.id, posted.trim());
     assert!(!poll.editable && !poll.forwardable);
     discord.vote(&general, &poll.id, &[2]).await.unwrap();
     live_where(&mut live, |event| match event {
@@ -532,18 +532,18 @@ async fn votes_in_and_posts_polls() {
     let posted = live_where(&mut live, |event| match event {
         Live::Created(message) => message
             .poll
-            .filter(|poll| poll.question == "Movie tonight?"),
+            .filter(|poll| &*poll.question == "Movie tonight?"),
         _ => None,
     })
     .await;
     let answers: Vec<_> = posted
         .answers
         .iter()
-        .map(|answer| (answer.id, answer.text.as_str(), answer.emoji.clone()))
+        .map(|answer| (answer.id, &*answer.text, answer.emoji.clone()))
         .collect();
     assert_eq!(
         answers,
-        [(1, "Yes", Some(("🍿".to_owned(), None))), (2, "No", None)]
+        [(1, "Yes", Some(("🍿".into(), None))), (2, "No", None)]
     );
     let expiry = posted.expiry.unwrap();
     let now = yapfast_discord::message::snowflake_ms(&yapfast_discord::message::nonce());
@@ -592,7 +592,7 @@ async fn forwards_messages() {
         .await
         .unwrap();
     live_where(&mut live, |event| match event {
-        Live::Created(note) if note.content == "look at this" => Some(()),
+        Live::Created(note) if &*note.content == "look at this" => Some(()),
         _ => None,
     })
     .await;
@@ -734,7 +734,7 @@ async fn shows_embeds_and_media() {
     assert_eq!(video.attachments[0].shown, Shown::Poster(0));
     assert!(gif.content.is_empty() && gif.embeds.is_empty());
     assert_eq!(gif.attachments[0].shown, Shown::Message);
-    assert_eq!(card.author, "Status Bot");
+    assert_eq!(&*card.author, "Status Bot");
     assert_eq!(card.embeds[0].fields.len(), 4);
     // Pictures come from Discord's proxy; the linked site is never asked.
     // The GIF is an MP4, with its first frame as a picture.
@@ -760,7 +760,7 @@ async fn shows_embeds_and_media() {
         .await
         .unwrap();
     let posted = live_where(&mut live, |event| match event {
-        Live::Created(message) if message.content == "Watch this" => Some(message),
+        Live::Created(message) if &*message.content == "Watch this" => Some(message),
         _ => None,
     })
     .await;
@@ -795,7 +795,7 @@ async fn shows_embeds_and_media() {
         _ => None,
     })
     .await;
-    assert_eq!(forward.content, "Watch this");
+    assert_eq!(&*forward.content, "Watch this");
     assert_eq!(forward.attachments, posted.attachments);
     // So does a linked post's, its card's thumbnail the poster.
     let linked = live_where(&mut live, |event| match event {
@@ -850,7 +850,7 @@ async fn highlights_mentions() {
         snapshot.servers[0]
             .marks
             .roles
-            .contains(&"1400000000000000112".to_owned())
+            .contains(&"1400000000000000112".into())
     );
     let latest = discord
         .history(&guild, &general, Span::Latest)
@@ -887,7 +887,7 @@ async fn lists_who_reacted_as_discords_client_does() {
             message
                 .reactions
                 .iter()
-                .any(|reaction| reaction.key == "🎉")
+                .any(|reaction| &*reaction.key == "🎉")
         })
         .expect("the fixture's newest message, with reactions");
     let id = newest.id.clone();

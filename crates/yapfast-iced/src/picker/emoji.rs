@@ -179,7 +179,7 @@ impl Emoji {
             .iter()
             .filter_map(|section| match &section.mark {
                 Mark::Icon(url) => Some(url.clone()),
-                Mark::Face(Face::Custom(emoji)) => Some(emoji.picture.clone()),
+                Mark::Face(Face::Custom(emoji)) => Some(emoji.picture.to_string()),
                 _ => None,
             })
             .collect()
@@ -240,7 +240,7 @@ impl Picker {
             let by_id: HashMap<&str, &CustomEmoji> = sets
                 .iter()
                 .flat_map(|set| &set.emoji)
-                .map(|emoji| (emoji.id.as_str(), emoji))
+                .map(|emoji| (&*emoji.id, emoji))
                 .collect();
             let lists = &app.state.discord_emojis;
             let used = match self.target {
@@ -291,7 +291,7 @@ impl Picker {
         let custom: HashMap<&str, &CustomEmoji> = sets
             .iter()
             .flat_map(|set| &set.emoji)
-            .map(|emoji| (emoji.id.as_str(), emoji))
+            .map(|emoji| (&*emoji.id, emoji))
             .collect();
         // A key of the account's lists as the grid shows it.
         let face = |key: &str| match key.rsplit_once(':') {
@@ -454,7 +454,7 @@ impl Picker {
                     let away = (top - tile.at.y - tile.at.height)
                         .max(tile.at.y - bottom)
                         .max(0.0);
-                    Some((away, emoji.picture.as_str()))
+                    Some((away, &*emoji.picture))
                 }
                 _ => None,
             })

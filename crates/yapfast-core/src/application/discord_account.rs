@@ -55,7 +55,7 @@ impl Application {
             Some(name) if name.contains(':') => match self.status_emoji(&name) {
                 Ok(found) => (
                     Some(found.text.trim_matches(':').to_owned()),
-                    Some(found.id),
+                    Some(found.id.into()),
                 ),
                 Err(error) => {
                     if let Some(editor) = &mut self.state.status_editor {
@@ -282,15 +282,16 @@ impl Application {
                             || format!("{}:{}", emoji.name, emoji.id) == name)
                 })
                 .map(|emoji| chat::CustomEmoji {
-                    text: format!(":{}:", emoji.name),
-                    id: emoji.id.clone(),
+                    text: format!(":{}:", emoji.name).into(),
+                    id: emoji.id.clone().into(),
                     animated: emoji.animated,
                     usable: true,
                     picture: yapfast_discord::ready::custom_emoji(
                         &emoji.id,
                         emoji.animated,
                         chat::EMOJI_PICTURE_SIZE,
-                    ),
+                    )
+                    .into(),
                 })
                 .ok_or("None of your servers has that emoji.");
         }
@@ -342,7 +343,7 @@ impl Application {
             .state
             .dm_with(&user)
             .map(|room| room.name.clone())
-            .or_else(|| self.state.person(&user).map(|person| person.name))
+            .or_else(|| self.state.person(&user).map(|person| person.name.into()))
             .or_else(|| friend.map(|friend| friend.name.clone()))
             .or_else(|| {
                 self.state

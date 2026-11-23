@@ -415,18 +415,19 @@ fn media(item: &Value, slot: usize, size: (u64, u64), spoiler: bool) -> Option<A
         .is_some_and(|kind| kind.starts_with("video/"));
     let side = |name: &str| u32::try_from(item[name].as_u64()?).ok();
     Some(Attachment {
-        name: crate::embed::file_name(url).unwrap_or("image").to_owned(),
+        name: crate::embed::file_name(url).unwrap_or("image").into(),
         size: None,
         url: url.into(),
         image: !video,
         dimensions: side("width").zip(side("height")),
         // A video's poster is its first frame alone.
-        preview_url: scaled_url(item, size.0, size.1, !video),
+        preview_url: scaled_url(item, size.0, size.1, !video).map(Into::into),
         view_url: (!video)
             .then(|| scaled_url(item, VIEW_WIDTH, VIEW_HEIGHT, true))
-            .flatten(),
+            .flatten()
+            .map(Into::into),
         still_url: None,
-        video_url: video.then(|| url.to_owned()),
+        video_url: video.then(|| url.into()),
         link_url: None,
         animated: !video && animated(item),
         shown: Shown::Component(slot),
@@ -443,7 +444,7 @@ fn file(component: &Value, slot: usize, spoiler: bool) -> Option<Attachment> {
         .or_else(|| crate::embed::file_name(url))
         .unwrap_or("file");
     Some(Attachment {
-        name: name.to_owned(),
+        name: name.into(),
         size: component["size"].as_u64(),
         url: url.into(),
         image: false,
@@ -564,7 +565,7 @@ mod tests {
         let media: Vec<_> = parsed
             .media
             .iter()
-            .map(|media| (media.name.as_str(), media.shown, media.spoiler))
+            .map(|media| (&*media.name, media.shown, media.spoiler))
             .collect();
         assert_eq!(
             media,

@@ -32,6 +32,11 @@ const ZOOM_NOTE: Duration = Duration::from_millis(1200);
 /// go of the window's last pieces as its event loop goes on.
 const RELEASE_AFTER: Duration = Duration::from_millis(500);
 
+/// How long after the window minimizes its memory is given back, so a
+/// look at the desktop for a moment and back doesn't pay to fault the
+/// window's pages in again.
+const MINIMIZE_RELEASE_AFTER: Duration = Duration::from_secs(3);
+
 /// How this start of Yapfast opens.
 pub struct Start {
     /// To the tray, with a saved session, as starting at sign-in does.
@@ -108,6 +113,9 @@ pub enum Event {
     Closed(window::Id),
     /// The window's memory is due to be given back.
     Release,
+    /// The window has been minimized a while: nobody is drawing, so its
+    /// pages can go to the desktop, which faults back the few it touches.
+    MinimizeReleased,
     /// The zoom level's note is due to go.
     ZoomNoted(u64),
     /// The display's scale factor, as the window opened or moved to
@@ -207,6 +215,12 @@ impl App {
                 desktop::desktop().release_memory();
                 Task::none()
             }
+            Event::MinimizeReleased => {
+                if self.shell.minimized {
+                    desktop::desktop().release_memory();
+                }
+                Task::none()
+            }
             Event::DismissGpuNotice => {
                 self.shell.gpu_notice = false;
                 Task::none()
@@ -302,6 +316,26 @@ impl App {
             self.sync_cues();
             self.dirty = true;
         }
+    }
+
+    /// The window minimized or came back. A little after it goes its
+    /// memory is given back: nothing draws while nobody sees it, so the
+    /// pages stay given back until what's shown again touches them — the
+    /// window comes back as it was, just paged out. A window already in
+    /// the state is left alone, so the button's say and the desktop's
+    /// read of it don't each give it back.
+    pub fn minimized_changed(&mut self, minimized: bool) -> Task<Message> {
+        if minimized == self.shell.minimized {
+            return Task::none();
+        }
+        self.shell.minimized = minimized;
+        if !minimized {
+            return Task::none();
+        }
+        after(
+            MINIMIZE_RELEASE_AFTER,
+            Message::Shell(Event::MinimizeReleased),
+        )
     }
 
     /// Whether someone reads the open conversation: its newest message is in

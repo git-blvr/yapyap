@@ -248,7 +248,7 @@ fn a_sent_command_shows_until_its_answer_and_a_failed_one_retries() {
             .messages
             .iter()
             .filter(|message| message.item.starts_with("c:"))
-            .map(|message| (message.body.clone(), message.delivery))
+            .map(|message| (message.body.to_string(), message.delivery))
             .collect()
     };
     app.dispatch(Action::SetDraft("/ping".into()));
@@ -259,7 +259,10 @@ fn a_sent_command_shows_until_its_answer_and_a_failed_one_retries() {
         rows(&app),
         [("Sending command…".into(), chat::Delivery::Sent)]
     );
-    assert_eq!(app.state.messages.last().unwrap().author, "Status Bot");
+    assert_eq!(
+        app.state.messages.last().unwrap().author.as_ref(),
+        "Status Bot"
+    );
     // A timeline that comes keeps it; the answer, naming the interaction,
     // takes its place.
     app.apply(Event::InteractionCreated {

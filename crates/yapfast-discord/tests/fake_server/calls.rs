@@ -1369,7 +1369,7 @@ async fn calls_in_dms() {
     .expect("timed out connecting to the DM call")
     .unwrap();
     let started = live_where(&mut live, |event| match event {
-        Live::Created(message) if message.channel_id == dm => Some(message),
+        Live::Created(message) if *message.channel_id == *dm => Some(message),
         _ => None,
     })
     .await;

@@ -116,12 +116,12 @@ impl Fixture {
         Interaction::Component {
             nonce: nonce.into(),
             guild: Some(self.guild.clone()),
-            channel: self.deploy.channel_id.clone(),
-            message: self.deploy.id.clone(),
+            channel: self.deploy.channel_id.to_string(),
+            message: self.deploy.id.to_string(),
             message_flags: self.deploy.flags,
             // Discord leaves a bot's own message without one: its author's
             // id, which a bot's user shares with its app, stands for it.
-            application: self.deploy.author_id.clone(),
+            application: self.deploy.author_id.to_string(),
             component_type: kind,
             custom_id: custom_id.into(),
             values: None,
@@ -219,11 +219,11 @@ async fn a_button_click_posts_discords_body_and_succeeds() {
     assert_eq!(body["type"], 3);
     assert_eq!(body["nonce"], "1000");
     assert_eq!(body["guild_id"], fixture.guild.as_str());
-    assert_eq!(body["channel_id"], fixture.deploy.channel_id.as_str());
-    assert_eq!(body["message_id"], fixture.deploy.id.as_str());
+    assert_eq!(body["channel_id"], &*fixture.deploy.channel_id);
+    assert_eq!(body["message_id"], &*fixture.deploy.id);
     assert_eq!(body["message_flags"], 0);
     // A bot message without application_id is its bot's application's.
-    assert_eq!(body["application_id"], fixture.deploy.author_id.as_str());
+    assert_eq!(body["application_id"], &*fixture.deploy.author_id);
     assert!(body["session_id"].as_str().is_some_and(|id| !id.is_empty()));
     assert_eq!(
         body["data"],
@@ -304,15 +304,15 @@ async fn a_modal_opens_and_submits_its_values() {
         _ => None,
     })
     .await;
-    assert_eq!(reply.content, "Noted: Faster start; production");
+    assert_eq!(&*reply.content, "Noted: Faster start; production");
     assert_eq!(reply.flags & (1 << 6), 1 << 6);
 
     // A form Discord didn't open is refused, and never sent again.
     let stale = Interaction::Modal {
         nonce: "2002".into(),
         guild: None,
-        channel: fixture.deploy.channel_id.clone(),
-        application: fixture.deploy.author_id.clone(),
+        channel: fixture.deploy.channel_id.to_string(),
+        application: fixture.deploy.author_id.to_string(),
         id: "1".into(),
         custom_id: "deploy-notes".into(),
         components: json!([]),
@@ -416,8 +416,8 @@ impl Fixture {
         interactions::CommandUse {
             nonce: nonce.into(),
             guild: Some(self.guild.clone()),
-            channel: self.deploy.channel_id.clone(),
-            application: self.deploy.author_id.clone(),
+            channel: self.deploy.channel_id.to_string(),
+            application: self.deploy.author_id.to_string(),
             command: command(name),
             options,
             target: None,
@@ -442,7 +442,7 @@ async fn a_slash_command_posts_its_options_and_its_answer_arrives() {
     assert_eq!(body["type"], 2);
     assert_eq!(body["nonce"], "5000");
     assert_eq!(body["guild_id"], fixture.guild.as_str());
-    assert_eq!(body["application_id"], fixture.deploy.author_id.as_str());
+    assert_eq!(body["application_id"], &*fixture.deploy.author_id);
     assert_eq!(body["analytics_location"], "slash_ui");
     assert!(body["session_id"].as_str().is_some_and(|id| !id.is_empty()));
     assert_eq!(body["data"]["name"], "config");
@@ -466,18 +466,18 @@ async fn a_slash_command_posts_its_options_and_its_answer_arrives() {
         _ => None,
     })
     .await;
-    assert_eq!(answer.content, "Ran /config.");
+    assert_eq!(&*answer.content, "Ran /config.");
     let interaction = answer.interaction.clone().unwrap();
-    assert_eq!(interaction.id, created);
+    assert_eq!(&*interaction.id, created);
     // Its line says who used which command, subcommand and all.
     assert_eq!(
-        (interaction.user.as_str(), interaction.name.as_deref()),
+        (&*interaction.user, interaction.name.as_deref()),
         ("Alice", Some("config set"))
     );
     assert_eq!(interaction.command_type, Some(message::CHAT_INPUT));
     assert_eq!(
         answer.application_id.as_deref(),
-        Some(fixture.deploy.author_id.as_str())
+        Some(&*fixture.deploy.author_id)
     );
 
     // One the app answers only Alice: her own, never in the channel.
@@ -514,14 +514,14 @@ async fn a_deferred_answer_shows_thinking_then_its_content() {
         _ => None,
     })
     .await;
-    assert_eq!(thinking.content, "");
+    assert_eq!(&*thinking.content, "");
     assert_eq!(thinking.flags & (1 << 7), 1 << 7);
     let answered = live_where(&mut live, |live| match live {
         Live::Updated(message) if message.id == thinking.id => Some(message),
         _ => None,
     })
     .await;
-    assert_eq!(answered.content, "hi hi");
+    assert_eq!(&*answered.content, "hi hi");
     assert_eq!(answered.flags & (1 << 7), 0);
 }
 
@@ -637,7 +637,7 @@ async fn an_attachment_option_is_uploaded_first() {
         _ => None,
     })
     .await;
-    assert_eq!(answer.content, "Got a.png (300 bytes)");
+    assert_eq!(&*answer.content, "Got a.png (300 bytes)");
 
     // A file named but not sent never goes.
     let mut lost = fixture.run(
@@ -656,7 +656,7 @@ async fn an_ephemeral_answer_never_comes_back_after_a_reconnect_or_history() {
     let fixture =
         Fixture::start("an_ephemeral_answer_never_comes_back_after_a_reconnect_or_history").await;
     let (discord, guild) = (&fixture.discord, fixture.guild.as_str());
-    let channel = fixture.deploy.channel_id.as_str();
+    let channel = &*fixture.deploy.channel_id;
     let marks = |snapshot: &Snapshot| {
         snapshot.servers[0]
             .text_channels()
@@ -699,7 +699,7 @@ async fn an_ephemeral_answer_never_comes_back_after_a_reconnect_or_history() {
     })
     .await;
     assert!(reply.ephemeral && !reply.loading);
-    assert_eq!(reply.channel_id, channel);
+    assert_eq!(&*reply.channel_id, channel);
     // It's placed in its server's channel, not taken for a DM's message,
     // and isn't unread there: the channel's history doesn't have it.
     assert!(
@@ -791,7 +791,7 @@ async fn context_menu_commands_run_on_their_message_or_person() {
     assert_eq!(body["type"], 2);
     assert_eq!(body["data"]["type"], 3);
     assert_eq!(body["data"]["name"], "Quote");
-    assert_eq!(body["data"]["target_id"], fixture.deploy.id.as_str());
+    assert_eq!(body["data"]["target_id"], &*fixture.deploy.id);
     // Empty options, and the chat bar's analytics_location, as Discord's
     // client sends a context menu's command.
     assert_eq!(body["data"]["options"], json!([]));
@@ -812,12 +812,9 @@ async fn context_menu_commands_run_on_their_message_or_person() {
     })
     .await;
     let used = quoted.interaction.clone().unwrap();
-    assert_eq!(used.id, created);
+    assert_eq!(&*used.id, created);
     assert_eq!(used.command_type, Some(message::MESSAGE_COMMAND));
-    assert_eq!(
-        used.target_message_id.as_deref(),
-        Some(fixture.deploy.id.as_str())
-    );
+    assert_eq!(used.target_message_id.as_deref(), Some(&*fixture.deploy.id));
     assert!(quoted.content.starts_with("> Deploy"), "{}", quoted.content);
     // A type 23 answer replies to the message it ran on.
     match &quoted.reply {
@@ -842,7 +839,7 @@ async fn context_menu_commands_run_on_their_message_or_person() {
         _ => None,
     })
     .await;
-    assert_eq!(waved.content, format!("👋 <@{alice}>"));
+    assert_eq!(&*waved.content, format!("👋 <@{alice}>"));
     assert!(waved.reply.is_none());
     let used = waved.interaction.clone().unwrap();
     assert_eq!(used.command_type, Some(message::USER_COMMAND));
@@ -1010,7 +1007,7 @@ async fn a_form_of_choices_checkboxes_and_files_submits_them_in_one_request() {
     })
     .await;
     assert_eq!(
-        reply.content,
+        &*reply.content,
         "Noted: smooth; calls; before.png, after.png; false"
     );
 }

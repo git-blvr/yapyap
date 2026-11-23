@@ -930,7 +930,7 @@ impl App {
                     .tag(message.tag.as_ref())
                     .and_then(|tag| tag.badge.as_deref()),
             );
-            if self.pointed.message.as_deref() == Some(message.item.as_str()) {
+            if self.pointed.message.as_deref() == Some(message.item.as_ref()) {
                 want(decoration.map(looks::animated_url).as_deref());
             }
         }

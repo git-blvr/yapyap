@@ -574,8 +574,8 @@ pub fn listed_thread(
         .max(thread.id.parse().unwrap_or_default());
     let person = |user: &str| {
         Some(chat::ThreadPerson {
-            name: names.name(&server.id, user)?.to_owned(),
-            avatar: names.avatar(Some(&server.id), user),
+            name: names.name(&server.id, user)?.into(),
+            avatar: names.avatar(Some(&server.id), user).into(),
             color: server.color(names.roles(&server.id, user)),
         })
     };
@@ -627,7 +627,8 @@ pub fn recent_message(
         tag: server_tag(names.server_tag(&recent.author).cloned()),
         text: one_line(&chat::notification_text(
             &names.render(Some(server), &recent.content),
-        )),
+        ))
+        .into(),
     }
 }
 
@@ -640,8 +641,8 @@ fn thread_person(
     user: &str,
 ) -> chat::ThreadPerson {
     chat::ThreadPerson {
-        name: names.name(&server.id, user).unwrap_or("Unknown").to_owned(),
-        avatar: names.avatar(Some(&server.id), user),
+        name: names.name(&server.id, user).unwrap_or("Unknown").into(),
+        avatar: names.avatar(Some(&server.id), user).into(),
         color: server.color(names.roles(&server.id, user)),
     }
 }

@@ -70,7 +70,7 @@ pub fn open_person_menu(
     choices.sort_by_key(|choice| discord_rank(*choice));
     let name = state
         .person(user)
-        .map_or_else(|| "them".to_owned(), |person| person.name);
+        .map_or_else(|| "them".to_owned(), |person| person.name.into());
     let in_call = state
         .rooms
         .iter()

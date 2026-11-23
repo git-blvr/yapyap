@@ -476,7 +476,7 @@ fn card(post: &ForumPost, info: &ForumInfo, now: u64) -> Card {
             .map(|tag| (tag.name.clone(), tag.emoji.clone()))
             .collect(),
         more_tags: post.tags.len().saturating_sub(SHOWN_TAGS),
-        person: person.map(|person| (person.name.clone(), person.color)),
+        person: person.map(|person| (person.name.to_string(), person.color)),
         text: words.to_owned(),
         reaction,
         replies: thread.replies,

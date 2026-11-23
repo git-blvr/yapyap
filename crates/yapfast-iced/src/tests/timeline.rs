@@ -216,7 +216,7 @@ fn a_bubbles_long_words_wrap_inside_a_narrow_window() {
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                if message.author == "Riley" {
+                if message.author.as_ref() == "Riley" {
                     message.body = long.into();
                     message.formatted = false;
                 }
@@ -258,7 +258,7 @@ fn a_resolved_irc_rule_repeats_beside_every_message_line() {
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                if message.author == "Riley" {
+                if message.author.as_ref() == "Riley" {
                     message.body = body.into();
                     message.formatted = false;
                 }
@@ -710,7 +710,7 @@ fn react_to(app: &mut crate::app::App, body: &str, reactions: Vec<yapfast_core::
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                if message.body == body {
+                if message.body.as_ref() == body {
                     message.reactions = reactions.clone();
                 }
                 Arc::new(message)
@@ -733,7 +733,10 @@ fn a_click_on_a_reaction_adds_to_it_and_another_takes_it_back() {
     react_to(&mut app, text, vec![reaction(1, false)]);
     let reactions = |app: &crate::app::App| {
         let state = app.client.state();
-        let message = state.messages.iter().find(|message| message.body == text);
+        let message = state
+            .messages
+            .iter()
+            .find(|message| message.body.as_ref() == text);
         message.expect("the message").reactions.clone()
     };
     // The preview keeps its own messages, which nobody reacted to.
@@ -783,7 +786,10 @@ fn reacting_follows_what_the_channel_allows() {
     };
     let mine = |app: &crate::app::App| {
         let state = app.client.state();
-        let message = state.messages.iter().find(|message| message.body == text);
+        let message = state
+            .messages
+            .iter()
+            .find(|message| message.body.as_ref() == text);
         message.expect("the message").reactions[0].mine
     };
     allow(&mut app, Reacts::Any);
@@ -811,7 +817,7 @@ fn many_reactions_go_onto_more_lines() {
     let reactions = |count: usize| {
         (0..count)
             .map(|index| yapfast_core::chat::Reaction {
-                key: format!("reaction{index}"),
+                key: format!("reaction{index}").into(),
                 count: 1,
                 mine: false,
             })
@@ -888,8 +894,8 @@ fn a_right_click_on_a_link_adds_its_address_to_the_messages_menu() {
                 .iter()
                 .map(|message| {
                     let mut message = (**message).clone();
-                    if message.author == "Riley" {
-                        message.body = body.clone();
+                    if message.author.as_ref() == "Riley" {
+                        message.body = body.clone().into();
                         message.formatted = true;
                     }
                     Arc::new(message)
@@ -969,7 +975,7 @@ fn alter(
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                if message.body == body {
+                if message.body.as_ref() == body {
                     alter(&mut message);
                 }
                 Arc::new(message)
@@ -1083,14 +1089,14 @@ fn who_used_an_apps_command_opens_their_card_and_the_command_is_written_in_the_c
         .state()
         .messages
         .iter()
-        .find(|message| message.author == "Sam")
+        .find(|message| message.author.as_ref() == "Sam")
         .expect("Sam's message")
         .sender
-        .clone();
+        .to_string();
     alter(&mut app, text, |message| {
         message.used = Some(yapfast_core::chat::UsedCommand {
             user: "Sam Carter".into(),
-            sender: sam.clone(),
+            sender: sam.clone().into(),
             avatar: None,
             color: None,
             name: "/ping".into(),
@@ -1130,7 +1136,7 @@ fn hover_bar_acts(app: &crate::app::App, item: &str) -> Vec<Message> {
         .timeline
         .messages
         .iter()
-        .position(|message| message.item == item)
+        .position(|message| &*message.item == item)
         .expect("the row");
     let mut acts = Vec::new();
     // Buttons 32 across in the bar's 3 px padding.
@@ -1224,7 +1230,7 @@ fn apps_are_left_out_of_the_menu_of_an_answer_only_this_account_sees_or_still_to
         Arc::new(ChatMessage {
             item: item.into(),
             author: "Sam".into(),
-            body: format!("Message {item}"),
+            body: format!("Message {item}").into(),
             timestamp: 1,
             can_reply: true,
             flags,
@@ -1279,7 +1285,7 @@ fn the_hover_bar_stays_while_the_menu_it_opened_is_open() {
         app.timeline
             .messages
             .iter()
-            .position(|message| message.body == body)
+            .position(|message| message.body.as_ref() == body)
             .expect("the row")
     };
     let text = "Yep. I should be free after dinner.";
@@ -1338,7 +1344,7 @@ fn the_message_the_keys_are_on_has_a_marigold_edge() {
         let mut ui =
             iced_test::Simulator::with_size(iced::Settings::default(), app.shell.frame, app.view());
         let list = timeline_box(&mut ui);
-        let text = ui.find(body.as_str()).expect("the newest message");
+        let text = ui.find(body.as_ref()).expect("the newest message");
         (
             list.x + 1.0,
             text.visible_bounds().expect("in view").center_y(),
@@ -1526,10 +1532,10 @@ fn an_animated_custom_emoji_plays_in_text_and_its_reaction_with_one_player_for_i
     change(&mut app, |state| {
         state
             .pictures
-            .insert(emoji[0].picture.clone(), party.clone());
+            .insert(emoji[0].picture.to_string(), party.clone());
         state
             .pictures
-            .insert(emoji[1].picture.clone(), calm.clone());
+            .insert(emoji[1].picture.to_string(), calm.clone());
         state.messages = Arc::new(vec![Arc::new(message)]);
     });
     app.layout.prefs.animate = crate::layout::Animate::Always;
@@ -1562,9 +1568,9 @@ fn an_animated_custom_emoji_plays_in_text_and_its_reaction_with_one_player_for_i
         let mut messages = (*state.messages).clone();
         messages.extend((0..80).map(|index| {
             Arc::new(ChatMessage {
-                item: format!("more-{index}"),
+                item: format!("more-{index}").into(),
                 author: "Sam".into(),
-                body: format!("Message number {index}"),
+                body: format!("Message number {index}").into(),
                 ..Default::default()
             })
         }));
@@ -1633,10 +1639,10 @@ fn reply_quotes_render_static_and_animated_custom_emoji_and_fall_back_until_load
     change(&mut app, |state| {
         state
             .pictures
-            .insert(emoji[0].picture.clone(), calm.clone());
+            .insert(emoji[0].picture.to_string(), calm.clone());
         state
             .pictures
-            .insert(emoji[1].picture.clone(), party.clone());
+            .insert(emoji[1].picture.to_string(), party.clone());
     });
     assert!(
         !shows(&app, "hi :AMkiss: and :party:!"),

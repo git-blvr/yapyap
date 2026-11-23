@@ -6,7 +6,7 @@ use super::*;
 fn forwarding_sends_a_message_to_the_conversations_chosen() {
     let mut app = Application::default();
     app.dispatch(Action::Preview);
-    let item = app.state.messages[1].item.clone();
+    let item = app.state.messages[1].item.to_string();
     let body = app.state.messages[1].body.clone();
     app.dispatch(Action::StartForward(item));
     // Choosing again leaves it out; a voice channel can't be chosen.
@@ -24,7 +24,7 @@ fn forwarding_sends_a_message_to_the_conversations_chosen() {
         panic!("no forward");
     };
     assert!(forward.forwarded && forward.body == body);
-    assert_eq!(note.body, "for you");
+    assert_eq!(&*note.body, "for you");
     assert_eq!(app.state.notice.as_deref(), Some("Message forwarded."));
 
     let mut app = connected();

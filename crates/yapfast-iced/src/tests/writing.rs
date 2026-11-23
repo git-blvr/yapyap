@@ -60,7 +60,7 @@ fn shift_enter_breaks_the_line_and_enter_sends_both() {
         ui.tap_key(keyboard::Key::Named(key::Named::Enter));
     });
     let sent = app.client.state().messages.last().expect("sent").clone();
-    assert_eq!(sent.body, "one\ntwo");
+    assert_eq!(&*sent.body, "one\ntwo");
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn up_in_an_empty_composer_edits_ones_last_message_in_its_row() {
     let item = app.composer.editing.clone().expect("an edit started");
     let own = app.client.state().message(&item).expect("the message");
     assert!(own.own, "the last of this account's own");
-    let before = own.body.clone();
+    let before = own.body.to_string();
     assert_eq!(
         app.composer.edit.text(),
         before,
@@ -132,7 +132,7 @@ fn up_in_an_empty_composer_edits_ones_last_message_in_its_row() {
     });
     assert!(app.composer.editing.is_none(), "Enter saves and ends it");
     let saved = app.client.state().message(&item).expect("the message");
-    assert_eq!(saved.body, format!("{before} Now?"));
+    assert_eq!(&*saved.body, format!("{before} Now?"));
 }
 
 #[test]
@@ -241,7 +241,13 @@ fn alt_up_steps_into_the_messages_and_r_replies_to_the_one_stepped_on() {
         ui.click(Id::new(COMPOSER)).expect("the composer");
         chord(ui, key::Named::ArrowUp, keyboard::Modifiers::ALT);
     });
-    let newest = app.timeline.messages.last().expect("messages").item.clone();
+    let newest = app
+        .timeline
+        .messages
+        .last()
+        .expect("messages")
+        .item
+        .to_string();
     assert_eq!(
         app.keyed.as_ref(),
         Some(&newest),
@@ -264,7 +270,7 @@ fn alt_up_steps_into_the_messages_and_r_replies_to_the_one_stepped_on() {
         .clone();
     window_key(&mut app, keyboard::Key::Character("r".into()));
     match app.client.state().compose() {
-        Some(Compose::Reply { author: to, .. }) => assert_eq!(*to, author),
+        Some(Compose::Reply { author: to, .. }) => assert_eq!(*to, *author),
         _ => panic!("R didn't reply"),
     }
     assert!(app.keyed.is_none(), "replying goes back to the composer");
@@ -301,7 +307,7 @@ fn typing_with_nothing_focused_goes_to_the_composer() {
             .state()
             .messages
             .iter()
-            .all(|m| m.body != "Hello")
+            .all(|m| m.body.as_ref() != "Hello")
     );
 
     // The text goes on the end, and Backspace edits it there.
@@ -375,7 +381,7 @@ fn show_more_under_a_long_message_unfolds_it() {
             std::sync::Arc::new(vec![std::sync::Arc::new(yapfast_core::chat::ChatMessage {
                 item: "long".into(),
                 author: "Sam".into(),
-                body: lines.join("\n"),
+                body: lines.join("\n").into(),
                 formatted: true,
                 timestamp: 1,
                 ..Default::default()
@@ -474,7 +480,7 @@ fn the_composer_sends_on_enter() {
     });
     let messages = &app.client.state().messages;
     assert_eq!(messages.len(), before + 1);
-    assert_eq!(messages.last().expect("sent").body, "hello there");
+    assert_eq!(messages.last().expect("sent").body.as_ref(), "hello there");
     assert!(
         app.composer.draft.is_empty(),
         "the core empties the draft once sent"

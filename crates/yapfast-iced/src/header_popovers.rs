@@ -704,7 +704,7 @@ impl<'a> View<'a> {
                     crate::found::found_view(
                         self.cx,
                         found,
-                        Message::Popover(Event::Jump(found.message.item.clone())),
+                        Message::Popover(Event::Jump(found.message.item.to_string())),
                     )
                 });
                 scroll_view(column(cards).spacing(8).padding(12))
@@ -1139,7 +1139,7 @@ fn section(rows: &mut Vec<ThreadRow>, threads: &[ListedThread], heading: String,
 fn thread_row(thread: &ListedThread, now: u64) -> ThreadRow {
     let ago = ago(thread.active_ms, now);
     let (person, lead, words, time) = match (&thread.recent, &thread.owner, thread.archived) {
-        (Some(recent), _, false) => (Some(&recent.author), "", recent.text.as_str(), ago),
+        (Some(recent), _, false) => (Some(&recent.author), "", recent.text.as_ref(), ago),
         (None, _, false) => (None, "", "No recent messages", ago),
         (_, Some(owner), true) => (Some(owner), "Started by ", "", format!("Last active {ago}")),
         (_, None, true) => (None, "", "", format!("Last active {ago}")),
@@ -1150,7 +1150,13 @@ fn thread_row(thread: &ListedThread, now: u64) -> ThreadRow {
         name: thread.name.clone(),
         private: thread.private,
         archived: thread.archived,
-        person: person.map(|person| (person.name.clone(), person.avatar.clone(), person.color)),
+        person: person.map(|person| {
+            (
+                person.name.to_string(),
+                person.avatar.to_string(),
+                person.color,
+            )
+        }),
         lead,
         text: words.to_owned(),
         time,

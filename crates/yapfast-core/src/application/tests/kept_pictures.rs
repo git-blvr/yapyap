@@ -17,9 +17,9 @@ fn custom_emoji_are_requested_only_for_nearby_messages_and_stale_views_are_ignor
     let messages: Vec<_> = (0..100)
         .map(|index| ChatMessage {
             emoji: vec![chat::CustomEmoji {
-                picture: format!("emoji/{index}"),
+                picture: format!("emoji/{index}").into(),
                 text: ":test:".into(),
-                id: index.to_string(),
+                id: index.to_string().into(),
                 animated: false,
                 usable: true,
             }],
@@ -70,7 +70,7 @@ fn closed_channels_keep_metadata_without_pinning_previews() {
         .collect();
     let kept = shelved(&rows);
     assert_eq!(kept.len(), discord::KEPT_MESSAGES);
-    assert_eq!(kept[0].id, "e:$50", "the oldest went");
+    assert_eq!(&*kept[0].id, "e:$50", "the oldest went");
     let previews: Vec<bool> = kept
         .iter()
         .map(|message| message.attachments[0].preview.is_some())
@@ -389,7 +389,7 @@ fn avatars_stay_only_near_the_rows_on_screen() {
     // A busy channel followed for a while: each message someone else's.
     let messages: Vec<_> = (0..300)
         .map(|index| ChatMessage {
-            avatar: Some(format!("{index}.png")),
+            avatar: Some(format!("{index}.png").into()),
             ..message(&format!("e:${index}"), false)
         })
         .collect();
@@ -517,7 +517,7 @@ fn animation_pins_cover_viewport_emoji_not_every_loaded_message() {
         (0..100)
             .map(|index| {
                 Arc::new(ChatMessage {
-                    item: format!("m{index}"),
+                    item: format!("m{index}").into(),
                     emoji: vec![yapfast_core_emoji(&format!("emoji-{index}.gif"))],
                     ..Default::default()
                 })
@@ -532,7 +532,7 @@ fn animation_pins_cover_viewport_emoji_not_every_loaded_message() {
     app.visible_messages = vec!["m40".into(), "m42".into()];
     let pictures: Vec<&str> = app
         .visible_message_emoji()
-        .map(|emoji| emoji.picture.as_str())
+        .map(|emoji| &*emoji.picture)
         .collect();
     assert_eq!(pictures, ["emoji-40.gif", "emoji-41.gif", "emoji-42.gif"]);
     app.visible_messages = vec!["m90".into()];
@@ -554,7 +554,7 @@ fn animation_pins_cover_viewport_emoji_not_every_loaded_message() {
     app.visible_messages = vec!["reply-row".into()];
     let reply_pictures: Vec<&str> = app
         .visible_message_emoji()
-        .map(|emoji| emoji.picture.as_str())
+        .map(|emoji| &*emoji.picture)
         .collect();
     assert_eq!(reply_pictures, ["reply-emoji.png"]);
 }

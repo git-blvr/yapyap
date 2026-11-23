@@ -787,12 +787,13 @@ pub fn live(
             .typing
             .keys()
             .find(|room| {
-                discord::parse_room(room).is_some_and(|(_, channel)| channel == message.channel_id)
+                discord::parse_room(room)
+                    .is_some_and(|(_, channel)| channel == message.channel_id.as_ref())
             })
             .cloned();
         if let Some(room) = room
             && let Some(typing) = channels.typing.get_mut(&room)
-            && typing.remove(&message.author_id).is_some()
+            && typing.remove(message.author_id.as_ref()).is_some()
         {
             channels.typing_changed(&room, events);
         }

@@ -146,7 +146,7 @@ pub fn split_emoji<'a>(
     while let Some((at, found)) = emoji
         .iter()
         .filter(|each| !each.text.is_empty())
-        .filter_map(|each| rest.find(&each.text).map(|at| (at, each)))
+        .filter_map(|each| rest.find(&*each.text).map(|at| (at, each)))
         .min_by_key(|(at, _)| *at)
     {
         if at > 0 {
@@ -336,7 +336,7 @@ pub fn with_emoji(body: &mut Body, emoji: &[yapfast_core::chat::CustomEmoji]) {
                     },
                     InlinePart::Emoji(found) => Run {
                         text: EMOJI_MARK.to_string(),
-                        emoji: Some((found.picture.clone(), found.text.clone())),
+                        emoji: Some((found.picture.to_string(), found.text.to_string())),
                         ..run.clone()
                     },
                 });
@@ -368,7 +368,7 @@ pub fn link_emoji(
             {
                 run.link = custom
                     .iter()
-                    .find(|emoji| &emoji.text == name)
+                    .find(|emoji| *emoji.text == **name)
                     .map(|emoji| yapfast_core::emoji::card::custom_link(&emoji.id));
             }
             if run.code || run.hidden || run.link.is_some() || run.emoji.is_some() {
@@ -1034,7 +1034,7 @@ impl<'c> crate::ctx::Ctx<'c> {
                         pictures.push((index, picture));
                         spans.push(span(EMOJI_MARK_STR).size(emoji_side as f32).color(look.ink));
                     } else {
-                        spans.push(span(custom.text.as_str()).color(look.ink));
+                        spans.push(span(&*custom.text).color(look.ink));
                     }
                 }
             }
@@ -1201,7 +1201,7 @@ mod tests {
         };
         let pinned = Notice {
             kind: NoticeKind::Pinned(Some("m1".into())),
-            text: String::new(),
+            text: "".into(),
         };
         let body = notice(&message, &pinned, 0xffffff, 0x808080);
         let coloured: Vec<_> = body.parts[0]

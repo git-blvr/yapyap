@@ -26,7 +26,7 @@ pub struct ServerMarks {
     /// Muted in the account's notification settings.
     pub muted: bool,
     /// This account's roles there.
-    pub roles: Vec<String>,
+    pub roles: Vec<Box<str>>,
     /// This account's notification settings there, shared with the
     /// service's while unchanged.
     pub notifications: Arc<Notifications>,

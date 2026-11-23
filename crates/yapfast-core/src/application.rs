@@ -917,7 +917,7 @@ impl AppState {
         self.messages
             .iter()
             .chain(self.aside.iter().flat_map(|aside| aside.messages.iter()))
-            .find(|message| message.item == item)
+            .find(|message| &*message.item == item)
             .map(Arc::as_ref)
     }
 
@@ -1220,17 +1220,17 @@ impl AppState {
                     .iter()
                     .flat_map(|role| role.members.iter().flatten()),
             )
-            .find(|member| member.id == user);
+            .find(|member| &*member.id == user);
         if let Some(member) = known {
             return Some(member.clone());
         }
         let sender = |message: &&Arc<ChatMessage>| {
-            message.sender == user || discord::sender_user(&message.sender) == Some(user)
+            &*message.sender == user || discord::sender_user(&message.sender) == Some(user)
         };
         if let Some(message) = self.messages.iter().rev().find(sender) {
             return Some(ChatMember {
                 bot: false,
-                id: user.to_owned(),
+                id: user.into(),
                 name: message.author.clone(),
                 username: None,
                 role: Role::Member,
@@ -1262,11 +1262,11 @@ impl AppState {
         {
             return Some(ChatMember {
                 bot: false,
-                id: user.to_owned(),
-                name: person.name.clone(),
+                id: user.into(),
+                name: person.name.clone().into(),
                 username: None,
                 role: Role::Member,
-                avatar: person.avatar.clone(),
+                avatar: person.avatar.clone().map(Into::into),
                 decoration: None,
                 nameplate: None,
                 style: None,
@@ -1294,8 +1294,8 @@ impl AppState {
         let name = mentioned.or_else(|| user.starts_with('@').then(|| user.to_owned()))?;
         Some(ChatMember {
             bot: false,
-            id: user.to_owned(),
-            name,
+            id: user.into(),
+            name: name.into(),
             username: None,
             role: Role::Member,
             avatar: None,
@@ -1337,7 +1337,7 @@ impl AppState {
             .flat_map(|members| members.iter());
         let people = listed.chain(&self.found_members).map(|member| {
             (
-                member.id.as_str(),
+                &*member.id,
                 &member.name,
                 member.username.as_ref(),
                 &member.avatar,
@@ -1346,7 +1346,7 @@ impl AppState {
         });
         let authors = self.messages.iter().map(|message| {
             (
-                message.sender.as_str(),
+                &*message.sender,
                 &message.author,
                 None,
                 &message.avatar,
@@ -1359,10 +1359,10 @@ impl AppState {
                 continue;
             }
             candidates.push(Candidate {
-                name: name.clone(),
+                name: name.to_string(),
                 // Matrix names people by their user id.
                 username: if on_discord {
-                    username.cloned()
+                    username.clone().map(|name| name.to_string())
                 } else {
                     Some(id.to_owned())
                 },
@@ -1372,7 +1372,7 @@ impl AppState {
                     let name = name.replace(['[', ']'], "");
                     format!("[{name}](https://matrix.to/#/{id})")
                 },
-                avatar: avatar.clone(),
+                avatar: avatar.clone().map(|avatar| avatar.to_string()),
                 color,
                 group: false,
                 channel: false,
@@ -1577,7 +1577,7 @@ impl AppState {
                     .iter()
                     .flatten()
                     .flat_map(|members| members.iter())
-                    .map(|member| member.id.as_str()),
+                    .map(|member| &*member.id),
             )
             .collect()
     }
@@ -2686,8 +2686,10 @@ fn visible_range(
     visible: &[String],
 ) -> Option<std::ops::RangeInclusive<usize>> {
     let (first, last) = visible.first().zip(visible.last())?;
-    let first = timeline.iter().position(|message| &message.item == first)?;
-    let last = timeline.iter().position(|message| &message.item == last)?;
+    let first = timeline
+        .iter()
+        .position(|message| &*message.item == first)?;
+    let last = timeline.iter().position(|message| &*message.item == last)?;
     (first <= last).then_some(first..=last)
 }
 
@@ -2924,7 +2926,7 @@ fn pictures_on_screen<'a>(
                                 .into_iter()
                                 .flat_map(|frame| frame.iter().map(|layer| layer.src.as_str())),
                         )
-                        .chain(profile.bio_emoji.iter().map(|emoji| emoji.picture.as_str()))
+                        .chain(profile.bio_emoji.iter().map(|emoji| &*emoji.picture))
                         // Its layers are asked for when it first plays.
                         .chain(effect.into_iter().flat_map(move |effect| {
                             effect.still.as_deref().into_iter().chain(
@@ -2979,9 +2981,9 @@ fn pictures_on_screen<'a>(
                         .chain(tag_badge(cosmetics, &message.tag))
                 })
                 .chain(
-                    timeline.iter().flat_map(|message| {
-                        message.all_emoji().map(|emoji| emoji.picture.as_str())
-                    }),
+                    timeline
+                        .iter()
+                        .flat_map(|message| message.all_emoji().map(|emoji| &*emoji.picture)),
                 ),
         )
         .chain(
@@ -3248,7 +3250,7 @@ impl Application {
                 .emoji_sets()
                 .into_iter()
                 .flat_map(|set| set.emoji)
-                .map(|emoji| emoji.picture)
+                .map(|emoji| String::from(emoji.picture))
                 .filter(|url| !url.is_empty() && self.emoji_prefetched.insert(url.clone()))
                 .collect();
             if !urls.is_empty() {
@@ -3287,14 +3289,14 @@ impl Application {
                     .collect(),
             )
             .into_iter()
-            .map(|emoji| emoji.picture)
+            .map(|emoji| String::from(emoji.picture))
             .collect();
         let shown: HashSet<&str> = timeline
             .iter()
             .chain(aside)
             .flat_map(|message| message.all_emoji())
             .chain(self.state.topic.iter().flat_map(|topic| &topic.emoji))
-            .map(|emoji| emoji.picture.as_str())
+            .map(|emoji| &*emoji.picture)
             .chain(frequent.iter().map(String::as_str))
             .collect();
         let kept = |url: &String| {
@@ -5045,8 +5047,8 @@ impl Application {
                             .iter()
                             .filter(|emoji| emoji.available)
                             .map(|emoji| chat::CustomEmoji {
-                                text: format!(":{}:", emoji.name),
-                                id: emoji.id.clone(),
+                                text: format!(":{}:", emoji.name).into(),
+                                id: emoji.id.clone().into(),
                                 animated: emoji.animated,
                                 usable: if ours {
                                     nitro || !emoji.animated
@@ -5057,7 +5059,8 @@ impl Application {
                                     &emoji.id,
                                     emoji.animated,
                                     chat::EMOJI_PICTURE_SIZE,
-                                ),
+                                )
+                                .into(),
                             })
                             .collect(),
                     }
@@ -5121,15 +5124,16 @@ impl Application {
                         .map(move |emoji| (emoji, nitro || (ours && !emoji.animated)))
                 })
                 .map(|(emoji, usable)| chat::CustomEmoji {
-                    text: format!(":{}:", emoji.name),
-                    id: emoji.id.clone(),
+                    text: format!(":{}:", emoji.name).into(),
+                    id: emoji.id.clone().into(),
                     animated: emoji.animated,
                     usable,
                     picture: yapfast_discord::ready::custom_emoji(
                         &emoji.id,
                         emoji.animated,
                         chat::EMOJI_PICTURE_SIZE,
-                    ),
+                    )
+                    .into(),
                 })
                 .collect();
         }

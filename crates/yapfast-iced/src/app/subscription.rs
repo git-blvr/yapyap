@@ -79,14 +79,14 @@ impl App {
                 .map(|()| Message::ThemeDevTick),
             );
         }
-        if self.themes.trial().is_some() {
+        if self.themes.trial().is_some() && !self.shell.minimized {
             subscriptions
                 .push(iced::time::every(Duration::from_millis(250)).map(Message::ThemeTrialTick));
         }
         let ctx = self.ctx();
         // A theme's status line or top bar with the time looks at the clock
         // every ten seconds, as Slint's does.
-        if self.themes.chrome(&self.theme.id).is_some_and(shows_time) {
+        if !self.shell.minimized && self.themes.chrome(&self.theme.id).is_some_and(shows_time) {
             subscriptions
                 .push(iced::time::every(Duration::from_secs(10)).map(|_| Message::Nothing));
         }
@@ -109,7 +109,7 @@ impl App {
                     .map(|_| Message::Updates(crate::updates::Event::Due)),
             );
         }
-        if crate::updates::updates_installing(self) {
+        if !self.shell.minimized && crate::updates::updates_installing(self) {
             subscriptions.push(iced::time::every(Duration::from_millis(200)).map(|_| {
                 Message::Shell(crate::shell::Event::Heard(crate::desktop::Heard::Updates))
             }));
@@ -172,8 +172,8 @@ impl App {
                 _ => None,
             }));
         }
-        // With the window closed to the tray, nothing shows.
-        let shown = self.shell.window.is_some();
+        // With the window closed to the tray or minimized, nothing shows.
+        let shown = self.shell.window.is_some() && !self.shell.minimized;
         // Settings: the push-to-talk key while it's recorded.
         if self.recording_keybind() {
             subscriptions.push(crate::settings::keybinds::record_keys());

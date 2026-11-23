@@ -1810,7 +1810,12 @@ impl Api {
     }
 
     /// Sets a member's roles, all of them, as Manage Members' remove does.
-    pub async fn set_member_roles(&self, guild: &str, user: &str, roles: &[String]) -> Result<()> {
+    pub async fn set_member_roles(
+        &self,
+        guild: &str,
+        user: &str,
+        roles: &[Box<str>],
+    ) -> Result<()> {
         let path = format!("/guilds/{guild}/members/{user}");
         let body = json!({ "roles": roles });
         self.empty(with_json(self.request(Method::PATCH, &path), &body))

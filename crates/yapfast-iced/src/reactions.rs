@@ -140,7 +140,7 @@ impl<'a> View<'a> {
                 pills = pills.push(self.pill(
                     key == window.key,
                     emoji,
-                    Some(answer.text.as_str()),
+                    Some(answer.text.as_ref()),
                     answer.votes,
                     key,
                 ));
@@ -148,11 +148,11 @@ impl<'a> View<'a> {
         } else {
             for reaction in state.window_reactions() {
                 pills = pills.push(self.pill(
-                    reaction.key == window.key,
+                    *reaction.key == window.key,
                     Some(self.reaction_face(message, &reaction.key)),
                     None,
                     reaction.count,
-                    reaction.key.clone(),
+                    reaction.key.to_string(),
                 ));
             }
         }
@@ -338,7 +338,7 @@ impl<'a> View<'a> {
         key: &str,
     ) -> Element<'a, Message> {
         let custom = message
-            .and_then(|message| message.emoji.iter().find(|emoji| emoji.text == key))
+            .and_then(|message| message.emoji.iter().find(|emoji| *emoji.text == *key))
             .and_then(|emoji| self.cx.picture(&emoji.picture, 20, 20, false));
         if let Some(picture) = custom {
             return Pic::square(picture, 20.0).into();
@@ -365,7 +365,7 @@ pub fn pictures(state: &AppState) -> Vec<String> {
         .map(|person| person.avatar.clone())
         .collect();
     if let Some(message) = state.message(&window.item) {
-        urls.extend(message.emoji.iter().map(|emoji| emoji.picture.clone()));
+        urls.extend(message.emoji.iter().map(|emoji| emoji.picture.to_string()));
     }
     urls
 }

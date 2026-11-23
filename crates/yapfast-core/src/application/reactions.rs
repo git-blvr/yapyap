@@ -125,7 +125,7 @@ impl AppState {
         self.message(item)?
             .reactions
             .iter()
-            .find(|reaction| reaction.key == key)
+            .find(|reaction| &*reaction.key == key)
     }
 }
 
@@ -198,7 +198,7 @@ impl Application {
             self.state
                 .window_reactions()
                 .first()
-                .map(|reaction| reaction.key.clone())
+                .map(|reaction| reaction.key.to_string())
         });
         match key {
             Some(key) => self.show_reactors(key),

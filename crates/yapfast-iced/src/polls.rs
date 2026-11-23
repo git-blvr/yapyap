@@ -209,7 +209,7 @@ fn card<'a>(
     let total: usize = poll.answers.iter().map(|answer| answer.votes).sum();
     let most = poll.answers.iter().map(|answer| answer.votes).max();
     let mut card = column![
-        text(poll.question.as_str())
+        text(poll.question.as_ref())
             .size(17)
             .font(BOLD)
             .color(theme.text)
@@ -242,7 +242,7 @@ fn card<'a>(
             line = line.push(emoji);
         }
         line = line.push(
-            text(answer.text.as_str())
+            text(answer.text.as_ref())
                 .size(15)
                 .font(SEMIBOLD)
                 .color(theme.text)
@@ -304,9 +304,9 @@ fn card<'a>(
         // Once the results show, an answer shows who voted for it.
         let press = interactive.then(|| {
             Message::Poll(if results {
-                Event::Voters(item.clone(), Some(answer.id))
+                Event::Voters(item.to_string(), Some(answer.id))
             } else {
-                Event::Pick(item.clone(), answer.id)
+                Event::Pick(item.to_string(), answer.id)
             })
         });
         card = card.push(
@@ -520,7 +520,7 @@ fn poll_emoji<'a>(
         None => message
             .emoji
             .iter()
-            .find(|custom| custom.text == key)
+            .find(|custom| *custom.text == *key)
             .and_then(|custom| ctx.picture(&custom.picture, ANSWER_EMOJI, ANSWER_EMOJI, false)),
     };
     Some(match picture {

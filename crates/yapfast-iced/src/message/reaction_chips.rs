@@ -99,7 +99,7 @@ pub(super) fn reactions<'a>(
         let custom = message
             .emoji
             .iter()
-            .find(|emoji| emoji.text == reaction.key);
+            .find(|emoji| *emoji.text == *reaction.key);
         let playing = custom.and_then(|emoji| {
             ctx.playing_emoji(&emoji.picture, REACTION_EMOJI, &ctx.pictures.players)
         });
@@ -113,13 +113,13 @@ pub(super) fn reactions<'a>(
             // Slint's 16 px emoji, centred in the chip's height so a tall
             // emoji face never reaches its edge.
             if theme.packaged() {
-                text(reaction.key.as_str())
+                text(reaction.key.as_ref())
                     .size(CHIP_EMOJI)
                     .line_height(iced::widget::text::LineHeight::Absolute(CHIP_HEIGHT.into()))
                     .color(theme.text)
                     .into()
             } else {
-                text(reaction.key.as_str()).color(theme.text).into()
+                text(reaction.key.as_ref()).color(theme.text).into()
             }
         };
         let count_words = reaction.count.to_string();
@@ -162,20 +162,20 @@ pub(super) fn reactions<'a>(
         if clicks {
             chip = chip
                 .on_press(Message::Menu(crate::menus::Event::React(
-                    message.item.clone(),
-                    reaction.key.clone(),
+                    message.item.to_string(),
+                    reaction.key.to_string(),
                 )))
                 .interaction(iced::mouse::Interaction::Pointer);
         }
         let chip = chip
             .on_enter(Message::Timeline(crate::timeline::Event::PointReaction(
-                message.item.clone(),
-                reaction.key.clone(),
+                message.item.to_string(),
+                reaction.key.to_string(),
                 true,
             )))
             .on_exit(Message::Timeline(crate::timeline::Event::PointReaction(
-                message.item.clone(),
-                reaction.key.clone(),
+                message.item.to_string(),
+                reaction.key.to_string(),
                 false,
             )));
         let words = reaction_tip(ctx, &message.item, &reaction.key)
@@ -220,7 +220,7 @@ fn add_chip<'a>(
     let at = super::hover_bar::bar_menu_at(ctx, index);
     let press = Message::Menu(crate::menus::Event::Act(
         crate::menus::MenuAct::AddReaction,
-        message.item.clone(),
+        message.item.to_string(),
         at,
     ));
     iced::widget::button(

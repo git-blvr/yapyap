@@ -136,7 +136,7 @@ pub(super) struct Tracker {
     /// The calls in DMs and group DMs, by channel id, with whom each rings.
     calls: HashMap<String, Vec<String>>,
     /// This account's roles, by server id.
-    my_roles: HashMap<String, Vec<String>>,
+    my_roles: HashMap<String, Vec<Box<str>>>,
     pub(super) unreads: Unreads,
     /// DMs and group DMs.
     private: Vec<Private>,
@@ -1209,13 +1209,13 @@ impl Tracker {
         if !self
             .private
             .iter()
-            .any(|private| private.id == *channel && private.request)
+            .any(|private| private.id.as_str() == channel.as_ref() && private.request)
         {
             return false;
         }
         if self
             .previews
-            .get(channel)
+            .get(channel.as_ref())
             .is_some_and(|known| known.id.parse::<u64>().ok() > message.id.parse().ok())
         {
             return false;
@@ -1226,11 +1226,11 @@ impl Tracker {
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .render(None, &message.content);
         let preview = Preview {
-            id: message.id.clone(),
+            id: message.id.to_string(),
             text,
             files: message.attachments.len(),
         };
-        self.previews.insert(channel.clone(), preview.clone()) != Some(preview)
+        self.previews.insert(channel.to_string(), preview.clone()) != Some(preview)
     }
 
     /// A message request's preview was deleted: it's asked for again.
@@ -1896,7 +1896,7 @@ impl Tracker {
         {
             let roles = roles
                 .iter()
-                .filter_map(|role| role.as_str().map(str::to_owned))
+                .filter_map(|role| role.as_str().map(Into::into))
                 .collect();
             self.my_roles.insert(guild.to_owned(), roles);
         }
@@ -2265,7 +2265,7 @@ mod tests {
             ]}],
         });
         let mut tracker = Tracker::from_ready("1".into(), &ready, Default::default());
-        let mine = ["20".to_owned()];
+        let mine = ["20".into()];
         assert!(tracker.servers[0].role_icon(&mine).is_some());
         tracker.apply(
             &Event::GuildUpdate,

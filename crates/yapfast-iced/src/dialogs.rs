@@ -84,8 +84,8 @@ pub fn delete_view(focus: bool, cx: Ctx<'_>) -> Option<Element<'_, Message>> {
         body = body.push(
             container(
                 column![
-                    text(message.author.clone()).font(MEDIUM).color(theme.text),
-                    text(message.body.clone())
+                    text(&*message.author).font(MEDIUM).color(theme.text),
+                    text(&*message.body)
                         .color(theme.text)
                         .wrapping(text::Wrapping::WordOrGlyph),
                 ]

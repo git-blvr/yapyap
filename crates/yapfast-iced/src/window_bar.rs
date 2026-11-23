@@ -291,16 +291,14 @@ pub fn update(app: &mut App, event: Event) -> Task<Message> {
             app.bar_drag.armed = None;
             id.map_or_else(Task::none, window::toggle_maximize)
         }
-        Event::Minimize => {
-            app.shell.minimized = true;
-            id.map_or_else(Task::none, |id| window::minimize(id, true))
-        }
-        Event::Minimized(minimized) => {
-            if let Some(minimized) = minimized {
-                app.shell.minimized = minimized;
-            }
-            Task::none()
-        }
+        Event::Minimize => Task::batch([
+            app.minimized_changed(true),
+            id.map_or_else(Task::none, |id| window::minimize(id, true)),
+        ]),
+        Event::Minimized(minimized) => match minimized {
+            Some(minimized) => app.minimized_changed(minimized),
+            None => Task::none(),
+        },
         // As the desktop's close button: to the tray, or quit.
         Event::Close => app.close_requested(),
         Event::Resize(direction) => {

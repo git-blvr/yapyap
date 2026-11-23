@@ -452,7 +452,7 @@ pub fn open_menu(app: &mut App, index: usize, at: Point) -> Task<Message> {
         return Task::none();
     }
     app.win.menu = Some(Menu {
-        item: Some(message.item.clone()),
+        item: Some(message.item.to_string()),
         apps_due,
         reactions: if reacts {
             app.client.app.frequent_reactions(QUICK)
@@ -752,7 +752,7 @@ pub fn act(
                 .client
                 .state()
                 .message(&item)
-                .map(|message| message.body.clone())
+                .map(|message| message.body.to_string())
                 .unwrap_or_default();
             Task::batch([iced::clipboard::write(body), focus])
         }
@@ -804,7 +804,7 @@ pub fn act(
                 .state()
                 .message(&item)
                 .and_then(|message| message.thread.as_ref())
-                .map(|thread| thread.room.clone());
+                .map(|thread| thread.room.to_string());
             match room {
                 Some(room) => crate::thread::update(app, crate::thread::Event::Open(room)),
                 None => focus,

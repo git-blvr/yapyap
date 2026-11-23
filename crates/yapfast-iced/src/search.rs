@@ -873,7 +873,7 @@ pub fn view<'a>(searching: &'a Searching, cx: Ctx<'a>) -> Option<Element<'a, Mes
         }
         let jump = Message::Search(Event::Jump(
             result.room.clone(),
-            result.found.message.item.clone(),
+            result.found.message.item.to_string(),
         ));
         entry = entry.push(crate::found::found_view(cx, &result.found, jump));
         list = list.push(entry);

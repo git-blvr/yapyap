@@ -289,7 +289,7 @@ async fn picks_the_stickers_of_the_default_packs() {
         _ => None,
     })
     .await;
-    assert_eq!(sent.content, "");
+    assert_eq!(&*sent.content, "");
     assert_eq!(sent.attachments[0].shown, Shown::Sticker);
     assert!(sent.attachments[0].url.contains(&wumpus.id));
     // One Discord doesn't have isn't sent.

@@ -57,7 +57,7 @@ impl Application {
             let without = roles
                 .iter()
                 .map(|role| {
-                    let rest: Vec<String> =
+                    let rest: Vec<Box<str>> =
                         roles.iter().filter(|held| *held != role).cloned().collect();
                     (role.clone(), known.server_permissions(me, &rest))
                 })

@@ -78,9 +78,12 @@ pub(super) fn command(
                 .into_iter()
                 .map(|user| ChatMember {
                     bot: false,
-                    name: discord.name(guild, &user).unwrap_or_else(|| user.clone()),
-                    username: discord.username(&user),
-                    avatar: Some(discord.avatar(Some(guild), &user)),
+                    name: discord
+                        .name(guild, &user)
+                        .unwrap_or_else(|| user.clone())
+                        .into(),
+                    username: discord.username(&user).map(Into::into),
+                    avatar: Some(discord.avatar(Some(guild), &user).into()),
                     decoration: None,
                     nameplate: None,
                     style: None,
@@ -94,7 +97,7 @@ pub(super) fn command(
                     timed_out_until: None,
                     tag: None,
                     boosting_since: None,
-                    id: user,
+                    id: user.into(),
                     group_icon: None,
                     role_icon: None,
                 })
@@ -141,9 +144,12 @@ pub(super) fn command(
                     .into_iter()
                     .map(|user| ChatMember {
                         bot: false,
-                        name: discord.name(&guild, &user).unwrap_or_else(|| user.clone()),
-                        username: discord.username(&user),
-                        avatar: Some(discord.avatar(Some(&guild), &user)),
+                        name: discord
+                            .name(&guild, &user)
+                            .unwrap_or_else(|| user.clone())
+                            .into(),
+                        username: discord.username(&user).map(Into::into),
+                        avatar: Some(discord.avatar(Some(&guild), &user).into()),
                         decoration: None,
                         nameplate: None,
                         style: None,
@@ -157,7 +163,7 @@ pub(super) fn command(
                         timed_out_until: None,
                         tag: None,
                         boosting_since: None,
-                        id: user,
+                        id: user.into(),
                         group_icon: None,
                         role_icon: None,
                     })

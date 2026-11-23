@@ -430,7 +430,10 @@ fn preview_and_voice_switching_need_no_backend_and_voice_survives_navigation() {
     app.dispatch(Action::SetDraft("Local message".into()));
     assert!(app.dispatch(Action::Send).is_empty());
     assert_eq!(app.state.messages.len(), 6);
-    assert_eq!(app.state.messages.last().unwrap().body, "Local message");
+    assert_eq!(
+        app.state.messages.last().unwrap().body.as_ref(),
+        "Local message"
+    );
     assert!(app.state.draft().is_empty());
     // The preview's calls sound as real ones do.
     assert_eq!(

@@ -20,7 +20,8 @@ pub const PINS_LINK: &str = "yapfast:pins";
 pub fn follow_link(app: &mut App, link: &str, at: iced::Point) -> Task<Message> {
     if let Some((item, index)) = yapfast_core::spoiler::target(link) {
         app.timeline.revealed.insert(format!("{item}/{index}"));
-        let found = |messages: &Messages| messages.iter().position(|message| message.item == item);
+        let found =
+            |messages: &Messages| messages.iter().position(|message| &*message.item == item);
         if let Some(row) = found(&app.timeline.messages)
             && let Some(body) = crate::timeline::body_for(app, row)
         {

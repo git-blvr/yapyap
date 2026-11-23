@@ -34,7 +34,7 @@ impl ServerMarks {
     pub(super) fn new(
         server: &Server,
         me: &str,
-        roles: &[String],
+        roles: &[Box<str>],
         unreads: &Unreads,
         now: u64,
     ) -> Self {
@@ -155,6 +155,6 @@ mod tests {
         unread.channels[1].unread = true;
         let read = unread.unread(&server, &unreads, 0).unwrap();
         assert_eq!(read, marks);
-        assert_eq!(read.roles, ["20"]);
+        assert_eq!(read.roles, ["20".into()]);
     }
 }

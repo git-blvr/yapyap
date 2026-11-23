@@ -1426,7 +1426,7 @@ fn a_theme_switch_lays_the_timelines_text_out_in_the_new_inks() {
             time: "12:01".into(),
             notice: Some(Notice {
                 kind: NoticeKind::Pinned(Some("m1".into())),
-                text: String::new(),
+                text: "".into(),
             }),
             ..Default::default()
         })]);

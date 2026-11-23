@@ -157,7 +157,7 @@ fn votes_go_to_discord_and_the_window_lists_who_voted() {
     let mut app = connected();
     let answer = |id, votes, mine| PollAnswer {
         id,
-        text: format!("Answer {id}"),
+        text: format!("Answer {id}").into(),
         votes,
         mine,
         ..Default::default()

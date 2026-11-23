@@ -208,21 +208,21 @@ impl Cards {
                 role.members
                     .iter()
                     .flatten()
-                    .filter_map(|member| member.avatar.clone()),
+                    .filter_map(|member| member.avatar.clone().map(String::from)),
             );
         }
         if let Some(server) = card_server(self, profiles) {
-            urls.extend(server.icon.clone());
-            urls.extend(server.banner.clone());
+            urls.extend(server.icon.clone().map(String::from));
+            urls.extend(server.banner.clone().map(String::from));
         }
         if let Some((expression, _)) = &self.expression
             && let Some(card) = expression_card(app, expression)
         {
             // A sticker's picture is its message's, which the timeline has.
             if matches!(expression, Expression::Emoji(_)) {
-                urls.extend(card.picture);
+                urls.extend(card.picture.map(String::from));
             }
-            urls.extend(card.server.and_then(|server| server.icon));
+            urls.extend(card.server.and_then(|server| server.icon).map(String::from));
         }
         urls
     }
@@ -489,7 +489,7 @@ impl<'a> View<'a> {
                         ROLE_AVATAR / 2.0,
                         1.0
                     ),
-                    elide(member.name.as_str())
+                    elide(member.name.as_ref())
                         .size(15)
                         .font(MEDIUM)
                         .color(member.color.map_or(theme.text, crate::style::hex)),
@@ -501,7 +501,7 @@ impl<'a> View<'a> {
                         .padding([0, 6])
                         .height(ROLE_ROW)
                         .width(Length::Fill)
-                        .on_press(Message::Info(Event::RoleMember(member.id.clone())))
+                        .on_press(Message::Info(Event::RoleMember(member.id.to_string())))
                         .style(crate::controls::lit_style(None, hover, 6.0)),
                 );
             }

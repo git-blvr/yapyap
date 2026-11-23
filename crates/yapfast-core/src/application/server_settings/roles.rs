@@ -457,10 +457,10 @@ pub struct RoleRules {
     /// Its highest role's position.
     pub top: i64,
     /// Its roles, and what they give it.
-    pub roles: Vec<String>,
+    pub roles: Vec<Box<str>>,
     pub held: u64,
     /// What it would hold without each of its roles, by id.
-    pub without: Vec<(String, u64)>,
+    pub without: Vec<(Box<str>, u64)>,
 }
 
 impl RoleRules {
@@ -470,7 +470,7 @@ impl RoleRules {
             return None;
         }
         Some(
-            if self.roles.iter().any(|mine| mine == role) && self.top == position {
+            if self.roles.iter().any(|mine| mine.as_ref() == role) && self.top == position {
                 RoleLock::Highest
             } else {
                 RoleLock::Higher
@@ -490,7 +490,7 @@ impl RoleRules {
             && self
                 .without
                 .iter()
-                .any(|(mine, held)| mine == role && held & bit == 0);
+                .any(|(mine, held)| mine.as_ref() == role && held & bit == 0);
         lose.then_some(PermissionLock::WouldLose)
     }
 }

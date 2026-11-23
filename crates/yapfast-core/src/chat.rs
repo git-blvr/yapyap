@@ -1116,16 +1116,16 @@ pub struct ProfileRole {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChatMember {
-    pub id: String,
+    pub id: Box<str>,
     /// A Discord application's account, which the list marks APP.
     pub bot: bool,
     /// The display name, or the user ID without one, as on the member's messages.
-    pub name: String,
+    pub name: Box<str>,
     /// Their Discord username, such as `ann`.
-    pub username: Option<String>,
+    pub username: Option<Box<str>>,
     pub role: Role,
     /// The address of their avatar; see [`DiscordCommand::Pictures`].
-    pub avatar: Option<String>,
+    pub avatar: Option<Box<str>>,
     /// The address of the decoration they wear around it, and their
     /// nameplate, which a member list draws behind their row.
     pub decoration: Option<Arc<str>>,
@@ -1134,7 +1134,7 @@ pub struct ChatMember {
     pub style: Option<Arc<NameStyle>>,
     /// The heading Discord lists them under, with its size, such as
     /// `Online — 12`. Matrix members are grouped by `role` instead.
-    pub group: Option<String>,
+    pub group: Option<Box<str>>,
     /// The address of the picture of the role their group is, and of the
     /// highest of their roles that has one, which a member list draws by
     /// the group's heading and by their name.
@@ -1146,11 +1146,11 @@ pub struct ChatMember {
     pub color: Option<u32>,
     /// Their custom status, else what they're doing, from Discord, and
     /// what they're doing in full.
-    pub activity: Option<String>,
+    pub activity: Option<Box<str>>,
     pub activities: Activities,
     /// Their Discord roles' ids, as far as they're known, shared with what
     /// learned them; empty for Matrix. See [`crate::application::Application::server_roles`].
-    pub roles: Arc<[String]>,
+    pub roles: Arc<[Box<str>]>,
     /// When their Discord timeout ends, in Unix milliseconds, while they're
     /// timed out as far as Yapfast knows.
     pub timed_out_until: Option<u64>,
@@ -1218,16 +1218,16 @@ pub enum Delivery {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Reply {
-    pub author: String,
+    pub author: Box<str>,
     /// The address of the author's avatar, where the network gives one; see
     /// [`DiscordCommand::Pictures`].
-    pub avatar: Option<String>,
-    pub body: String,
+    pub avatar: Option<Box<str>>,
+    pub body: Box<str>,
     /// The Discord custom emoji in `body`, which show as pictures once their
     /// pictures arrive.
     pub emoji: Vec<CustomEmoji>,
     /// The original message's item, to jump to it; none when it's gone.
-    pub item: Option<String>,
+    pub item: Option<Box<str>>,
     /// The author's role colour, where the network gives one.
     pub color: Option<u32>,
     /// The author's server tag, which Discord's quote shows after the name.
@@ -1240,20 +1240,20 @@ pub struct Reply {
 pub struct UsedCommand {
     /// Who used it, by name in the conversation, and Matrix-style user id,
     /// which opens their card.
-    pub user: String,
-    pub sender: String,
+    pub user: Box<str>,
+    pub sender: Box<str>,
     /// The address of their avatar; see [`DiscordCommand::Pictures`].
-    pub avatar: Option<String>,
+    pub avatar: Option<Box<str>>,
     /// Their role colour, where the network gives one.
     pub color: Option<u32>,
     /// The command as the line names it: `/name sub` for a slash command,
     /// its name for one used from a person's or message's menu.
-    pub name: String,
+    pub name: Box<str>,
     /// A slash command, which clicking puts in the composer for its picker
     /// to find: its name without the `/` or its subcommands.
-    pub slash: Option<String>,
+    pub slash: Option<Box<str>>,
     /// The person a command from their menu was used on, by name.
-    pub target: Option<String>,
+    pub target: Option<Box<str>>,
 }
 
 /// A Discord thread a message leads to: the one started from it, or that
@@ -1261,8 +1261,8 @@ pub struct UsedCommand {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ThreadLink {
     /// The thread's room id, which [`crate::application::Action::Open`] opens.
-    pub room: String,
-    pub name: String,
+    pub room: Box<str>,
+    pub name: Box<str>,
     /// Its messages after the first, when Yapfast knows.
     pub messages: Option<u64>,
     pub archived: bool,
@@ -1345,8 +1345,8 @@ pub struct ForumTag {
 /// Someone a thread's row names.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ThreadPerson {
-    pub name: String,
-    pub avatar: String,
+    pub name: Box<str>,
+    pub avatar: Box<str>,
     /// Their role colour, when they have one.
     pub color: Option<u32>,
 }
@@ -1359,7 +1359,7 @@ pub struct RecentMessage {
     /// after the name.
     pub tag: Option<ServerTag>,
     /// Its text on one line, mentions and custom emoji as text.
-    pub text: String,
+    pub text: Box<str>,
 }
 
 /// A Discord custom emoji, which shows as `text` until its picture arrives.
@@ -1367,8 +1367,8 @@ pub struct RecentMessage {
 pub struct CustomEmoji {
     /// Its name between colons, such as `:pog:`, as message bodies and
     /// reaction keys show it.
-    pub text: String,
-    pub id: String,
+    pub text: Box<str>,
+    pub id: Box<str>,
     pub animated: bool,
     /// Whether this account may use it in the room it is looking at: Nitro
     /// reaches every server's, and animated ones; without it, only the room's
@@ -1376,7 +1376,7 @@ pub struct CustomEmoji {
     /// Discord's does.
     pub usable: bool,
     /// The address of its picture; see [`DiscordCommand::Pictures`].
-    pub picture: String,
+    pub picture: Box<str>,
 }
 
 /// A message a search found, and the room it's in.
@@ -1474,7 +1474,7 @@ pub fn wire_emoji(text: &str, usable: &[CustomEmoji]) -> String {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Reaction {
-    pub key: String,
+    pub key: Box<str>,
     pub count: usize,
     pub mine: bool,
 }
@@ -1750,7 +1750,7 @@ impl Picture {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Attachment {
-    pub name: String,
+    pub name: Box<str>,
     pub size: Option<u64>,
     pub image: bool,
     /// The full image's width and height, when the sender said.
@@ -1771,7 +1771,7 @@ pub struct Attachment {
     /// attachments have one.
     pub url: Option<Arc<str>>,
     /// Its alt text, which a screen reader reads in place of the picture.
-    pub description: Option<String>,
+    pub description: Option<Box<str>>,
 }
 
 /// What [`Command::Video`] tells the video playing.
@@ -1888,24 +1888,24 @@ pub struct Embed {
     /// The RGB colour of the bar down its side.
     pub color: Option<u32>,
     /// The site, such as "YouTube".
-    pub provider: String,
-    pub author: String,
-    pub title: String,
+    pub provider: Box<str>,
+    pub author: Box<str>,
+    pub title: Box<str>,
     /// Where the title leads.
-    pub url: String,
+    pub url: Box<str>,
     /// Markdown.
-    pub description: String,
+    pub description: Box<str>,
     pub fields: Vec<EmbedField>,
-    pub footer: String,
+    pub footer: Box<str>,
     /// Its large picture is a video's poster, which opens `url`.
     pub video: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EmbedField {
-    pub name: String,
+    pub name: Box<str>,
     /// Markdown.
-    pub value: String,
+    pub value: Box<str>,
     /// Shares a row with the inline fields beside it.
     pub inline: bool,
 }
@@ -1924,7 +1924,7 @@ pub struct Card {
 pub enum CardRow {
     /// Markdown, and what a section shows beside it.
     Text {
-        text: String,
+        text: Box<str>,
         beside: Option<Beside>,
     },
     /// The attachments placed [`Placement::Component`] with this slot: a
@@ -1938,12 +1938,12 @@ pub enum CardRow {
     Buttons(Vec<CardButton>),
     /// A menu, by what it shows before it's opened.
     Select {
-        text: String,
+        text: Box<str>,
         disabled: bool,
         kind: u64,
-        custom_id: String,
+        custom_id: Box<str>,
         options: Vec<CardOption>,
-        defaults: Vec<String>,
+        defaults: Vec<Box<str>>,
         channel_types: Vec<u64>,
         min_values: u64,
         max_values: u64,
@@ -1965,27 +1965,27 @@ pub enum Beside {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CardButton {
     /// Its emoji, a custom one by `:name:`, then its label.
-    pub label: String,
+    pub label: Box<str>,
     pub style: ButtonStyle,
     /// Where a link button leads.
-    pub url: Option<String>,
+    pub url: Option<Box<str>>,
     /// What its app knows it by, when using it asks the app.
-    pub custom_id: Option<String>,
+    pub custom_id: Option<Box<str>>,
     /// What a premium button offers in its app's store.
-    pub sku_id: Option<String>,
+    pub sku_id: Option<Box<str>>,
     pub disabled: bool,
 }
 
 /// An option of a select menu in an app's message.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CardOption {
-    pub label: String,
-    pub value: String,
-    pub description: Option<String>,
+    pub label: Box<str>,
+    pub value: Box<str>,
+    pub description: Option<Box<str>>,
     pub default: bool,
     /// Shown before its label: the emoji itself, or a custom one by
     /// `:name:`.
-    pub emoji: Option<String>,
+    pub emoji: Option<Box<str>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -2001,24 +2001,24 @@ pub enum ButtonStyle {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ChatMessage {
     /// Stable row key across the local echo and its remote event.
-    pub id: String,
+    pub id: Box<str>,
     /// The timeline item that actions apply to: `e:` event ID or `t:` transaction ID.
-    pub item: String,
+    pub item: Box<str>,
     /// The Discord app that owns interactive components, when one is known.
-    pub application_id: Option<String>,
+    pub application_id: Option<Box<str>>,
     /// The Discord interaction it answers, by its id.
-    pub interaction: Option<String>,
+    pub interaction: Option<Box<str>>,
     /// The command whose answer it is, which shows above it as Discord's
     /// "{user} used /{name}", when it doesn't quote a message instead.
     pub used: Option<UsedCommand>,
     pub flags: u64,
-    pub author: String,
+    pub author: Box<str>,
     /// The author's Matrix user ID, which tells apart people sharing a display name.
-    pub sender: String,
+    pub sender: Box<str>,
     /// Its text hides what's between `||` until clicked, as Discord's does.
     pub spoilers: bool,
     /// The address of the author's avatar; see [`DiscordCommand::Pictures`].
-    pub avatar: Option<String>,
+    pub avatar: Option<Box<str>>,
     /// The address of the decoration the author wears around it, and how
     /// they draw their name.
     pub decoration: Option<Arc<str>>,
@@ -2035,10 +2035,10 @@ pub struct ChatMessage {
     /// The author joined the server in the last week, which Discord marks
     /// by their name as a new member.
     pub new_member: bool,
-    pub body: String,
+    pub body: Box<str>,
     /// The body is Markdown source whose sender also sent formatting.
     pub formatted: bool,
-    pub time: String,
+    pub time: Box<str>,
     /// Seconds since the Unix epoch; zero when unknown.
     pub timestamp: u64,
     pub own: bool,
@@ -2097,13 +2097,13 @@ pub struct ChatMessage {
 pub struct Notice {
     pub kind: NoticeKind,
     /// What follows the author's name, such as "joined the server."
-    pub text: String,
+    pub text: Box<str>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NoticeKind {
     /// Its author pinned a message, by item, which it links to.
-    Pinned(Option<String>),
+    Pinned(Option<Box<str>>),
     Joined,
     ThreadStarted,
     Call,
@@ -2113,7 +2113,7 @@ pub enum NoticeKind {
 /// A Discord poll as a message shows it.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Poll {
-    pub question: String,
+    pub question: Box<str>,
     pub answers: Vec<PollAnswer>,
     /// When it closes, in seconds since the Unix epoch.
     pub expiry: Option<u64>,
@@ -2128,10 +2128,10 @@ pub struct Poll {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PollAnswer {
     pub id: u64,
-    pub text: String,
+    pub text: Box<str>,
     /// Its emoji, as a reaction's key: the emoji itself, or `:name:` for a
     /// custom one, among the message's [`ChatMessage::emoji`].
-    pub emoji: Option<String>,
+    pub emoji: Option<Box<str>>,
     pub votes: usize,
     pub mine: bool,
 }
@@ -2195,7 +2195,7 @@ pub fn first_new(messages: &[Arc<ChatMessage>], seen: Option<&str>) -> usize {
         }),
         None => messages
             .iter()
-            .position(|message| message.item == seen)
+            .position(|message| &*message.item == seen)
             .map(|at| at + 1),
     }
     .unwrap_or(messages.len())
@@ -3781,7 +3781,7 @@ pub enum OverwriteChange {
 pub struct ListedMember {
     /// Their name here, username and avatar.
     pub person: RoleMember,
-    pub roles: Vec<String>,
+    pub roles: Vec<Box<str>>,
     /// When they joined the server, in Unix milliseconds.
     pub joined: u64,
     /// Until when they're timed out, in Unix milliseconds; 0 for not.
@@ -3857,7 +3857,7 @@ pub struct ServerInvite {
     /// When it expires, in Unix seconds; none for never.
     pub expires: Option<u64>,
     /// The roles it gives, by id.
-    pub roles: Vec<String>,
+    pub roles: Vec<Box<str>>,
     /// New members skip join applications.
     pub bypass: bool,
 }
@@ -5227,7 +5227,7 @@ pub fn reply_snippet(markdown: &str, mut emoji: Vec<CustomEmoji>) -> (String, Ve
         text.push_str(part);
         prose.push_str(if code { "\0" } else { part });
     });
-    emoji.retain(|each| prose.contains(&each.text));
+    emoji.retain(|each| prose.contains(&*each.text));
     (text, emoji)
 }
 
@@ -5791,10 +5791,10 @@ mod tests {
     fn sends_custom_emoji_in_discords_form() {
         let emoji = |name: &str, id: &str, animated| CustomEmoji {
             usable: true,
-            text: format!(":{name}:"),
+            text: format!(":{name}:").into(),
             id: id.into(),
             animated,
-            picture: String::new(),
+            picture: Default::default(),
         };
         let usable = [
             emoji("pog", "5", false),
@@ -5867,5 +5867,50 @@ mod tests {
         );
         assert_eq!(plain_snippet("plain"), "plain");
         assert_eq!(plain_snippet(""), "");
+    }
+
+    /// Retained messages and members are the bulk of what's held: their
+    /// fields box strings (16 bytes, exactly fitted) rather than keeping
+    /// `String`'s capacity word (24 bytes, often over). These sizes are what
+    /// they were then; growing them is a memory regression.
+    #[test]
+    fn retained_structs_stay_slim() {
+        use std::mem::size_of;
+        assert!(
+            size_of::<ChatMessage>() <= 928,
+            "{}",
+            size_of::<ChatMessage>()
+        );
+        assert!(
+            size_of::<ChatMember>() <= 304,
+            "{}",
+            size_of::<ChatMember>()
+        );
+        assert!(size_of::<Reply>() <= 136, "{}", size_of::<Reply>());
+        assert!(
+            size_of::<Attachment>() <= 208,
+            "{}",
+            size_of::<Attachment>()
+        );
+        assert!(size_of::<Reaction>() <= 32, "{}", size_of::<Reaction>());
+        assert!(size_of::<Notice>() <= 40, "{}", size_of::<Notice>());
+        assert!(size_of::<Poll>() <= 64, "{}", size_of::<Poll>());
+        assert!(size_of::<Embed>() <= 136, "{}", size_of::<Embed>());
+        assert!(
+            size_of::<ThreadLink>() <= 160,
+            "{}",
+            size_of::<ThreadLink>()
+        );
+        assert!(
+            size_of::<UsedCommand>() <= 104,
+            "{}",
+            size_of::<UsedCommand>()
+        );
+        assert!(size_of::<Card>() <= 40, "{}", size_of::<Card>());
+        assert!(
+            size_of::<ListedMember>() <= 176,
+            "{}",
+            size_of::<ListedMember>()
+        );
     }
 }

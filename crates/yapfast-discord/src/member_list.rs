@@ -50,7 +50,7 @@ pub struct ListedMember {
     /// What they're doing, in full, as their profile shows it.
     pub activities: Activities,
     /// Their roles' ids, shared with [`Names`]; empty outside a server.
-    pub roles: Arc<[String]>,
+    pub roles: Arc<[Box<str>]>,
     /// When their timeout ends, in Unix milliseconds, while they're timed
     /// out as far as Yapfast knows.
     pub timed_out_until: Option<u64>,
@@ -99,7 +99,7 @@ impl Presence {
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 struct Person {
     /// Shared with [`Names`] while it knows them.
-    roles: Arc<[String]>,
+    roles: Arc<[Box<str>]>,
     presence: Presence,
     activity: Option<String>,
     /// Not saved: a game is over by the next start, and the line above
@@ -475,10 +475,7 @@ mod tests {
     #[test]
     fn takes_the_custom_emoji_off_a_status() {
         let (emoji, words) = status_emoji("<:pog:5> back soon").expect("an emoji");
-        assert_eq!(
-            (emoji.name.as_str(), emoji.id.as_str(), words),
-            ("pog", "5", "back soon")
-        );
+        assert_eq!((&*emoji.name, &*emoji.id, words), ("pog", "5", "back soon"));
         let (emoji, words) = status_emoji("<a:party:6>").expect("an emoji");
         assert!(emoji.animated);
         assert_eq!(words, "");

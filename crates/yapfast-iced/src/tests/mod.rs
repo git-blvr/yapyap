@@ -313,9 +313,9 @@ fn long_history(app: &mut App, count: usize) -> Vec<String> {
                 let item = format!("long-{index}");
                 items.push(item.clone());
                 Arc::new(yapfast_core::chat::ChatMessage {
-                    id: item.clone(),
-                    item,
-                    body: format!("Message number {index}"),
+                    id: item.clone().into(),
+                    item: item.into(),
+                    body: format!("Message number {index}").into(),
                     timestamp: template.timestamp + index as u64 * 600,
                     reply: None,
                     own: false,
@@ -355,9 +355,9 @@ fn numbered(app: &App, from: usize, to: usize) -> Vec<Arc<yapfast_core::chat::Ch
         .map(|index| {
             let item = format!("long-{index}");
             Arc::new(yapfast_core::chat::ChatMessage {
-                id: item.clone(),
-                item,
-                body: format!("Message number {index}"),
+                id: item.clone().into(),
+                item: item.into(),
+                body: format!("Message number {index}").into(),
                 timestamp: template.timestamp + 600,
                 ..(**template).clone()
             })

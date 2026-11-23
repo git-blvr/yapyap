@@ -88,12 +88,12 @@ impl crate::timeline::Lanes<'_> {
                         .aside?
                         .messages
                         .iter()
-                        .position(|message| message.item == sel.item)?
+                        .position(|message| &*message.item == sel.item)?
             } else {
                 self.timeline
                     .messages
                     .iter()
-                    .position(|message| message.item == sel.item)?
+                    .position(|message| &*message.item == sel.item)?
             };
             Some(Mark {
                 row,
@@ -152,8 +152,8 @@ fn copied_message(
             continue;
         }
         let (text, names): (String, Vec<&str>) = match part {
-            0 => (message.author.clone(), Vec::new()),
-            1 => (message.time.clone(), Vec::new()),
+            0 => (message.author.to_string(), Vec::new()),
+            1 => (message.time.to_string(), Vec::new()),
             _ => {
                 let part = &look.body.parts[usize::from(part - FIRST_PART)];
                 (part.plain(), part.emoji_names().collect())
@@ -238,7 +238,7 @@ mod tests {
             .collect();
         let message = ChatMessage {
             author: "Sam".into(),
-            body: body.join("\n"),
+            body: body.join("\n").into(),
             formatted: true,
             ..Default::default()
         };

@@ -66,7 +66,7 @@ pub fn hover_bar<'a>(ctx: crate::ctx::Ctx<'a>, index: usize) -> Option<Element<'
     };
     let quick = ctx.modifiers.shift() && !opened_from(ctx, item);
     let deletes = quick && message.can_delete && writes;
-    let act = |act: MenuAct| Message::Menu(crate::menus::Event::Act(act, item.clone(), at));
+    let act = |act: MenuAct| Message::Menu(crate::menus::Event::Act(act, item.to_string(), at));
     let hover_wash = theme.token_colour("actions-hover", theme.wash(0.1));
     let button = |icon: Icon, label: &'static str, message: Message| {
         ctx.look
@@ -107,7 +107,10 @@ pub fn hover_bar<'a>(ctx: crate::ctx::Ctx<'a>, index: usize) -> Option<Element<'
                     20,
                     BAR_BUTTON,
                     (None, hover_wash),
-                    Message::Menu(crate::menus::Event::React(item.clone(), key.clone())),
+                    Message::Menu(crate::menus::Event::React(
+                        item.to_string(),
+                        key.to_string(),
+                    )),
                 ));
             }
             buttons = buttons.push(

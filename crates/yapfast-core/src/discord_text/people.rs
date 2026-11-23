@@ -155,7 +155,7 @@ fn invite(invite: Invite) -> ServerInvite {
         uses: invite.uses,
         max_uses: invite.max_uses,
         expires: invite.expires,
-        roles: invite.roles,
+        roles: invite.roles.into_iter().map(Into::into).collect(),
         bypass: invite.bypass,
     }
 }
@@ -263,7 +263,7 @@ fn listed(member: FoundMember, now: u64) -> ListedMember {
             name,
             avatar: user.avatar,
         },
-        roles: member.roles,
+        roles: member.roles.into_iter().map(Into::into).collect(),
         joined: member.joined_at,
         timed_out_until: member.timed_out_until,
         unusual_dms: member.unusual_dms_until + UNUSUAL_DMS_MS >= now

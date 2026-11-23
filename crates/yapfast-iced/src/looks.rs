@@ -203,17 +203,18 @@ pub fn member_lines(
                     old_members
                         .iter()
                         .enumerate()
-                        .map(|(index, member)| (member.id.as_str(), index))
+                        .map(|(index, member)| (member.id.as_ref(), index))
                         .collect()
                 })
-                .get(member.id.as_str())?
+                .get(member.id.as_ref())?
         };
         (old_members.get(at)? == member).then(|| old_looks[at].clone())
     };
     let mut lines = Vec::with_capacity(members.len() + 4);
     for (index, member) in members.iter().enumerate() {
         let heading = if let Some(group) = &member.group {
-            (index == 0 || members[index - 1].group.as_ref() != Some(group)).then(|| group.clone())
+            (index == 0 || members[index - 1].group.as_ref() != Some(group))
+                .then(|| group.to_string())
         } else if index == 0 || members[index - 1].role != member.role {
             let count = members
                 .iter()
@@ -245,9 +246,9 @@ pub fn member_lines(
         let line = subline.name.as_deref().or(member.activity.as_deref());
         let (emoji, words) = line.map_or((None, ""), yapfast_core::discord::status_parts);
         lines.push(MemberLine::Member(Arc::new(MemberLook {
-            id: member.id.clone(),
-            name: member.name.clone(),
-            avatar: member.avatar.clone(),
+            id: member.id.to_string(),
+            name: member.name.to_string(),
+            avatar: member.avatar.as_deref().map(String::from),
             decoration: cosmetics
                 .decoration(member.decoration.as_deref())
                 .map(Arc::from),
@@ -271,7 +272,7 @@ pub fn member_lines(
                 .tag(member.tag.as_ref())
                 .map(|tag| (tag.text.clone(), tag.badge.clone())),
             bot: member.bot,
-            owner: owner == Some(member.id.as_str()),
+            owner: owner == Some(member.id.as_ref()),
             timed_out: member.timed_out_until.is_some_and(|until| until > now),
             boosting: member.boosting_since.map(|since| {
                 format!(
@@ -316,8 +317,8 @@ pub fn post_author(state: &AppState) -> Option<&str> {
     state
         .messages
         .iter()
-        .find(|message| message.item == item)
-        .map(|message| message.sender.as_str())
+        .find(|message| &*message.item == item)
+        .map(|message| message.sender.as_ref())
 }
 
 /// The address of the animated picture of a decoration's or nameplate's

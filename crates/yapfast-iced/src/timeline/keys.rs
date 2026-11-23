@@ -33,7 +33,7 @@ fn keyed_index(app: &App) -> Option<usize> {
     app.timeline
         .messages
         .iter()
-        .position(|message| message.item == *item)
+        .position(|message| &*message.item == *item)
 }
 
 fn step_to(app: &mut App, index: usize) -> Task<Message> {
@@ -41,7 +41,7 @@ fn step_to(app: &mut App, index: usize) -> Task<Message> {
     let Some(message) = app.timeline.messages.get(index) else {
         return Task::none();
     };
-    app.keyed = Some(message.item.clone());
+    app.keyed = Some(message.item.to_string());
     app.timeline.keyed_press = app.pressed.get();
     app.pointed.message = Some(crate::timeline::row_item(app, index));
     crate::edit::reveal_row(app, index)
@@ -98,7 +98,7 @@ pub fn browse_key(
     if message.deleted || message.delivery != Delivery::default() {
         return None;
     }
-    let item = message.item.clone();
+    let item = message.item.to_string();
     let at = crate::message::hover_bar::bar_menu_at(app.ctx(), index);
     let writes = crate::composer::composer_look(app.ctx()).enabled;
     let letter = match key.as_ref() {
@@ -133,7 +133,9 @@ pub fn browse_key(
             act(app, MenuAct::Delete)
         }
         // Copying leaves the keys where they are.
-        (_, "c") if !message.body.is_empty() => Some(iced::clipboard::write(message.body.clone())),
+        (_, "c") if !message.body.is_empty() => {
+            Some(iced::clipboard::write(message.body.to_string()))
+        }
         // Ctrl+F is the search's.
         (_, "f")
             if message.can_forward

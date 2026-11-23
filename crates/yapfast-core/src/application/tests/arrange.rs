@@ -53,7 +53,7 @@ fn server(me: &str, roles: &[&str]) -> Application {
     }))
     .unwrap();
     let marks = yapfast_discord::marked::ServerMarks {
-        roles: roles.iter().map(|role| (*role).to_owned()).collect(),
+        roles: roles.iter().map(|role| (*role).into()).collect(),
         ..Default::default()
     };
     let mut app = Application::default();

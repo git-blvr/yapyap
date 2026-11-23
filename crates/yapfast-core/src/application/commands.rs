@@ -287,7 +287,7 @@ impl Application {
             .state
             .messages
             .iter()
-            .find(|message| message.item == target);
+            .find(|message| &*message.item == target);
         let (kind, target) = match message {
             Some(message) => {
                 const EPHEMERAL: u64 = 1 << 6;

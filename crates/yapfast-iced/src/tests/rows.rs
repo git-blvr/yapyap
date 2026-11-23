@@ -60,7 +60,7 @@ fn a_right_click_opens_the_menu_of_its_message_after_the_rows_moved() {
 fn a_click_on_an_author_opens_that_messages_author_after_the_rows_moved() {
     let (mut app, _folder) = preview();
     long_history(&mut app, 80);
-    let sender = app.timeline.messages[78].sender.clone();
+    let sender = app.timeline.messages[78].sender.to_string();
     let clicked = sent(&app, |ui| {
         // The author's name over the message clicked.
         let body = ui.find("Message number 78").expect("the message");
@@ -87,8 +87,8 @@ fn a_click_on_a_member_opens_their_card_after_the_list_moved() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let right = app.window.width - 300.0;
     let clicked = sent(&app, |ui| {
@@ -268,8 +268,8 @@ fn a_rows_menu_and_its_authors_card_open_by_its_message_under_any_head() {
                 id: item.into(),
                 item: item.into(),
                 author: author.into(),
-                sender: format!("{author}-id"),
-                body: format!("Said by {author}"),
+                sender: format!("{author}-id").into(),
+                body: format!("Said by {author}").into(),
                 timestamp,
                 can_react: true,
                 can_reply: true,

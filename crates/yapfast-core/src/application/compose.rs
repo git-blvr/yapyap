@@ -15,7 +15,7 @@ impl Application {
             .iter()
             .rev()
             .find(|message| message.own && message.can_edit && !message.deleted)
-            .map(|message| message.item.clone());
+            .map(|message| message.item.to_string());
         match last {
             Some(item) => self.dispatch(Action::Edit(item)),
             None => vec![],
@@ -104,7 +104,7 @@ impl Application {
         let (body, emoji) = chat::reply_snippet(&message.body, message.emoji.clone());
         let reply = Compose::Reply {
             item,
-            author: message.author.clone(),
+            author: message.author.to_string(),
             body,
             emoji,
             ping: self.state.reply_ping,
@@ -182,7 +182,7 @@ impl Application {
         }
         if self.state.preview {
             self.update_sample(&edit.room, &edit.item, |message| {
-                message.body.clone_from(&body);
+                message.body = body.clone().into();
                 message.formatted = has_markdown(&body);
                 message.edited = true;
             });
@@ -355,12 +355,12 @@ impl Application {
             let item = uuid::Uuid::new_v4().to_string();
             let messages = self.samples.entry(id.clone()).or_default();
             messages.push(Arc::new(ChatMessage {
-                id: item.clone(),
-                item,
+                id: item.clone().into(),
+                item: item.into(),
                 author: "You".into(),
                 sender: "You".into(),
                 formatted: has_markdown(&body),
-                body,
+                body: body.into(),
                 time: "Local preview".into(),
                 own: true,
                 reply: match compose {
@@ -371,7 +371,7 @@ impl Application {
                         emoji,
                         ..
                     }) => Some(Reply {
-                        author,
+                        author: author.into(),
                         avatar: self
                             .state
                             .message(&item)
@@ -384,9 +384,9 @@ impl Application {
                             .state
                             .message(&item)
                             .and_then(|original| original.tag.clone()),
-                        body,
+                        body: body.into(),
                         emoji,
-                        item: Some(item),
+                        item: Some(item.into()),
                     }),
                     _ => None,
                 },

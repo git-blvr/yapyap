@@ -402,7 +402,7 @@ pub fn voice_card<'a>(
 ) -> Element<'a, Message> {
     let theme = ctx.look.theme;
     let state = ctx.state;
-    let item = &message.item;
+    let item = &*message.item;
     let playback = state
         .voice_message
         .as_ref()
@@ -429,7 +429,7 @@ pub fn voice_card<'a>(
         .padding(0)
         .width(BUTTON)
         .height(BUTTON)
-        .on_press_maybe(enabled.then(|| Message::Voice(Event::Toggle(item.clone()))))
+        .on_press_maybe(enabled.then(|| Message::Voice(Event::Toggle(item.to_string()))))
         .style(move |_, status| {
             let opacity = match (enabled, lights(status)) {
                 (false, _) => 0.5,
@@ -464,7 +464,7 @@ pub fn voice_card<'a>(
     }
     let wave = container(wave).height(PILL).align_y(Alignment::Center);
     let wave: Element<'a, Message> = if enabled {
-        let (seek, released) = (item.clone(), item.clone());
+        let (seek, released) = (item.to_string(), item.to_string());
         Scrub::new(wave, move |at| {
             Message::Voice(Event::Seek(seek.clone(), at))
         })
@@ -506,8 +506,8 @@ pub fn voice_card<'a>(
         .playback
         .voice_volume
         .as_ref()
-        .is_some_and(|(open, count)| open == item && *count > 0);
-    if ctx.pointed.voice.as_ref() == Some(item)
+        .is_some_and(|(open, count)| *open == *item && *count > 0);
+    if ctx.pointed.voice.as_deref() == Some(item)
         || volume_open
         || ctx.layout.prefs.animate == crate::layout::Animate::Never
     {
@@ -559,8 +559,8 @@ pub fn voice_card<'a>(
             slot.into()
         };
         let mute = mouse_area(slot)
-            .on_enter(Message::Voice(Event::VolumeHover(item.clone(), true)))
-            .on_exit(Message::Voice(Event::VolumeHover(item.clone(), false)));
+            .on_enter(Message::Voice(Event::VolumeHover(item.to_string(), true)))
+            .on_exit(Message::Voice(Event::VolumeHover(item.to_string(), false)));
         card = card.push(row![speed, mute].spacing(4).align_y(Alignment::Center));
     }
     let ground = theme.sidebar;
@@ -574,8 +574,8 @@ pub fn voice_card<'a>(
         .style(move |_| rounded(ground, PILL / 2.0));
     container(
         mouse_area(pill)
-            .on_enter(Message::Voice(Event::Point(item.clone(), true)))
-            .on_exit(Message::Voice(Event::Point(item.clone(), false))),
+            .on_enter(Message::Voice(Event::Point(item.to_string(), true)))
+            .on_exit(Message::Voice(Event::Point(item.to_string(), false))),
     )
     .padding(Padding::ZERO.top(4))
     .into()
@@ -639,7 +639,7 @@ pub fn clip_cell<'a>(
     let playing = state
         .video
         .as_ref()
-        .filter(|video| video.item == message.item && video.index == index);
+        .filter(|video| video.item == *message.item && video.index == index);
     let failed = playing.and_then(|video| video.error.as_deref());
     let pointed = ctx.pointed.clip.as_deref() == Some(key.as_str());
     let source = format!("clip:{key}");
@@ -701,7 +701,7 @@ pub fn clip_cell<'a>(
     // their own.
     let press = match playing {
         Some(_) if failed.is_none() => Message::Clip(Clip::Toggle),
-        _ => Message::Clip(Clip::Play(message.item.clone(), index, size)),
+        _ => Message::Clip(Clip::Play(message.item.to_string(), index, size)),
     };
     mouse_area(layers)
         .on_press(press)

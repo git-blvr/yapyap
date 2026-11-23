@@ -111,25 +111,25 @@ pub struct Page {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Message {
-    pub id: String,
-    pub channel_id: String,
+    pub id: Box<str>,
+    pub channel_id: Box<str>,
     #[serde(default)]
-    pub application_id: Option<String>,
+    pub application_id: Option<Box<str>>,
     #[serde(default)]
     pub flags: u64,
     /// The client's nonce, on messages this account sent.
-    pub nonce: Option<String>,
-    pub author_id: String,
+    pub nonce: Option<Box<str>>,
+    pub author_id: Box<str>,
     /// The author's name from the message itself, used until a better one is known.
-    pub author: String,
+    pub author: Box<str>,
     /// The author is a bot or webhook, which Discord tags.
     #[serde(default)]
     pub bot: bool,
     /// Discord Markdown with mentions still as `<@id>`.
-    pub content: String,
+    pub content: Box<str>,
     /// Shown after the author's name instead of content, for joins, pins
     /// and calls.
-    pub system: Option<String>,
+    pub system: Option<Box<str>>,
     /// What such a notice tells of, which its icon and links show.
     #[serde(default)]
     pub notice: Option<Notice>,
@@ -148,11 +148,11 @@ pub struct Message {
     /// Who it mentions, by user id, including the author of the message it
     /// replies to when the reply pings them.
     #[serde(default)]
-    pub mentions: Vec<String>,
+    pub mentions: Vec<Box<str>>,
     /// The roles it mentions, by id, as Discord counts them: only those the
     /// author may mention.
     #[serde(default)]
-    pub mention_roles: Vec<String>,
+    pub mention_roles: Vec<Box<str>>,
     /// It mentions @everyone or @here, and its author may.
     #[serde(default)]
     pub mention_everyone: bool,
@@ -177,7 +177,7 @@ pub struct Message {
     /// Who ran the command it answers, for an app installed on their
     /// account, who may delete it as their own.
     #[serde(default)]
-    pub invoker: Option<String>,
+    pub invoker: Option<Box<str>>,
     /// The interaction it answers: whose, and the command they used.
     #[serde(default)]
     pub interaction: Option<Interaction>,
@@ -202,22 +202,22 @@ pub struct Message {
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Interaction {
     /// The id INTERACTION_CREATE gave it.
-    pub id: String,
+    pub id: Box<str>,
     /// Who used it, by id and the name the interaction carries.
-    pub user_id: String,
-    pub user: String,
+    pub user_id: Box<str>,
+    pub user: Box<str>,
     /// The command used, with its subcommands' names, as `ban user`: for a
     /// form's answer, the command that opened the form. None for a button
     /// or a menu.
-    pub name: Option<String>,
+    pub name: Option<Box<str>>,
     /// [`CHAT_INPUT`], [`USER_COMMAND`] or [`MESSAGE_COMMAND`].
     pub command_type: Option<u64>,
     /// The person a user command was used on, by id and name.
-    pub target_user: Option<(String, String)>,
+    pub target_user: Option<(Box<str>, Box<str>)>,
     /// The message a message command was used on.
-    pub target_message_id: Option<String>,
+    pub target_message_id: Option<Box<str>>,
     /// The message whose button or menu was used.
-    pub interacted_message_id: Option<String>,
+    pub interacted_message_id: Option<Box<str>>,
 }
 
 /// An application command's `command_type`: a slash command.
@@ -245,13 +245,11 @@ impl Interaction {
             _ => metadata,
         };
         let user = &metadata["user"];
-        let id = |value: &Value| value.as_str().map(str::to_owned);
+        let id = |value: &Value| -> Option<Box<str>> { value.as_str().map(Into::into) };
         Some(Self {
-            id: metadata["id"].as_str()?.to_owned(),
+            id: metadata["id"].as_str()?.into(),
             user_id: id(&user["id"]).unwrap_or_default(),
-            user: ready::display_name(user)
-                .unwrap_or("Discord user")
-                .to_owned(),
+            user: ready::display_name(user).unwrap_or("Discord user").into(),
             name: (used["type"].as_u64() != Some(COMPONENT_INTERACTION))
                 .then(|| id(&used["name"]))
                 .flatten()
@@ -260,7 +258,7 @@ impl Interaction {
             command_type: used["command_type"].as_u64(),
             target_user: id(&used["target_user"]["id"]).map(|target| {
                 let name = ready::display_name(&used["target_user"]).unwrap_or("Discord user");
-                (target, name.to_owned())
+                (target, name.into())
             }),
             target_message_id: id(&used["target_message_id"]),
             interacted_message_id: id(&used["interacted_message_id"]),
@@ -308,7 +306,7 @@ impl VoiceMessage {
 /// came, with those that came live since.
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Poll {
-    pub question: String,
+    pub question: Box<str>,
     pub answers: Vec<PollAnswer>,
     /// When it closes, in Unix milliseconds.
     pub expiry: Option<u64>,
@@ -324,10 +322,10 @@ pub struct Poll {
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PollAnswer {
     pub id: u64,
-    pub text: String,
+    pub text: Box<str>,
     /// Its emoji as a reaction's key: the emoji itself, or `:name:` for a
     /// custom one, whose id follows.
-    pub emoji: Option<(String, Option<String>)>,
+    pub emoji: Option<(Box<str>, Option<Box<str>>)>,
     pub votes: usize,
     /// This account voted for it.
     pub me: bool,
@@ -350,14 +348,15 @@ impl Poll {
                 let emoji = &media["emoji"];
                 Some(PollAnswer {
                     id,
-                    text: media["text"].as_str().unwrap_or_default().to_owned(),
+                    text: media["text"].as_str().unwrap_or_default().into(),
                     emoji: match (emoji["id"].as_str(), emoji["name"].as_str()) {
                         // Discord's client sends a custom one without its name.
                         (Some(id), name) => Some((
-                            format!(":{}:", name.filter(|name| !name.is_empty()).unwrap_or(id)),
-                            Some(id.to_owned()),
+                            format!(":{}:", name.filter(|name| !name.is_empty()).unwrap_or(id))
+                                .into(),
+                            Some(id.into()),
                         )),
-                        (None, Some(name)) if !name.is_empty() => Some((name.to_owned(), None)),
+                        (None, Some(name)) if !name.is_empty() => Some((name.into(), None)),
                         _ => None,
                     },
                     votes: count.and_then(|count| count["count"].as_u64()).unwrap_or(0) as usize,
@@ -366,7 +365,7 @@ impl Poll {
             })
             .collect();
         Some(Self {
-            question: poll["question"]["text"].as_str()?.to_owned(),
+            question: poll["question"]["text"].as_str()?.into(),
             answers,
             expiry: poll["expiry"].as_str().and_then(iso_ms),
             multiselect: poll["allow_multiselect"].as_bool().unwrap_or(false),
@@ -385,8 +384,8 @@ impl Poll {
 /// Yapfast knows it now, if it does, is newer.
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ThreadLink {
-    pub id: String,
-    pub name: String,
+    pub id: Box<str>,
+    pub name: Box<str>,
     /// Its messages after the first.
     pub messages: u64,
     pub archived: bool,
@@ -396,8 +395,8 @@ impl ThreadLink {
     /// A thread's channel object.
     fn of(thread: &Value) -> Option<Self> {
         Some(Self {
-            id: thread["id"].as_str()?.to_owned(),
-            name: thread["name"].as_str().unwrap_or_default().to_owned(),
+            id: thread["id"].as_str()?.into(),
+            name: thread["name"].as_str().unwrap_or_default().into(),
             messages: thread["message_count"].as_u64().unwrap_or_default(),
             archived: thread["thread_metadata"]["archived"]
                 .as_bool()
@@ -410,10 +409,10 @@ impl ThreadLink {
 pub enum Reply {
     Message {
         /// The original message's id.
-        id: String,
-        author_id: String,
-        author: String,
-        content: String,
+        id: Box<str>,
+        author_id: Box<str>,
+        author: Box<str>,
+        content: Box<str>,
     },
     Deleted,
     /// Discord didn't look the original up, as in the MESSAGE_UPDATE that
@@ -421,7 +420,7 @@ pub enum Reply {
     Unknown {
         /// The original's id, in the reply's channel, empty when Discord
         /// didn't name it.
-        id: String,
+        id: Box<str>,
     },
 }
 
@@ -449,24 +448,24 @@ impl Reply {
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Attachment {
-    pub name: String,
+    pub name: Box<str>,
     pub size: Option<u64>,
     pub url: Arc<str>,
     pub image: bool,
     /// The image's width and height.
     pub dimensions: Option<(u32, u32)>,
     /// The image scaled down by Discord's media proxy, for previews.
-    pub preview_url: Option<String>,
+    pub preview_url: Option<Box<str>>,
     /// The image scaled down to fit the viewer, by the same proxy.
-    pub view_url: Option<String>,
+    pub view_url: Option<Box<str>>,
     /// A still picture to show when the preview, a video, can't be shown:
     /// a Tenor or Giphy GIF's first frame.
     #[serde(default)]
-    pub still_url: Option<String>,
+    pub still_url: Option<Box<str>>,
     /// A video that plays in place of the picture, which is its poster: an
     /// attached video, or a link's through the media proxy.
     #[serde(default)]
-    pub video_url: Option<String>,
+    pub video_url: Option<Box<str>>,
     /// The address a GIF or moving picture linked on its own was sent as,
     /// which Discord's client keeps it among the favourites by: a GIF's page,
     /// or the picture's own address.
@@ -480,7 +479,7 @@ pub struct Attachment {
     pub spoiler: bool,
     /// Its alt text, which a screen reader reads in place of the picture.
     #[serde(default)]
-    pub description: Option<String>,
+    pub description: Option<Box<str>>,
 }
 
 /// Where a message's picture shows.
@@ -505,9 +504,9 @@ pub enum Shown {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Reaction {
     /// What Yapfast shows: the emoji itself, or `:name:` for a custom one.
-    pub key: String,
+    pub key: Box<str>,
     /// What Discord's API takes: the emoji itself, or `name:id`.
-    pub emoji: String,
+    pub emoji: Box<str>,
     pub count: usize,
     pub me: bool,
 }
@@ -528,10 +527,10 @@ impl Message {
     /// on them, as it does in Discord, which tints every reply that pings
     /// you and none that doesn't.
     pub fn names_me(&self, me: &str, marks: Option<&ServerMarks>) -> bool {
-        if self.author_id == me {
+        if self.author_id.as_ref() == me {
             return false;
         }
-        let named = self.mentions.iter().any(|user| user == me);
+        let named = self.mentions.iter().any(|user| user.as_ref() == me);
         let everyone = self.mention_everyone && marks.is_some_and(|marks| !marks.suppress_everyone);
         let role = marks.is_some_and(|marks| {
             !marks.suppress_roles
@@ -545,8 +544,8 @@ impl Message {
 
     /// Whether it replies to a message of `me`'s, not being its own.
     pub fn replies_to(&self, me: &str) -> bool {
-        self.author_id != me
-            && matches!(&self.reply, Some(Reply::Message { author_id, .. }) if author_id == me)
+        self.author_id.as_ref() != me
+            && matches!(&self.reply, Some(Reply::Message { author_id, .. }) if author_id.as_ref() == me)
     }
 
     /// Seconds since the Unix epoch, from the message's snowflake.
@@ -566,7 +565,7 @@ impl Message {
         match self
             .reactions
             .iter()
-            .position(|reaction| reaction.key == key)
+            .position(|reaction| reaction.key.as_ref() == key)
         {
             Some(index) => {
                 let reaction = &mut self.reactions[index];
@@ -585,8 +584,8 @@ impl Message {
                 }
             }
             None if added => self.reactions.push(Reaction {
-                key: key.to_owned(),
-                emoji: emoji.to_owned(),
+                key: key.into(),
+                emoji: emoji.into(),
                 count: 1,
                 me,
             }),
@@ -696,7 +695,7 @@ pub(crate) fn written(kind: u64) -> bool {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Notice {
     /// Its author pinned a message, by id, which the notice links to.
-    Pinned(Option<String>),
+    Pinned(Option<Box<str>>),
     Joined,
     ThreadStarted,
     Call,
@@ -805,11 +804,13 @@ pub fn parse(value: &Value) -> Option<Message> {
                     .flatten(),
                 preview_url: (image || video)
                     .then(|| scaled_url(attachment, PREVIEW_WIDTH, PREVIEW_HEIGHT, image))
-                    .flatten(),
+                    .flatten()
+                    .map(Into::into),
                 view_url: image
                     .then(|| scaled_url(attachment, VIEW_WIDTH, VIEW_HEIGHT, true))
-                    .flatten(),
-                video_url: video.then(|| url.to_string()),
+                    .flatten()
+                    .map(Into::into),
+                video_url: video.then(|| url.as_ref().into()),
                 link_url: None,
                 animated: image && animated(attachment),
                 url,
@@ -872,8 +873,8 @@ pub fn parse(value: &Value) -> Option<Message> {
             url: url.as_str().into(),
             image: true,
             dimensions: Some((STICKER_SIZE, STICKER_SIZE)),
-            preview_url: Some(url.clone()),
-            view_url: Some(url),
+            preview_url: Some(url.clone().into()),
+            view_url: Some(url.into()),
             still_url: None,
             video_url: None,
             link_url: None,
@@ -887,22 +888,22 @@ pub fn parse(value: &Value) -> Option<Message> {
     Some(Message {
         id: value["id"].as_str()?.into(),
         channel_id: value["channel_id"].as_str().unwrap_or_default().into(),
-        application_id: value["application_id"].as_str().map(str::to_owned),
+        application_id: value["application_id"].as_str().map(Into::into),
         flags: value["flags"].as_u64().unwrap_or_default(),
         nonce: match &value["nonce"] {
-            Value::String(nonce) => Some(nonce.clone()),
-            Value::Number(nonce) => Some(nonce.to_string()),
+            Value::String(nonce) => Some(nonce.as_str().into()),
+            Value::Number(nonce) => Some(nonce.to_string().into()),
             _ => None,
         },
         author_id: author["id"].as_str()?.into(),
         author: author_name(value).into(),
         bot: author["bot"].as_bool().unwrap_or(false),
-        content,
+        content: content.into(),
         notice: system.as_ref().and_then(|_| match kind {
             PINNED => Some(Notice::Pinned(
                 value["message_reference"]["message_id"]
                     .as_str()
-                    .map(str::to_owned),
+                    .map(Into::into),
             )),
             MEMBER_JOIN => Some(Notice::Joined),
             THREAD_CREATED => Some(Notice::ThreadStarted),
@@ -910,7 +911,7 @@ pub fn parse(value: &Value) -> Option<Message> {
             POLL_RESULT => Some(Notice::PollResult),
             _ => None,
         }),
-        system,
+        system: system.map(Into::into),
         edited: value["edited_timestamp"].is_string(),
         reply,
         attachments,
@@ -929,15 +930,15 @@ pub fn parse(value: &Value) -> Option<Message> {
                 value["message_reference"]["channel_id"]
                     .as_str()
                     .map(|id| ThreadLink {
-                        id: id.to_owned(),
-                        name: value["content"].as_str().unwrap_or_default().to_owned(),
+                        id: id.into(),
+                        name: value["content"].as_str().unwrap_or_default().into(),
                         ..Default::default()
                     })
             }
             // A forum post's first message has the post's id, and links
             // to no thread but the one it's in.
             _ => ThreadLink::of(&value["thread"])
-                .filter(|thread| value["channel_id"].as_str() != Some(thread.id.as_str())),
+                .filter(|thread| value["channel_id"].as_str() != Some(&*thread.id)),
         },
         pinned: value["pinned"].as_bool().unwrap_or(false),
         forwarded,
@@ -966,7 +967,7 @@ pub fn parse(value: &Value) -> Option<Message> {
 /// quotes: the one it was used on, which a context menu command's answer
 /// references, or the one with the button, unless that's the answer itself,
 /// which the button updated.
-fn interaction_quotes(value: &Value, interaction: &Interaction) -> Option<String> {
+fn interaction_quotes(value: &Value, interaction: &Interaction) -> Option<Box<str>> {
     let id = value["id"].as_str();
     if value["type"].as_u64() == Some(CONTEXT_MENU_COMMAND)
         && interaction.command_type == Some(MESSAGE_COMMAND)
@@ -974,23 +975,23 @@ fn interaction_quotes(value: &Value, interaction: &Interaction) -> Option<String
         return value["message_reference"]["message_id"]
             .as_str()
             .or(interaction.target_message_id.as_deref())
-            .map(str::to_owned);
+            .map(Into::into);
     }
     interaction
         .interacted_message_id
         .clone()
-        .filter(|interacted| Some(interacted.as_str()) != id)
+        .filter(|interacted| Some(interacted.as_ref()) != id)
 }
 
 /// Who ran the command an app's message answers, when the app answered
 /// as installed on their account alone, as Discord's client lets them
 /// delete it.
-fn invoker(interaction: &Value) -> Option<String> {
+fn invoker(interaction: &Value) -> Option<Box<str>> {
     let owners = interaction["authorizing_integration_owners"].as_object()?;
     if owners.len() != 1 || !owners.contains_key(USER_INSTALL) {
         return None;
     }
-    interaction["user"]["id"].as_str().map(str::to_owned)
+    interaction["user"]["id"].as_str().map(Into::into)
 }
 
 /// The notice of a closed poll, from the fields of its embed, said after
@@ -1037,12 +1038,12 @@ pub fn votes_text(votes: u64) -> String {
 }
 
 /// The ids `id` finds in a list.
-fn ids<'a>(list: &'a Value, id: impl Fn(&'a Value) -> Option<&'a str>) -> Vec<String> {
+fn ids<'a>(list: &'a Value, id: impl Fn(&'a Value) -> Option<&'a str>) -> Vec<Box<str>> {
     list.as_array()
         .into_iter()
         .flatten()
         .filter_map(id)
-        .map(str::to_owned)
+        .map(Into::into)
         .collect()
 }
 
@@ -1074,12 +1075,12 @@ pub const VIEW_HEIGHT: u64 = 1200;
 /// picture, such as an AVIF, comes as an animated WebP rather than its first
 /// frame; a video's poster asks without, for its first frame alone.
 /// Alt text Discord gave a picture or file, when it has any.
-pub(crate) fn alt_text(description: &Value) -> Option<String> {
+pub(crate) fn alt_text(description: &Value) -> Option<Box<str>> {
     description
         .as_str()
         .map(str::trim)
         .filter(|text| !text.is_empty())
-        .map(str::to_owned)
+        .map(Into::into)
 }
 
 pub(crate) fn scaled_url(
@@ -1126,8 +1127,8 @@ pub(crate) fn scaled_url(
 /// when animated, or as a reaction.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CustomEmoji {
-    pub name: String,
-    pub id: String,
+    pub name: Box<str>,
+    pub id: Box<str>,
     pub animated: bool,
 }
 
@@ -1149,11 +1150,11 @@ pub fn custom_emoji(content: &str) -> Vec<CustomEmoji> {
             && !name.is_empty()
             && !id.is_empty()
             && id.bytes().all(|byte| byte.is_ascii_digit())
-            && !found.iter().any(|known| known.id == id)
+            && !found.iter().any(|known| known.id.as_ref() == id)
         {
             found.push(CustomEmoji {
-                name: name.to_owned(),
-                id: id.to_owned(),
+                name: name.into(),
+                id: id.into(),
                 animated,
             });
         }
@@ -1162,11 +1163,11 @@ pub fn custom_emoji(content: &str) -> Vec<CustomEmoji> {
 }
 
 /// A reaction's emoji object as Yapfast's key and the API's form.
-pub fn emoji(emoji: &Value) -> Option<(String, String)> {
+pub fn emoji(emoji: &Value) -> Option<(Box<str>, Box<str>)> {
     let name = emoji["name"].as_str()?;
     Some(match emoji["id"].as_str() {
-        Some(id) => (format!(":{name}:"), format!("{name}:{id}")),
-        None => (name.to_owned(), name.to_owned()),
+        Some(id) => (format!(":{name}:").into(), format!("{name}:{id}").into()),
+        None => (name.into(), name.into()),
     })
 }
 
@@ -1440,24 +1441,24 @@ impl serde::Serialize for Text {
 #[derive(Default)]
 pub struct Names {
     /// Display names by user id.
-    users: HashMap<Id, String>,
+    users: HashMap<Id, Box<str>>,
     /// Usernames by user id, such as `ann` for Ann.
-    usernames: HashMap<Id, String>,
+    usernames: HashMap<Id, Box<str>>,
     /// The bots and apps among them, which nobody invites to a server.
     bots: HashSet<Id>,
     /// Server nicknames by server and user id.
-    nicknames: HashMap<(Id, Id), String>,
+    nicknames: HashMap<(Id, Id), Box<str>>,
     /// Members whose server profile is known, with or without a nickname.
     members: HashSet<(Id, Id)>,
     /// Avatar hashes by user id, of those who set one.
-    avatars: HashMap<Id, String>,
+    avatars: HashMap<Id, Box<str>>,
     /// The server tags of those who wear one, by user id.
     tags: HashMap<Id, Tag>,
     /// Discord's own accounts, such as the one that sends its official
     /// messages, which a DM list marks.
     officials: HashSet<Id>,
     /// Server avatar hashes by server and user id.
-    member_avatars: HashMap<(Id, Id), String>,
+    member_avatars: HashMap<(Id, Id), Box<str>>,
     /// The SKUs of the avatar decorations people equip, by user id.
     decorations: HashMap<Id, Id>,
     /// The nameplates people equip, by user id.
@@ -1474,7 +1475,7 @@ pub struct Names {
     collectible_pictures: Mutex<HashMap<Id, Arc<str>>>,
     /// Members' roles by server and user id, for the colour of their name.
     /// Member lists and the core share each, rather than copying it.
-    roles: HashMap<(Id, Id), Arc<[String]>>,
+    roles: HashMap<(Id, Id), Arc<[Box<str>]>>,
     /// When members' timeouts end, in Unix milliseconds, by server and user
     /// id: only those timed out, while Yapfast runs.
     timeouts: HashMap<(Id, Id), u64>,
@@ -1528,12 +1529,12 @@ impl Names {
     pub fn restore(saved: SavedNames) -> Self {
         let keyed = |list: Vec<(String, String, String)>| {
             list.into_iter()
-                .filter_map(|(guild, user, value)| Some((member_key(&guild, &user)?, value)))
+                .filter_map(|(guild, user, value)| Some((member_key(&guild, &user)?, value.into())))
                 .collect()
         };
         let by_user = |list: Vec<(String, String)>| {
             list.into_iter()
-                .filter_map(|(user, value)| Some((id(&user)?, value)))
+                .filter_map(|(user, value)| Some((id(&user)?, value.into())))
                 .collect()
         };
         let mut names = Self {
@@ -1549,7 +1550,12 @@ impl Names {
             roles: saved
                 .roles
                 .into_iter()
-                .filter_map(|(guild, user, roles)| Some((member_key(&guild, &user)?, roles.into())))
+                .filter_map(|(guild, user, roles)| {
+                    Some((
+                        member_key(&guild, &user)?,
+                        roles.into_iter().map(Into::into).collect(),
+                    ))
+                })
                 .collect(),
             usernames: by_user(saved.usernames),
             bots: saved.bots.iter().filter_map(|user| id(user)).collect(),
@@ -1691,10 +1697,10 @@ impl Names {
         let known = self.saw(id);
         let mut learned = false;
         if let Some(name) = ready::display_name(user) {
-            learned |= changed(&mut self.users, id, Some(name.to_owned()));
+            learned |= changed(&mut self.users, id, Some(name.into()));
         }
         if let Some(username) = user["username"].as_str() {
-            self.usernames.insert(id, username.to_owned());
+            self.usernames.insert(id, username.into());
         }
         // Partial user objects leave both out.
         if user.get("system").is_some() || user.get("public_flags").is_some() {
@@ -1717,7 +1723,7 @@ impl Names {
         // Partial user objects leave the avatar out; null removes it.
         match user.get("avatar") {
             Some(Value::String(hash)) => {
-                learned |= changed(&mut self.avatars, id, Some(hash.clone()));
+                learned |= changed(&mut self.avatars, id, Some(hash.as_str().into()));
             }
             Some(Value::Null) => learned |= changed(&mut self.avatars, id, None),
             _ => {}
@@ -1763,15 +1769,15 @@ impl Names {
         };
         self.saw(user);
         let key = (guild, user);
-        let nick = member["nick"].as_str().map(str::to_owned);
+        let nick = member["nick"].as_str().map(Into::into);
         let mut learned = changed(&mut self.nicknames, key, nick);
-        let avatar = member["avatar"].as_str().map(str::to_owned);
+        let avatar = member["avatar"].as_str().map(Into::into);
         learned |= changed(&mut self.member_avatars, key, avatar);
         // Some member objects leave the roles out.
         if let Some(roles) = member["roles"].as_array() {
-            let roles: Arc<[String]> = roles
+            let roles: Arc<[Box<str>]> = roles
                 .iter()
-                .filter_map(|role| role.as_str().map(str::to_owned))
+                .filter_map(|role| role.as_str().map(Into::into))
                 .collect();
             learned |= changed(&mut self.roles, key, Some(roles));
         }
@@ -1860,7 +1866,7 @@ impl Names {
             .roles
             .iter()
             .filter(|((server, _), roles)| {
-                *server == guild && roles.iter().any(|held| held == role)
+                *server == guild && roles.iter().any(|held| held.as_ref() == role)
             })
             .map(|((_, user), _)| user.to_string())
             .collect();
@@ -1869,17 +1875,17 @@ impl Names {
     }
 
     /// A member's roles in a server, as far as they're known.
-    pub fn roles(&self, guild: &str, user: &str) -> &[String] {
-        self.shared(guild, user).map_or(&[], |roles| roles)
+    pub fn roles(&self, guild: &str, user: &str) -> &[Box<str>] {
+        self.shared(guild, user).map_or(&[], |roles| &**roles)
     }
 
     /// A member's roles in a server, as far as they're known, shared rather
     /// than copied; none when they aren't known.
-    pub fn shared_roles(&self, guild: &str, user: &str) -> Option<Arc<[String]>> {
+    pub fn shared_roles(&self, guild: &str, user: &str) -> Option<Arc<[Box<str>]>> {
         self.shared(guild, user).cloned()
     }
 
-    fn shared(&self, guild: &str, user: &str) -> Option<&Arc<[String]>> {
+    fn shared(&self, guild: &str, user: &str) -> Option<&Arc<[Box<str>]>> {
         let key = member_key(guild, user)?;
         self.touch(key.1);
         self.roles.get(&key)
@@ -1927,7 +1933,7 @@ impl Names {
     /// by id; any letter case.
     pub fn find_users(&self, query: &str) -> Vec<String> {
         let query = query.to_lowercase();
-        let mut found: Vec<(bool, &String, String)> = self
+        let mut found: Vec<(bool, &Box<str>, String)> = self
             .users
             .iter()
             .filter_map(|(id, name)| {
@@ -1957,19 +1963,19 @@ impl Names {
     pub fn user_name(&self, user: &str) -> Option<&str> {
         let user = id(user)?;
         self.touch(user);
-        self.users.get(&user).map(String::as_str)
+        self.users.get(&user).map(|name| &**name)
     }
 
     /// A user's username, such as `ann`.
     pub fn username(&self, user: &str) -> Option<&str> {
-        self.usernames.get(&id(user)?).map(String::as_str)
+        self.usernames.get(&id(user)?).map(|name| &**name)
     }
 
     /// A member's nickname in a server, when they set one.
     pub fn nickname(&self, guild: &str, user: &str) -> Option<&str> {
         self.nicknames
             .get(&member_key(guild, user)?)
-            .map(String::as_str)
+            .map(|name| &**name)
     }
 
     pub fn name(&self, guild: &str, user: &str) -> Option<&str> {
@@ -1978,7 +1984,7 @@ impl Names {
         id(guild)
             .and_then(|guild| self.nicknames.get(&(guild, user_id)))
             .or_else(|| self.users.get(&user_id))
-            .map(String::as_str)
+            .map(|name| &**name)
     }
 
     /// The address of the avatar Discord shows for a user: their server
@@ -1995,7 +2001,7 @@ impl Names {
             return ready::member_avatar(guild, user, hash);
         }
         let hash = user_id.and_then(|user| self.avatars.get(&user));
-        ready::avatar(user, hash.map(String::as_str))
+        ready::avatar(user, hash.map(|hash| &**hash))
     }
 
     /// Whether a user is one of Discord's own accounts.
@@ -2072,7 +2078,7 @@ impl Names {
     pub fn avatar_hash(&self, user: &str) -> Option<&str> {
         let user = id(user)?;
         self.touch(user);
-        self.avatars.get(&user).map(String::as_str)
+        self.avatars.get(&user).map(|hash| &**hash)
     }
 
     /// Discord Markdown for Yapfast: mentions, custom emoji and timestamps
@@ -2427,6 +2433,39 @@ mod tests {
 
     use super::*;
 
+    /// Kept messages and names are the bulk of what's held: their fields box
+    /// strings (16 bytes, exactly fitted) rather than keeping `String`'s
+    /// capacity word (24 bytes, often over). These sizes are what they were
+    /// then; growing them is a memory regression.
+    #[test]
+    fn retained_structs_stay_slim() {
+        use std::mem::size_of;
+        assert!(size_of::<Message>() <= 688, "{}", size_of::<Message>());
+        assert!(size_of::<Reply>() <= 72, "{}", size_of::<Reply>());
+        assert!(
+            size_of::<Attachment>() <= 176,
+            "{}",
+            size_of::<Attachment>()
+        );
+        assert!(size_of::<Embed>() <= 184, "{}", size_of::<Embed>());
+        assert!(size_of::<Reaction>() <= 48, "{}", size_of::<Reaction>());
+        assert!(
+            size_of::<Interaction>() <= 144,
+            "{}",
+            size_of::<Interaction>()
+        );
+        assert!(size_of::<Poll>() <= 64, "{}", size_of::<Poll>());
+        assert!(size_of::<ThreadLink>() <= 48, "{}", size_of::<ThreadLink>());
+        assert!(
+            size_of::<CustomEmoji>() <= 40,
+            "{}",
+            size_of::<CustomEmoji>()
+        );
+        assert!(size_of::<Tag>() <= 40, "{}", size_of::<Tag>());
+        assert!(size_of::<Plate>() <= 16, "{}", size_of::<Plate>());
+        assert!(size_of::<Names>() <= 1032, "{}", size_of::<Names>());
+    }
+
     #[test]
     fn a_pin_notice_links_to_the_message_pinned() {
         let notice = parse(&json!({
@@ -2478,11 +2517,8 @@ mod tests {
                 "author": {"id": "2", "username": "bob"}, "content": "Who's in?",
                 "thread": {"id": "500", "name": "Saturday"}}}))
         .unwrap();
-        assert_eq!(
-            (first.id.as_str(), first.channel_id.as_str()),
-            ("501", "500")
-        );
-        assert_eq!(first.content, "Who's in?");
+        assert_eq!((&*first.id, &*first.channel_id), ("501", "500"));
+        assert_eq!(&*first.content, "Who's in?");
         assert!(first.thread.is_none() && !first.editable && first.undeletable);
         assert!(
             parse(&json!({"id": "502", "type": 21, "channel_id": "500",
@@ -2579,7 +2615,7 @@ mod tests {
             .attachments
             .iter()
             .filter(|attachment| attachment.shown == Shown::Sticker)
-            .map(|attachment| (attachment.name.as_str(), &*attachment.url))
+            .map(|attachment| (&*attachment.name, &*attachment.url))
             .collect();
         assert_eq!(
             stickers,
@@ -2592,7 +2628,7 @@ mod tests {
                 ("Spin", "https://cdn.discordapp.com/stickers/9.json"),
             ]
         );
-        assert_eq!(message.content, "look ||https://example.com/cat.gif||");
+        assert_eq!(&*message.content, "look ||https://example.com/cat.gif||");
     }
 
     #[test]
@@ -2649,7 +2685,7 @@ mod tests {
             ],
         }))
         .unwrap();
-        assert_eq!(message.author, "Captain");
+        assert_eq!(&*message.author, "Captain");
         assert!(message.edited && message.editable);
         assert_eq!(
             message.reply,
@@ -2680,8 +2716,8 @@ mod tests {
         );
         assert_eq!(video.dimensions, Some((1920, 1080)));
         assert_eq!(message.attachments[0].video_url, None);
-        assert_eq!(message.reactions[1].key, ":pog:");
-        assert_eq!(message.reactions[1].emoji, "pog:5");
+        assert_eq!(&*message.reactions[1].key, ":pog:");
+        assert_eq!(&*message.reactions[1].emoji, "pog:5");
         assert_eq!(message.timestamp(), 1_730_014_552);
 
         let mut message = message;
@@ -2749,7 +2785,7 @@ mod tests {
         }))
         .unwrap();
         assert!(message.forwarded && !message.editable);
-        assert_eq!(message.content, "look");
+        assert_eq!(&*message.content, "look");
         assert_eq!(
             message.attachments[0].video_url.as_deref(),
             Some("https://cdn/clip.mp4")
@@ -2764,7 +2800,7 @@ mod tests {
         }))
         .unwrap();
         assert!(!reply.forwarded);
-        assert_eq!(reply.content, "mine");
+        assert_eq!(&*reply.content, "mine");
     }
 
     #[test]
@@ -2789,8 +2825,8 @@ mod tests {
         let interaction = slash.interaction.unwrap();
         assert_eq!(
             (
-                interaction.user_id.as_str(),
-                interaction.user.as_str(),
+                &*interaction.user_id,
+                &*interaction.user,
                 interaction.name.as_deref(),
                 interaction.command_type
             ),
@@ -2804,10 +2840,7 @@ mod tests {
             "user": {"id": "1", "username": "alice"}}}),
         );
         let interaction = old.interaction.unwrap();
-        assert_eq!(
-            (interaction.id.as_str(), interaction.user.as_str()),
-            ("902", "alice")
-        );
+        assert_eq!((&*interaction.id, &*interaction.user), ("902", "alice"));
         assert_eq!(interaction.name.as_deref(), Some("ping"));
         // A user command names the person it was used on.
         let user = answer(
@@ -2818,10 +2851,7 @@ mod tests {
         );
         let interaction = user.interaction.unwrap();
         assert_eq!(interaction.command_type, Some(USER_COMMAND));
-        assert_eq!(
-            interaction.target_user,
-            Some(("2".to_owned(), "Bob".to_owned()))
-        );
+        assert_eq!(interaction.target_user, Some(("2".into(), "Bob".into())));
         assert!(user.reply.is_none());
         // A message command's answer quotes the message.
         let quote = answer(
@@ -2836,7 +2866,7 @@ mod tests {
             quote.interaction.unwrap().target_message_id.as_deref(),
             Some("500")
         );
-        assert!(matches!(quote.reply, Some(Reply::Message { id, .. }) if id == "500"));
+        assert!(matches!(quote.reply, Some(Reply::Message { id, .. }) if &*id == "500"));
         // A button's follow-up quotes the message with the button, by id
         // when Discord doesn't send it.
         let button = |id: &str| {
@@ -2847,7 +2877,7 @@ mod tests {
             )
         };
         let follow_up = button("900");
-        assert!(matches!(&follow_up.reply, Some(Reply::Unknown { id }) if id == "600"));
+        assert!(matches!(&follow_up.reply, Some(Reply::Unknown { id }) if &**id == "600"));
         assert_eq!(follow_up.interaction.unwrap().name, None);
         // The message the button updated quotes nothing.
         assert!(button("600").reply.is_none());
@@ -2861,7 +2891,7 @@ mod tests {
         );
         let interaction = form.interaction.unwrap();
         assert_eq!(
-            (interaction.id.as_str(), interaction.name.as_deref()),
+            (&*interaction.id, interaction.name.as_deref()),
             ("906", Some("feedback"))
         );
         // One a button opened quotes the button's message.
@@ -2873,7 +2903,7 @@ mod tests {
                 "interacted_message_id": "600"}}}),
         );
         assert_eq!(form.interaction.unwrap().name, None);
-        assert!(matches!(&form.reply, Some(Reply::Unknown { id }) if id == "600"));
+        assert!(matches!(&form.reply, Some(Reply::Unknown { id }) if &**id == "600"));
     }
 
     #[test]
@@ -2980,7 +3010,7 @@ mod tests {
         .unwrap();
         assert!(!message.editable, "a poll stays as it was sent");
         let poll = message.poll.as_ref().unwrap();
-        assert_eq!(poll.question, "Lunch?");
+        assert_eq!(&*poll.question, "Lunch?");
         assert!(poll.multiselect && poll.counted && !poll.finalized);
         let expiry = iso_ms("2026-10-20T12:00:00Z").unwrap();
         assert_eq!(poll.expiry, Some(expiry));
@@ -2992,7 +3022,7 @@ mod tests {
             .map(|answer| {
                 (
                     answer.id,
-                    answer.text.as_str(),
+                    &*answer.text,
                     answer.emoji.clone(),
                     answer.votes,
                     answer.me,
@@ -3002,11 +3032,11 @@ mod tests {
         assert_eq!(
             answers,
             [
-                (1, "Pizza", Some(("🍕".to_owned(), None)), 3, true),
+                (1, "Pizza", Some(("🍕".into(), None)), 3, true),
                 (
                     2,
                     "Soup",
-                    Some((":77:".to_owned(), Some("77".to_owned()))),
+                    Some((":77:".into(), Some("77".into()))),
                     0,
                     false
                 ),
@@ -3045,13 +3075,14 @@ mod tests {
                 field("victor_answer_emoji_name", "🍕"),
             ])),
             "'s poll \u{201c}Lunch?\u{201d} has closed. Winning answer: 🍕 Pizza, 3 votes (75%)."
+                .into()
         );
         assert_eq!(
             notice(json!([
                 field("poll_question_text", "Lunch?"),
                 field("total_votes", "0")
             ])),
-            "'s poll \u{201c}Lunch?\u{201d} has closed. There was no winner."
+            "'s poll \u{201c}Lunch?\u{201d} has closed. There was no winner.".into()
         );
     }
 
@@ -3100,8 +3131,8 @@ mod tests {
         };
         names.learn_message(Some("10"), &post(None));
         assert_eq!(names.version(), 0);
-        assert_eq!(names.roles("10", "7"), ["30"]);
-        assert_eq!(names.roles("10", "8"), ["31"]);
+        assert_eq!(names.roles("10", "7"), ["30".into()]);
+        assert_eq!(names.roles("10", "8"), ["31".into()]);
         names.learn_message(Some("10"), &post(None));
         assert_eq!(names.version(), 0);
         // What they're shown by changing does.
@@ -3489,7 +3520,7 @@ mod tests {
         names.learn_member("10", &json!({"user_id": "2", "nick": "Annie"}));
         assert_eq!(
             names.roles("10", "2"),
-            ["30", "31"],
+            ["30".into(), "31".into()],
             "kept when a member object leaves them out"
         );
         assert!(names.roles("11", "2").is_empty());
@@ -3685,7 +3716,7 @@ mod tests {
         let Some(Reply::Message { content, .. }) = message.reply else {
             panic!("expected reply message");
         };
-        assert_eq!(content, "<:AMkiss:123> and <a:party:7>");
+        assert_eq!(&*content, "<:AMkiss:123> and <a:party:7>");
         assert_eq!(
             custom_emoji(&content),
             [
@@ -3710,7 +3741,7 @@ mod tests {
         };
         assert!(matches!(
             Reply::quoting(&original),
-            Reply::Message { content, .. } if content == "<:AMkiss:123> and <a:party:7>"
+            Reply::Message { content, .. } if &*content == "<:AMkiss:123> and <a:party:7>"
         ));
     }
 }

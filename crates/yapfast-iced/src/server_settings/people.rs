@@ -191,11 +191,13 @@ fn columns<'a>(
 /// chip: its dot and name, then "+2" for more; `alpha` of it showing.
 fn role_chip<'a>(
     theme: &Theme,
-    held: &[String],
+    held: &[Box<str>],
     roles: &[ServerRole],
     alpha: f32,
 ) -> Element<'a, Message> {
-    let mut known = roles.iter().filter(|role| held.contains(&role.id));
+    let mut known = roles
+        .iter()
+        .filter(|role| held.iter().any(|held| held.as_ref() == role.id));
     let Some(first) = known.next() else {
         return Space::new().into();
     };
@@ -469,7 +471,7 @@ impl<'a> View<'a> {
         // Discord colours a name by its highest coloured role.
         let name_ink = roles
             .iter()
-            .filter(|role| listed.roles.contains(&role.id))
+            .filter(|role| listed.roles.iter().any(|held| held.as_ref() == role.id))
             .find_map(|role| role.color.filter(|colour| *colour != 0))
             .map_or(theme.text, crate::style::hex);
         let mut names = column![

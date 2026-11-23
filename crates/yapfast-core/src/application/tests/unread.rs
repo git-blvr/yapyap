@@ -476,7 +476,7 @@ fn highlighted(app: &Application, aside: bool) -> Vec<String> {
         .iter()
         .enumerate()
         .filter(|(index, message)| message.highlighted(*index >= first_new))
-        .map(|(_, message)| message.item.clone())
+        .map(|(_, message)| message.item.to_string())
         .collect()
 }
 

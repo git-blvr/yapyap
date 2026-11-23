@@ -17,7 +17,7 @@ impl Application {
         let there = message
             .reactions
             .iter()
-            .find(|reaction| reaction.key == key);
+            .find(|reaction| &*reaction.key == key);
         let adding = !there.is_some_and(|reaction| reaction.mine);
         // A reaction nobody added yet needs leave to add any; adding to one
         // there, or taking one's own back, doesn't.
@@ -37,7 +37,7 @@ impl Application {
                 if let Some(index) = message
                     .reactions
                     .iter()
-                    .position(|reaction| reaction.key == key)
+                    .position(|reaction| &*reaction.key == key)
                 {
                     let reaction = &mut message.reactions[index];
                     reaction.mine = !reaction.mine;
@@ -51,7 +51,7 @@ impl Application {
                     }
                 } else {
                     message.reactions.push(Reaction {
-                        key,
+                        key: key.into(),
                         count: 1,
                         mine: true,
                     });
@@ -199,7 +199,7 @@ impl Application {
             .filter(|message| allowed && message.can_forward)
             .map(|message| Forwarding {
                 quote: match message.attachments.first() {
-                    Some(attachment) if message.body.is_empty() => attachment.name.clone(),
+                    Some(attachment) if message.body.is_empty() => attachment.name.to_string(),
                     _ => chat::plain_snippet(&message.body),
                 },
                 room,
@@ -578,7 +578,7 @@ impl Application {
             .and_then(|messages| {
                 messages
                     .iter()
-                    .find(|message| message.item == forwarding.item)
+                    .find(|message| &*message.item == forwarding.item)
             })
             .cloned()
         else {
@@ -587,13 +587,13 @@ impl Application {
         let sample = |body: String, formatted, attachments, forwarded| {
             let item = uuid::Uuid::new_v4().to_string();
             Arc::new(ChatMessage {
-                id: item.clone(),
-                item,
+                id: item.clone().into(),
+                item: item.into(),
                 author: "You".into(),
                 sender: "You".into(),
                 time: "Local preview".into(),
                 own: true,
-                body,
+                body: body.into(),
                 formatted,
                 attachments,
                 forwarded,
@@ -602,7 +602,7 @@ impl Application {
         };
         let messages = self.samples.entry(target.to_owned()).or_default();
         messages.push(sample(
-            message.body.clone(),
+            message.body.to_string(),
             message.formatted,
             message.attachments.clone(),
             true,
@@ -704,7 +704,7 @@ impl Application {
         change: impl FnOnce(&mut ChatMessage),
     ) {
         if let Some(messages) = self.samples.get_mut(room)
-            && let Some(message) = messages.iter_mut().find(|message| message.item == item)
+            && let Some(message) = messages.iter_mut().find(|message| &*message.item == item)
         {
             change(Arc::make_mut(message));
             self.state.messages = Arc::new(messages.clone());
@@ -750,7 +750,7 @@ impl Application {
                 .state
                 .messages
                 .iter()
-                .any(|message| message.item == item)
+                .any(|message| &*message.item == item)
         {
             return self.seek();
         }
@@ -917,7 +917,7 @@ impl Application {
             .state
             .messages
             .iter()
-            .any(|message| message.item == seeking.item)
+            .any(|message| &*message.item == seeking.item)
         {
             if seeking.unread {
                 self.state.unread_jump += 1;
@@ -948,10 +948,10 @@ impl Application {
         self.placing_seen = false;
         let known = self.state.seen.as_deref().is_some_and(|seen| {
             discord::item_order(seen).is_some()
-                || messages.iter().any(|message| message.item == seen)
+                || messages.iter().any(|message| &*message.item == seen)
         });
         if !known {
-            self.state.seen = Some(newest.item.clone());
+            self.state.seen = Some(newest.item.to_string());
         }
     }
 
@@ -1011,7 +1011,7 @@ impl Application {
             }
             None => messages
                 .iter()
-                .position(|message| message.item == marker)
+                .position(|message| &*message.item == marker)
                 .and_then(|at| {
                     let next = messages[at + 1..].iter().position(unread)?;
                     Some(at + 1 + next)
@@ -1022,7 +1022,7 @@ impl Application {
             // now would end what shows, and the view would follow past them.
             Some(_) if self.divider_waits => self.read_marker = Some((marker, asked)),
             Some(first) => {
-                self.state.first_unread = Some(messages[first].item.clone());
+                self.state.first_unread = Some(messages[first].item.to_string());
                 if !jumping {
                     self.state.unread_jump += 1;
                 }

@@ -81,13 +81,13 @@ fn cells<'a>(
     ];
     let page = embed
         .filter(|embed| embed.video && !embed.url.is_empty())
-        .map(|embed| embed.url.as_str());
+        .map(|embed| embed.url.as_ref());
     // Save and the star are for the message's own pictures, once sent.
     let own = embed.is_none()
         && !ctx.state.preview
         && !message.deleted
         && message.delivery == chat::Delivery::default();
-    let pointed = own && ctx.pointed.message.as_deref() == Some(message.item.as_str());
+    let pointed = own && ctx.pointed.message.as_deref() == Some(message.item.as_ref());
     for &(at, cell) in &gallery.cells {
         let attachment = &message.attachments[at];
         let covered = covered(ctx, message, at);
@@ -161,7 +161,10 @@ fn cells<'a>(
                 .icon_button(
                     Icon::Download,
                     format!("Save {}", attachment.name),
-                    Message::Image(crate::image_viewer::Event::Save(message.item.clone(), at)),
+                    Message::Image(crate::image_viewer::Event::Save(
+                        message.item.to_string(),
+                        at,
+                    )),
                 )
                 .size(SAVE_BUTTON, 20)
                 .ink(Color::WHITE)
@@ -244,7 +247,7 @@ fn favorite_star<'a>(
             ctx.look.glyph(icon, 20, ink),
             SAVE_BUTTON,
             label,
-            Message::Image(Event::FavoriteGif(message.item.clone(), at)),
+            Message::Image(Event::FavoriteGif(message.item.to_string(), at)),
         )
         .fill(theme.panel)
         .radius(5.0);
@@ -284,7 +287,7 @@ pub fn pressed<'a>(
     } else if message.attachments[at].image {
         let opened = mouse_area(shot)
             .on_press(Message::Image(crate::image_viewer::Event::Open(
-                message.item.clone(),
+                message.item.to_string(),
                 at,
             )))
             .interaction(iced::mouse::Interaction::Pointer);
@@ -305,7 +308,7 @@ pub(super) fn media_press<'a>(
     if message.deleted || message.delivery != chat::Delivery::default() {
         return shown.into();
     }
-    let item = message.item.clone();
+    let item = message.item.to_string();
     crate::widgets::RightPress::new(shown, move |_| {
         Message::Image(crate::image_viewer::Event::Menu(item.clone(), at, video))
     })
@@ -334,7 +337,7 @@ pub(super) fn stickers<'a>(
         };
         // A click opens its card under it.
         let open = Message::Info(crate::info_cards::Event::Sticker(
-            message.item.clone(),
+            message.item.to_string(),
             index,
         ));
         let pressable = iced::widget::mouse_area(shown)
@@ -362,7 +365,7 @@ pub fn file_card<'a>(
         _ => String::new(),
     };
     let mut words = column![
-        text(attachment.name.as_str())
+        text(attachment.name.as_ref())
             .size(theme.type_size("body", 14.0))
             .font(theme.font("body", MEDIUM))
             .color(theme.text)

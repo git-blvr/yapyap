@@ -195,7 +195,7 @@ pub fn message_content<'a>(
     } else {
         theme.text
     };
-    let editing = ctx.composer.editing.as_deref() == Some(message.item.as_str());
+    let editing = ctx.composer.editing.as_deref() == Some(message.item.as_ref());
     if editing {
         content = content.push(crate::edit::inline_edit(ctx));
     } else if !look.body.parts.is_empty() && !look.body.plain().is_empty() {
@@ -373,7 +373,7 @@ pub fn message_content<'a>(
                     ctx.themes.marked(
                         &theme.id,
                         yapfast_core::themes::chrome::Place::Author,
-                        message.author.as_str(),
+                        message.author.as_ref(),
                     ),
                     crate::people::NameInk::new(
                         14.0,
@@ -381,7 +381,7 @@ pub fn message_content<'a>(
                         message.color.map_or(theme.text, crate::style::hex),
                     )
                     .style(style.as_ref())
-                    .key(message.sender.as_str()),
+                    .key(message.sender.as_ref()),
                 )
             } else {
                 Space::new().into()
@@ -457,8 +457,8 @@ pub fn message_content<'a>(
             // A mention's tint lies on the bubble under its words, as
             // Slint's `mark`, and the jump's light: never a band across the
             // row.
-            let pointed_mark = ctx.pointed.message.as_deref() == Some(message.item.as_str());
-            let jumped = ctx.lanes.timeline.jump_lit.as_deref() == Some(message.item.as_str());
+            let pointed_mark = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
+            let jumped = ctx.lanes.timeline.jump_lit.as_deref() == Some(message.item.as_ref());
             let mark = if look.highlighted {
                 Some(if pointed_mark {
                     theme.token_colour("mentioned-hover", crate::timeline::MENTIONED_HOVER)
@@ -517,7 +517,7 @@ pub fn message_content<'a>(
             } else {
                 crate::theme_art::gel_bubble(padded, background, radius, gel.clone())
             };
-            let pointed_here = ctx.pointed.message.as_deref() == Some(message.item.as_str());
+            let pointed_here = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
             // Under the pointer the bubble takes Slint's tint: the
             // overlay colour at 8% over it.
             if pointed_here {
@@ -560,7 +560,7 @@ pub fn message_content<'a>(
             );
             // As Slint: the hover bar beside the bubble, not at the row's
             // end (the timeline leaves it out for bubbles).
-            let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_str());
+            let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
             let bubble = match (pointed || hover_bar::kept(ctx, &message.item))
                 .then(|| hover_bar::hover_bar(ctx, index))
                 .flatten()
@@ -674,7 +674,7 @@ pub fn message_content<'a>(
             // keyboard's lie on the card, as Slint's, not across the row.
             // Lit while pointed at, or while what its bar opened is open, as
             // Slint keeps the active message lit.
-            let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_str())
+            let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref())
                 || crate::message::hover_bar::kept(ctx, &message.item);
             let highlighter = ctx
                 .themes
@@ -686,7 +686,7 @@ pub fn message_content<'a>(
                 .map(|event| crate::themes::argb(event.colour));
             let tint = crate::timeline::view::row_ground(ctx, index, look)
                 .filter(|tint| highlighter.is_none() || *tint != theme.row_hover);
-            let edge = if ctx.lanes.keyed == Some(message.item.as_str()) {
+            let edge = if ctx.lanes.keyed == Some(message.item.as_ref()) {
                 Some((theme.accent, 3.0))
             } else if look.highlighted {
                 Some((theme.accent, 2.0))
@@ -961,7 +961,7 @@ fn gutter<'a>(
             .state
             .cosmetics
             .decoration(message.decoration.as_deref());
-        let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_str());
+        let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
         let face = ctx.face(
             Face::new(message.avatar.as_deref(), &message.author, avatar)
                 .decoration(decoration, pointed)
@@ -977,7 +977,7 @@ fn gutter<'a>(
             0.0,
             if header { 24.0 } else { 2.0 },
         ));
-    } else if ctx.pointed.message.as_deref() == Some(message.item.as_str()) {
+    } else if ctx.pointed.message.as_deref() == Some(message.item.as_ref()) {
         // Right-aligned to the avatar's edge.
         let clock = sent_time(ctx, index, message)
             .split_whitespace()
@@ -1008,7 +1008,7 @@ fn person_menu<'a>(
     message: &'a ChatMessage,
     on: impl Into<Element<'a, Message>>,
 ) -> Element<'a, Message> {
-    let sender = message.sender.as_str();
+    let sender = message.sender.as_ref();
     if sender.is_empty() {
         return on.into();
     }
@@ -1111,7 +1111,7 @@ fn used_line<'a>(
 ) -> Element<'a, Message> {
     use crate::timeline::Event;
     let theme = ctx.look.theme;
-    let user = text(used.user.as_str())
+    let user = text(used.user.as_ref())
         .size(theme.type_size("names", 14.0))
         .font(theme.font("names", MEDIUM))
         .color(used.color.map_or(theme.secondary, hex));
@@ -1125,7 +1125,7 @@ fn used_line<'a>(
             .on_press(Message::Timeline(Event::OpenPerson(id.to_owned())))
             .into()
     };
-    let command = text(used.name.as_str())
+    let command = text(used.name.as_ref())
         .size(theme.type_size("body", 14.0))
         .font(theme.font("body", MEDIUM));
     let command: Element<'a, Message> = match used.slash.as_deref() {
@@ -1181,7 +1181,7 @@ pub fn text_size(ctx: crate::ctx::Ctx<'_>) -> f32 {
 /// settings chose.
 fn sent_time<'a>(ctx: crate::ctx::Ctx<'a>, index: usize, message: &'a ChatMessage) -> &'a str {
     ctx.row_look(index)
-        .map_or(message.time.as_str(), |look| &*look.time)
+        .map_or(message.time.as_ref(), |look| &*look.time)
 }
 
 /// A message's author line: the name in its style's font (only the font, in
@@ -1354,7 +1354,7 @@ fn author_line<'a>(
         line = line.push(ctx.bot_tag(1.0));
     } else if ctx
         .post_author
-        .is_some_and(|author| author == message.sender)
+        .is_some_and(|author| author == &*message.sender)
     {
         line = line.push(ctx.blurple_tag("OP", 1.0));
     }
@@ -1446,7 +1446,7 @@ fn thread_card<'a>(
         count.into()
     };
     let top = row![
-        crate::elide::elide(thread.name.as_str())
+        crate::elide::elide(thread.name.as_ref())
             .size(14)
             .line_height(18.0)
             .font(theme.font("body", SEMIBOLD))
@@ -1487,14 +1487,14 @@ fn thread_card<'a>(
             bottom = bottom
                 .push(
                     container(ctx.face(Face::new(
-                        Some(author.avatar.as_str()),
+                        Some(author.avatar.as_ref()),
                         &author.name,
                         HEADER_AVATAR,
                     )))
                     .padding(Padding::ZERO.right(4)),
                 )
                 .push(
-                    text(author.name.as_str())
+                    text(author.name.as_ref())
                         .size(14)
                         .line_height(text::LineHeight::Absolute(18.into()))
                         .color(author.color.map_or(theme.text, hex).scale_alpha(0.64))
@@ -1517,7 +1517,7 @@ fn thread_card<'a>(
                     1.0,
                 ));
             }
-            bottom = bottom.push(words(recent.text.as_str(), theme.text));
+            bottom = bottom.push(words(recent.text.as_ref(), theme.text));
         }
     }
     if !thread.archived && thread.messages.unwrap_or_default() > 0 {
@@ -1551,7 +1551,7 @@ fn thread_card<'a>(
         .padding(8)
         .width(Length::Shrink)
         .on_press(Message::Thread(crate::thread::Event::Open(
-            thread.room.clone(),
+            thread.room.to_string(),
         )))
         .style(controls::outlined_lit_style(
             ground, ground, edge, edge, 4.0,
@@ -1642,7 +1642,7 @@ fn delivery_line<'a>(
                 theme,
                 "Retry",
                 controls::Kind::Ghost,
-                Some(Message::Write(Event::Retry(item.clone()))),
+                Some(Message::Write(Event::Retry(item.to_string()))),
             )
             .small(),
         );
@@ -1653,7 +1653,7 @@ fn delivery_line<'a>(
                 theme,
                 "Cancel",
                 controls::Kind::Ghost,
-                Some(Message::Write(Event::CancelSend(item.clone()))),
+                Some(Message::Write(Event::CancelSend(item.to_string()))),
             )
             .small(),
         );
@@ -1672,7 +1672,8 @@ fn ephemeral_line<'a>(ctx: crate::ctx::Ctx<'a>, message: &ChatMessage) -> Elemen
     )
     .padding(0)
     .on_press_maybe(
-        (!preview).then(|| Message::Write(crate::composer::Event::Dismiss(message.item.clone()))),
+        (!preview)
+            .then(|| Message::Write(crate::composer::Event::Dismiss(message.item.to_string()))),
     )
     .style(controls::ink_style(
         if preview { theme.muted } else { theme.link },
@@ -1768,5 +1769,5 @@ pub fn content_width_of(ctx: crate::ctx::Ctx<'_>, row: usize) -> f32 {
 /// Whether `message` is being edited in place, where the field needs the
 /// whole lane.
 fn editing_row(ctx: crate::ctx::Ctx<'_>, message: &yapfast_core::chat::ChatMessage) -> bool {
-    ctx.composer.editing.as_deref() == Some(message.item.as_str())
+    ctx.composer.editing.as_deref() == Some(message.item.as_ref())
 }

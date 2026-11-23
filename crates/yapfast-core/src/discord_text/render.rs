@@ -19,9 +19,9 @@ pub(super) fn notification(
             guild.unwrap_or(yapfast_discord::ready::PRIVATE),
             &message.author_id,
         )
-        .unwrap_or_else(|| message.author.clone());
+        .unwrap_or_else(|| message.author.to_string());
     // A message of components says what its first text does.
-    let text = match message.content.as_str() {
+    let text = match message.content.as_ref() {
         "" => message
             .components
             .iter()
@@ -87,7 +87,7 @@ pub(super) fn found(
             guild.unwrap_or(yapfast_discord::ready::PRIVATE),
             &message.author_id,
         )
-        .unwrap_or_else(|| message.author.clone());
+        .unwrap_or_else(|| message.author.to_string());
     let ordinary = message.system.is_none();
     let timestamp = message.timestamp();
     let (body, mentions) = rendered(discord, server, &message.content);
@@ -96,23 +96,23 @@ pub(super) fn found(
         None => body,
     };
     ChatMessage {
-        id: format!("d:{}", message.id),
-        item: format!("d:{}", message.id),
+        id: format!("d:{}", message.id).into(),
+        item: format!("d:{}", message.id).into(),
         application_id: message.application_id.clone(),
         flags: message.flags,
-        sender: discord::sender_id(&message.author_id),
+        sender: discord::sender_id(&message.author_id).into(),
         spoilers: true,
-        avatar: Some(discord.avatar(guild, &message.author_id)),
+        avatar: Some(discord.avatar(guild, &message.author_id).into()),
         decoration: discord.decoration(guild, &message.author_id),
         style: discord
             .style(guild, &message.author_id)
             .map(|style| Arc::new(style.into())),
         color: server.and_then(|server| discord.color(server, &message.author_id)),
         bot: message.bot,
-        body,
-        author,
+        body: body.into(),
+        author: author.into(),
         formatted: ordinary,
-        time: crate::clock::time(timestamp),
+        time: crate::clock::time(timestamp).into(),
         timestamp,
         edited: message.edited,
         attachments: message
@@ -133,8 +133,9 @@ pub(super) fn found(
                 url: Some(
                     attachment
                         .link_url
-                        .clone()
-                        .unwrap_or_else(|| attachment.url.clone()),
+                        .as_deref()
+                        .unwrap_or(attachment.url.as_ref())
+                        .into(),
                 ),
                 description: attachment.description.clone(),
             })
@@ -164,7 +165,7 @@ pub(super) fn used_command(
     }
     let interaction = message.interaction.as_ref()?;
     let name = interaction.name.as_deref()?;
-    let user = interaction.user_id.as_str();
+    let user = interaction.user_id.as_ref();
     let named = |user: &str, fallback: &str| {
         discord
             .name(guild.unwrap_or(yapfast_discord::ready::PRIVATE), user)
@@ -175,22 +176,22 @@ pub(super) fn used_command(
         .command_type
         .is_none_or(|kind| kind == yapfast_discord::message::CHAT_INPUT);
     Some(crate::chat::UsedCommand {
-        user: named(user, &interaction.user),
-        sender: discord::sender_id(user),
-        avatar: (!user.is_empty()).then(|| discord.avatar(guild, user)),
+        user: named(user, &interaction.user).into(),
+        sender: discord::sender_id(user).into(),
+        avatar: (!user.is_empty()).then(|| discord.avatar(guild, user).into()),
         color: server.and_then(|server| discord.color(server, user)),
         name: if slash {
-            format!("/{name}")
+            format!("/{name}").into()
         } else {
-            name.to_owned()
+            name.into()
         },
         // The picker finds a command by its own name, without its
         // subcommands'.
-        slash: slash.then(|| name.split(' ').next().unwrap_or(name).to_owned()),
+        slash: slash.then(|| name.split(' ').next().unwrap_or(name).into()),
         target: interaction
             .target_user
             .as_ref()
-            .map(|(target, fallback)| named(target, fallback)),
+            .map(|(target, fallback)| named(target, fallback).into()),
     })
 }
 
@@ -210,7 +211,7 @@ pub(super) fn chat_notice(message: &Message) -> Option<crate::chat::Notice> {
     use crate::chat::NoticeKind;
     use yapfast_discord::message::Notice;
     let kind = match message.notice.as_ref()? {
-        Notice::Pinned(id) => NoticeKind::Pinned(id.as_ref().map(|id| format!("d:{id}"))),
+        Notice::Pinned(id) => NoticeKind::Pinned(id.as_ref().map(|id| format!("d:{id}").into())),
         Notice::Joined => NoticeKind::Joined,
         Notice::ThreadStarted => NoticeKind::ThreadStarted,
         Notice::Call => NoticeKind::Call,
@@ -218,7 +219,7 @@ pub(super) fn chat_notice(message: &Message) -> Option<crate::chat::Notice> {
     };
     Some(crate::chat::Notice {
         kind,
-        text: message.system.clone()?,
+        text: message.system.clone()?.into(),
     })
 }
 
@@ -278,7 +279,7 @@ pub(super) async fn with_previews(
                 .enumerate()
                 .filter(|(_, (_, attachment))| attachment.image || attachment.video)
                 .filter_map(|(index, (attachment, _))| {
-                    Some((at, index, attachment.preview_url.clone()?))
+                    Some((at, index, attachment.preview_url.as_deref()?.to_owned()))
                 })
                 .take(crate::chat::FOUND_PICTURES),
         );
@@ -379,7 +380,7 @@ pub(super) fn hits_in(
             message: found(discord, server, message),
             thread: threads
                 .iter()
-                .find(|(id, ..)| *id == message.channel_id)
+                .find(|(id, ..)| id.as_str() == message.channel_id.as_ref())
                 .map(|(_, name, parent)| {
                     let parent = parent
                         .as_deref()
@@ -415,17 +416,18 @@ pub(super) fn custom_emoji(message: &Message) -> Vec<CustomEmoji> {
             Some((key, id.as_deref()?))
         });
     for (key, id) in reactions.chain(answers) {
-        if !found.iter().any(|known| known.id == id) {
+        if !found.iter().any(|known| known.id.as_ref() == id) {
             found.push(CustomEmoji {
                 text: key.clone(),
-                id: id.to_owned(),
+                id: id.into(),
                 animated: false,
                 usable: true,
                 picture: yapfast_discord::ready::custom_emoji(
                     id,
                     false,
                     crate::chat::EMOJI_PICTURE_SIZE,
-                ),
+                )
+                .into(),
             });
         }
     }
@@ -455,14 +457,15 @@ fn emoji_in(content: &str) -> Vec<CustomEmoji> {
     yapfast_discord::message::custom_emoji(content)
         .into_iter()
         .map(|emoji| CustomEmoji {
-            text: format!(":{}:", emoji.name),
+            text: format!(":{}:", emoji.name).into(),
             // Its address says whether it moves, which is how its frames come:
             // Discord serves an animated emoji as a GIF and a still one as a PNG.
             picture: yapfast_discord::ready::custom_emoji(
                 &emoji.id,
                 emoji.animated,
                 crate::chat::EMOJI_PICTURE_SIZE,
-            ),
+            )
+            .into(),
             id: emoji.id,
             animated: emoji.animated,
             usable: true,
@@ -815,8 +818,8 @@ pub(super) fn chat_card(
         label: match &button.emoji {
             Some(emoji) => format!("{} {}", discord.render(server, emoji), button.label)
                 .trim_end()
-                .to_owned(),
-            None => button.label.clone(),
+                .into(),
+            None => button.label.clone().into(),
         },
         style: match button.style {
             Style::Primary => ButtonStyle::Primary,
@@ -826,9 +829,9 @@ pub(super) fn chat_card(
             Style::Link => ButtonStyle::Link,
             Style::Premium => ButtonStyle::Premium,
         },
-        url: button.url.clone(),
-        custom_id: button.custom_id.clone(),
-        sku_id: button.sku_id.clone(),
+        url: button.url.clone().map(Into::into),
+        custom_id: button.custom_id.clone().map(Into::into),
+        sku_id: button.sku_id.clone().map(Into::into),
         disabled: button.disabled,
     };
     Card {
@@ -839,7 +842,7 @@ pub(super) fn chat_card(
             .iter()
             .map(|row| match row {
                 Row::Text { text, beside } => CardRow::Text {
-                    text: discord.render(server, text),
+                    text: discord.render(server, text).into(),
                     beside: beside.as_ref().map(|beside| match beside {
                         DiscordBeside::Thumbnail(slot) => Beside::Thumbnail(*slot),
                         DiscordBeside::Button(each) => Beside::Button(button(each)),
@@ -862,24 +865,24 @@ pub(super) fn chat_card(
                     min_values,
                     max_values,
                 } => CardRow::Select {
-                    text: discord.render(server, text),
+                    text: discord.render(server, text).into(),
                     disabled: *disabled,
                     kind: *kind,
-                    custom_id: custom_id.clone(),
+                    custom_id: custom_id.clone().into(),
                     options: options
                         .iter()
                         .map(|option| crate::chat::CardOption {
-                            label: option.label.clone(),
-                            value: option.value.clone(),
-                            description: option.description.clone(),
+                            label: option.label.clone().into(),
+                            value: option.value.clone().into(),
+                            description: option.description.clone().map(Into::into),
                             default: option.default,
                             emoji: option
                                 .emoji
                                 .as_ref()
-                                .map(|emoji| discord.render(server, emoji)),
+                                .map(|emoji| discord.render(server, emoji).into()),
                         })
                         .collect(),
-                    defaults: defaults.clone(),
+                    defaults: defaults.iter().map(|each| each.as_str().into()).collect(),
                     channel_types: channel_types.clone(),
                     min_values: *min_values,
                     max_values: *max_values,
@@ -896,7 +899,7 @@ pub(super) fn chat_embed(
     server: Option<&yapfast_discord::ready::Server>,
     embed: &yapfast_discord::embed::Embed,
 ) -> Embed {
-    let text = |text: &Option<String>| text.clone().unwrap_or_default();
+    let text = |text: &Option<String>| text.clone().unwrap_or_default().into();
     Embed {
         color: embed.color,
         provider: text(&embed.provider),
@@ -906,14 +909,14 @@ pub(super) fn chat_embed(
         description: embed
             .description
             .as_deref()
-            .map(|description| discord.render(server, description))
+            .map(|description| discord.render(server, description).into())
             .unwrap_or_default(),
         fields: embed
             .fields
             .iter()
             .map(|field| EmbedField {
-                name: field.name.clone(),
-                value: discord.render(server, &field.value),
+                name: field.name.clone().into(),
+                value: discord.render(server, &field.value).into(),
                 inline: field.inline,
             })
             .collect(),
@@ -925,20 +928,20 @@ pub(super) fn chat_embed(
 pub(super) fn chat_member(member: ListedMember) -> ChatMember {
     ChatMember {
         bot: member.bot,
-        id: member.user_id,
-        name: member.name,
-        username: member.username,
+        id: member.user_id.into(),
+        name: member.name.into(),
+        username: member.username.map(Into::into),
         role: Role::Member,
-        avatar: Some(member.avatar),
+        avatar: Some(member.avatar.into()),
         decoration: member.decoration,
         nameplate: member.nameplate.map(Into::into),
         style: member.style.map(|style| Arc::new(style.into())),
-        group: Some(member.group),
+        group: Some(member.group.into()),
         group_icon: member.group_icon,
         role_icon: member.role_icon,
         presence: Some(discord::presence(member.presence)),
         color: member.color,
-        activity: member.activity,
+        activity: member.activity.map(Into::into),
         activities: member.activities,
         roles: member.roles,
         timed_out_until: member.timed_out_until,
@@ -1004,12 +1007,12 @@ mod tests {
         // One in code shows its name, as the message's text does.
         assert_eq!(body, "hi :AMkiss: :party: :code: (spoiler)");
         assert_eq!(emoji.len(), 2);
-        assert_eq!(emoji[0].text, ":AMkiss:");
-        assert_eq!(emoji[0].id, "123");
+        assert_eq!(&*emoji[0].text, ":AMkiss:");
+        assert_eq!(&*emoji[0].id, "123");
         assert!(!emoji[0].animated);
         assert!(emoji[0].picture.contains("/emojis/123.png"));
-        assert_eq!(emoji[1].text, ":party:");
-        assert_eq!(emoji[1].id, "7");
+        assert_eq!(&*emoji[1].text, ":party:");
+        assert_eq!(&*emoji[1].id, "7");
         assert!(emoji[1].animated);
         assert!(emoji[1].picture.contains("/emojis/7.gif"));
     }

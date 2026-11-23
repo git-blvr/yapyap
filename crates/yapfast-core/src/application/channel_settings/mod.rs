@@ -305,7 +305,7 @@ impl Application {
             }
             let (allow, deny) = overwrites
                 .iter()
-                .filter(|known| !known.member && roles.contains(&known.id))
+                .filter(|known| !known.member && roles.iter().any(|role| role.as_ref() == known.id))
                 .fold((0, 0), |(allow, deny), known| {
                     (allow | known.allow, deny | known.deny)
                 });

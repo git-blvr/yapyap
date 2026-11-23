@@ -207,7 +207,7 @@ fn a_blocked_persons_message_shows_folded_until_asked() {
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                message.blocked = message.body == RILEYS;
+                message.blocked = message.body.as_ref() == RILEYS;
                 Arc::new(message)
             })
             .collect();
@@ -232,7 +232,7 @@ fn view_reactions_opens_from_a_messages_menu_and_escape_closes_it() {
             .iter()
             .map(|message| {
                 let mut message = (**message).clone();
-                if message.body == RILEYS {
+                if message.body.as_ref() == RILEYS {
                     message.reactions = vec![
                         Reaction {
                             key: "👍".into(),
@@ -490,8 +490,8 @@ fn a_cards_effect_plays_only_under_the_pointer_and_its_frame_shows() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(400.0, 200.0));
     change(&mut app, |state| {
@@ -558,8 +558,8 @@ fn a_cards_frame_that_came_and_went_is_asked_for_again_as_it_shows() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let framed = |state: &mut yapfast_core::application::AppState| {
         state
@@ -601,7 +601,7 @@ fn a_boosters_gem_in_the_member_list_says_since_when() {
     change(&mut app, |state| {
         for members in state.members.iter_mut().flatten() {
             for member in Arc::make_mut(members).iter_mut() {
-                if member.name == "Riley" {
+                if member.name.as_ref() == "Riley" {
                     member.boosting_since = Some(1_700_000_000_000);
                 }
             }
@@ -690,7 +690,7 @@ fn a_long_status_in_the_member_list_ends_in_an_ellipsis() {
     change(&mut app, |state| {
         for members in state.members.iter_mut().flatten() {
             for member in Arc::make_mut(members).iter_mut() {
-                if member.name == "Riley" {
+                if member.name.as_ref() == "Riley" {
                     member.activity = Some(
                         "Out walking the dogs by the river until the rain comes back again".into(),
                     );
@@ -729,8 +729,8 @@ fn a_note_typed_on_a_profile_is_kept_as_it_changes_without_enter() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(400.0, 200.0));
     // A Discord user's, whose notes Discord keeps.
@@ -763,8 +763,8 @@ fn view_full_bio_shows_when_the_bio_is_taller_than_three_lines_as_laid_out() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(400.0, 200.0));
     let bio = |app: &mut App, bio: &str| {
@@ -1011,8 +1011,8 @@ fn the_full_profiles_tab_is_settled_as_it_opens() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     app.client
         .dispatch(Action::ShowProfile { user, large: true });
@@ -1056,8 +1056,8 @@ fn a_styled_name_on_the_card_opens_the_full_profile() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(400.0, 200.0));
     // Where the card's name is, drawn plain.
@@ -1095,8 +1095,8 @@ fn riley(app: &App) -> String {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview")
 }
 
@@ -1286,8 +1286,8 @@ fn crowd(app: &mut App, count: usize) {
             let first = members[0].clone();
             for at in 0..count {
                 let mut member = first.clone();
-                member.id = format!("crowd-{at}");
-                member.name = format!("Member {at}");
+                member.id = format!("crowd-{at}").into();
+                member.name = format!("Member {at}").into();
                 members.push(member);
             }
         }

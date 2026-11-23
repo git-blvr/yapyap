@@ -136,7 +136,7 @@ fn frequent_reactions_follow_use_and_fill_with_defaults() {
     let mut app = Application::default();
     app.dispatch(Action::Preview);
     assert_eq!(app.frequent_reactions(3), ["👍", "❤️", "😂"]);
-    let item = app.state.messages[0].item.clone();
+    let item = app.state.messages[0].item.to_string();
     for key in ["🔥", "🔥", "👀"] {
         app.dispatch(Action::React {
             item: item.clone(),
@@ -177,7 +177,7 @@ fn blocked_messages_can_leave_the_timeline_and_come_back() {
         app.state
             .messages
             .iter()
-            .map(|message| message.item.clone())
+            .map(|message| message.item.to_string())
             .collect()
     };
     assert_eq!(items(&app), ["e:$bob", "e:$troll"], "collapsed, not hidden");
@@ -647,7 +647,7 @@ fn a_reactions_tooltip_and_window_ask_for_who_reacted() {
         .state
         .window_reactions()
         .iter()
-        .map(|reaction| reaction.key.as_str())
+        .map(|reaction| reaction.key.as_ref())
         .collect();
     assert_eq!(keys, ["🎉", "👍"]);
     // The tooltip's page doesn't fill it.
@@ -700,7 +700,7 @@ fn the_preview_tells_no_backend_which_messages_show() {
         .state
         .messages
         .iter()
-        .map(|message| message.item.clone())
+        .map(|message| message.item.to_string())
         .collect();
     let effects = app.dispatch(Action::VisibleMessages {
         room,

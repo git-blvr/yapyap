@@ -18,7 +18,9 @@ The call's views and what they do are in `call/`.
   channel keeps its choice while Yapfast runs, through leaving and joining
   again, as Discord's client keeps it. The tiles scroll when there are more than fit. Each tile is a
   `tile::Tile`: a camera, a stream or the avatar (a camera shows the
-  avatar until its first frame, and keeps its last if frames stop), a green ring while the
+  avatar until its first frame, and keeps its last if frames stop) on a
+  ground of its picture's dominant colour muted toward the theme's, as a
+  profile's banner takes it (the name's tint until the picture comes), a green ring while the
   person speaks, their name and marks, LIVE and how many watch. A stream
   not watched offers Watch stream; a watched one shows large with Stop
   watching and the full-screen button under the pointer, and a double click

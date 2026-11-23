@@ -1081,7 +1081,7 @@ impl Application {
         let answered = |id: &String| {
             messages
                 .iter()
-                .any(|message| message.interaction.as_ref() == Some(id))
+                .any(|message| message.interaction.as_deref() == Some(id.as_str()))
         };
         self.state.slash.sent.retain(|sent| {
             sent.run.room != room || !sent.interaction.as_ref().is_some_and(answered)
@@ -1095,16 +1095,17 @@ impl Application {
             .map(|sent| {
                 let item = format!("{SENT_COMMAND}{}", sent.run.nonce);
                 Arc::new(ChatMessage {
-                    id: item.clone(),
-                    item,
-                    application_id: Some(sent.run.application.clone()),
-                    author: sent.app_name.clone(),
-                    avatar: sent.app_icon.clone(),
+                    id: item.clone().into(),
+                    item: item.into(),
+                    application_id: Some(sent.run.application.clone().into()),
+                    author: sent.app_name.clone().into(),
+                    avatar: sent.app_icon.clone().map(Into::into),
                     bot: true,
                     body: sent
                         .failed
                         .clone()
-                        .unwrap_or_else(|| "Sending command…".into()),
+                        .unwrap_or_else(|| "Sending command…".into())
+                        .into(),
                     delivery: if sent.failed.is_some() {
                         chat::Delivery::Failed
                     } else {

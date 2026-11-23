@@ -184,7 +184,7 @@ impl Unreads {
         event: &Event,
         data: &Value,
         me: &str,
-        roles: &HashMap<String, Vec<String>>,
+        roles: &HashMap<String, Vec<Box<str>>>,
     ) -> bool {
         match event {
             // An answer only this account sees isn't in the channel's
@@ -302,7 +302,7 @@ impl Unreads {
         &self,
         message: &Value,
         me: &str,
-        roles: &HashMap<String, Vec<String>>,
+        roles: &HashMap<String, Vec<Box<str>>>,
         place: &str,
         category: Option<&str>,
         thread: Option<&Thread>,
@@ -350,7 +350,7 @@ impl Unreads {
         guild: &str,
         message: &Value,
         me: &str,
-        roles: Option<&Vec<String>>,
+        roles: Option<&Vec<Box<str>>>,
     ) -> bool {
         let settings = self.settings.get(guild);
         let mentions = message["mentions"].as_array().into_iter().flatten();
@@ -363,7 +363,9 @@ impl Unreads {
                 .into_iter()
                 .flatten()
                 .filter_map(Value::as_str)
-                .any(|role| roles.is_some_and(|roles| roles.iter().any(|mine| mine == role)));
+                .any(|role| {
+                    roles.is_some_and(|roles| roles.iter().any(|mine| mine.as_ref() == role))
+                });
         user || everyone || role
     }
 
@@ -600,7 +602,7 @@ mod tests {
             [(false, 0), (true, 0), (true, 0), (false, 0)]
         );
 
-        let roles = HashMap::from([("10".to_owned(), vec!["30".to_owned()])]);
+        let roles = HashMap::from([("10".to_owned(), vec!["30".into()])]);
         let message = |id: &str, extra: Value| {
             let mut message =
                 json!({"id": id, "channel_id": "11", "guild_id": "10", "author": {"id": "2"}});

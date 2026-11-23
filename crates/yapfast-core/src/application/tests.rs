@@ -82,7 +82,7 @@ fn message(item: &str, own: bool) -> ChatMessage {
         id: item.into(),
         item: item.into(),
         author: if own { "Alice" } else { "Bob" }.into(),
-        body: format!("Body of {item}"),
+        body: format!("Body of {item}").into(),
         own,
         can_reply: true,
         can_edit: own,

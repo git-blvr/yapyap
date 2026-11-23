@@ -74,7 +74,7 @@ pub fn reading(app: &App) -> Option<(String, f32)> {
         .partition_point(|end| *end <= top)
         .min(app.timeline.messages.len() - 1);
     Some((
-        app.timeline.messages[index].item.clone(),
+        app.timeline.messages[index].item.to_string(),
         top - app.timeline.tops[index],
     ))
 }
@@ -92,7 +92,7 @@ pub fn keep_reading(app: &mut App, reading: Option<(String, f32)>) -> Task<Messa
         .timeline
         .messages
         .iter()
-        .position(|message| message.item == item)
+        .position(|message| &*message.item == item)
     else {
         return Task::none();
     };
@@ -152,7 +152,7 @@ pub fn follow_jumps(app: &mut App) -> Task<Message> {
             .timeline
             .messages
             .iter()
-            .position(|message| &message.item == item)
+            .position(|message| &*message.item == item.as_str())
     {
         app.timeline.jumped.clone_from(&jump);
         app.timeline.jump_lit = Some(item.clone());

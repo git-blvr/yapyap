@@ -484,7 +484,12 @@ impl Application {
         };
         let (public, private) = self.thread_starts(&room);
         let default_name = match &message {
-            Some(item) => match self.state.messages.iter().find(|known| &known.item == item) {
+            Some(item) => match self
+                .state
+                .messages
+                .iter()
+                .find(|known| &*known.item == *item)
+            {
                 Some(found) if public && item.starts_with("d:") => default_thread_name(found),
                 _ => return vec![],
             },

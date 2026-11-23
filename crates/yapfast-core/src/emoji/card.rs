@@ -153,7 +153,7 @@ pub fn emoji(target: &Target, server: Option<&ChatServer>, state: &AppState) -> 
         .iter()
         .chain(state.aside.iter().flat_map(|aside| aside.messages.iter()))
         .flat_map(|message| &message.emoji)
-        .find(|emoji| &emoji.id == id);
+        .find(|emoji| *emoji.id == **id);
     // The server its card shows: one this account is in, and can reach. One
     // it left, or that's out of reach, shows no server at all, and says why.
     let server = server.filter(|server| !server.unavailable);
@@ -167,13 +167,13 @@ pub fn emoji(target: &Target, server: Option<&ChatServer>, state: &AppState) -> 
         card_server(server, preview, discoverable)
     });
     Card {
-        name: listed.map_or_else(String::new, |emoji| emoji.text.clone()),
+        name: listed.map_or_else(String::new, |emoji| emoji.text.to_string()),
         description: if server.is_some() {
             SERVER_EMOJI
         } else {
             OTHER_EMOJI
         },
-        picture: listed.map(|emoji| emoji.picture.clone()),
+        picture: listed.map(|emoji| emoji.picture.to_string()),
         animated: listed.is_some_and(|emoji| emoji.animated),
         server,
     }
@@ -222,7 +222,7 @@ pub fn sticker(state: &AppState, item: &str, index: usize) -> Option<Card> {
         card_server(server, preview, discoverable)
     });
     Some(Card {
-        name: attachment.name.clone(),
+        name: attachment.name.to_string(),
         description: if server.is_some() {
             SERVER_STICKER
         } else {

@@ -50,7 +50,7 @@ pub fn take_edit(app: &mut App) -> Task<Message> {
         .timeline
         .messages
         .iter()
-        .position(|message| message.item == item)
+        .position(|message| &*message.item == item)
         .map_or_else(Task::none, |index| reveal_row(app, index));
     Task::batch([app.sync(), reveal, operation::focus(EDIT)])
 }
@@ -104,7 +104,7 @@ pub fn edit_top(app: &App) -> Option<f32> {
         .timeline
         .messages
         .iter()
-        .position(|message| Some(&message.item) == app.composer.editing.as_ref())?;
+        .position(|message| Some(&*message.item) == app.composer.editing.as_deref())?;
     let foot = crate::header::HEIGHT + 1.0 + app.timeline.tops[index + 1] - app.timeline.view_top();
     let reactions = if app.timeline.messages[index].reactions.is_empty() {
         0.0

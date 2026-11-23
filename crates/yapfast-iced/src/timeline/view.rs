@@ -137,9 +137,9 @@ pub(crate) fn timeline<'a>(ctx: crate::ctx::Ctx<'a>) -> Element<'a, Message> {
 pub(crate) fn row_ground(ctx: crate::ctx::Ctx<'_>, index: usize, look: &RowLook) -> Option<Color> {
     let theme = ctx.look.theme;
     let message = ctx.row_message(index)?;
-    let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_str());
-    let jumped = ctx.lanes.timeline.jump_lit.as_deref() == Some(message.item.as_str());
-    let edited = ctx.composer.editing.as_deref() == Some(message.item.as_str());
+    let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
+    let jumped = ctx.lanes.timeline.jump_lit.as_deref() == Some(message.item.as_ref());
+    let edited = ctx.composer.editing.as_deref() == Some(message.item.as_ref());
     // As Slint's: in bubbles the jump's light and a mention's tint lie on
     // the bubble (see `message::message_content`), not across the row.
     let bubble = bubbled(ctx, message);
@@ -185,7 +185,7 @@ fn reply_target(ctx: crate::ctx::Ctx<'_>, message: &yapfast_core::chat::ChatMess
     matches!(
         ctx.state.compose(),
         Some(yapfast_core::application::Compose::Reply { item, .. })
-            if item.as_str() == message.item.as_str()
+            if *item == *message.item
     )
 }
 
@@ -223,7 +223,7 @@ pub fn timeline_row<'a>(ctx: crate::ctx::Ctx<'a>, index: usize) -> Element<'a, M
             ),
         );
     }
-    let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_str());
+    let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
     // The message a reply being written answers is blurple, not gold.
     let target = !aside && reply_target(ctx, message);
     // A card carries its own tint, mark and edge, leaning with it, as
@@ -319,7 +319,7 @@ pub fn timeline_row<'a>(ctx: crate::ctx::Ctx<'a>, index: usize) -> Element<'a, M
             content = content.push(edged(MENTION_GOLD, MENTION_EDGE));
         }
     }
-    if ctx.lanes.keyed == Some(message.item.as_str()) && !carded {
+    if ctx.lanes.keyed == Some(message.item.as_ref()) && !carded {
         content = content.push(edged(theme.accent, KEYED_EDGE));
     }
     // The hover bar floats over the row's top edge, so it never moves

@@ -120,7 +120,7 @@ fn live_events_echoes_and_failed_sends() {
     open.edited(edited);
     let seven = &open.shown.messages[&7];
     assert_eq!(
-        (seven.content.as_str(), seven.reactions.len()),
+        (seven.content.as_ref(), seven.reactions.len()),
         ("changed", 1)
     );
     assert!(open.live(&Live::Deleted {
@@ -188,7 +188,7 @@ fn the_latest_page_fits_what_was_kept() {
     latest.insert(0, message("1059", None));
     latest
         .iter_mut()
-        .find(|message| message.id == "1099")
+        .find(|message| message.id.as_ref() == "1099")
         .unwrap()
         .content = "edited".into();
     open.loaded(Load::Latest, shown(latest));
@@ -196,7 +196,7 @@ fn the_latest_page_fits_what_was_kept() {
         ids(&open),
         (1000..1110).filter(|&id| id != 1060).collect::<Vec<_>>()
     );
-    assert_eq!(open.shown.messages[&1099].content, "edited");
+    assert_eq!(open.shown.messages[&1099].content.as_ref(), "edited");
 
     // A full page entirely newer than what's kept leaves a gap: only it stays.
     open.loaded(Load::Latest, shown(page(2000..2050)));
@@ -263,7 +263,7 @@ fn closed_channels_keep_metadata_without_pinning_previews() {
             url: "".into(),
             image: true,
             dimensions: None,
-            preview_url: Some(format!("preview/{id}")),
+            preview_url: Some(format!("preview/{id}").into()),
             view_url: None,
             still_url: None,
             video_url: None,
@@ -438,7 +438,7 @@ fn a_reply_keeps_its_original_through_an_update_that_leaves_it_out() {
     let unknown = Reply::Unknown { id: "4".into() };
     assert!(open.live(&Live::Updated(reply(unknown, "a gif, previewed"))));
     assert_eq!(open.shown.messages[&5].reply, Some(original));
-    assert_eq!(open.shown.messages[&5].content, "a gif, previewed");
+    assert_eq!(open.shown.messages[&5].content.as_ref(), "a gif, previewed");
     // One that says it was deleted is believed.
     assert!(open.live(&Live::Updated(reply(Reply::Deleted, "a gif, previewed"))));
     assert_eq!(open.shown.messages[&5].reply, Some(Reply::Deleted));
@@ -471,7 +471,7 @@ fn a_reply_on_screen_looks_its_original_up_once() {
     open.visible(["5", "6", "7"].map(|id| format!("d:{id}")).to_vec());
     // The one loaded is quoted without asking; two replies share one question.
     assert_eq!(open.originals_wanted(), ["1"]);
-    assert!(matches!(shows(&open, 5), Some(Reply::Message { id, .. }) if id == "4"));
+    assert!(matches!(shows(&open, 5), Some(Reply::Message { id, .. }) if id.as_ref() == "4"));
     assert!(open.originals_wanted().is_empty(), "asked once");
     // The answer quotes it in every reply to it, and no other.
     let original = Reply::Message {
@@ -592,7 +592,7 @@ fn channels_go_to_disk_once_they_change() {
     assert_eq!(
         saved
             .iter()
-            .map(|message| message.id.as_str())
+            .map(|message| message.id.as_ref())
             .collect::<Vec<_>>(),
         ["1", "3"]
     );
@@ -606,11 +606,7 @@ fn an_answer_only_this_account_sees_stays_off_disk_and_goes_when_dismissed() {
     let ephemeral = |id: &str, loading: bool| Message {
         ephemeral: true,
         loading,
-        content: if loading {
-            String::new()
-        } else {
-            "Noted".into()
-        },
+        content: if loading { "".into() } else { "Noted".into() },
         ..message(id, None)
     };
     // The app thinks, then answers, only to this account.
@@ -620,14 +616,17 @@ fn an_answer_only_this_account_sees_stays_off_disk_and_goes_when_dismissed() {
     assert_eq!(
         saved
             .iter()
-            .map(|message| message.id.as_str())
+            .map(|message| message.id.as_ref())
             .collect::<Vec<_>>(),
         ["1", "2", "3"],
         "never on disk"
     );
     // Discord's history never lists it; it stays till dismissed.
     open.loaded(Load::Latest, shown(page([1, 2, 3, 5])));
-    assert!(open.message(4).is_some_and(|kept| kept.content == "Noted"));
+    assert!(
+        open.message(4)
+            .is_some_and(|kept| kept.content.as_ref() == "Noted")
+    );
     assert!(!open.dismiss("d:3"), "only an ephemeral one is dismissed");
     assert!(open.dismiss("d:4"));
     assert!(open.message(4).is_none());
@@ -662,7 +661,7 @@ fn a_pin_marks_its_message_and_goes_to_disk() {
     assert!(
         saved
             .iter()
-            .any(|message| message.id == "2" && message.pinned)
+            .any(|message| message.id.as_ref() == "2" && message.pinned)
     );
     open.pinned("2", true);
     assert!(open.take_changes().is_none(), "pinned already");
@@ -775,10 +774,10 @@ fn a_window_of_older_messages_shows_in_place_of_the_newest_until_it_reaches_them
         content: "edited".into(),
         ..message("900", None)
     })));
-    assert_eq!(open.shown.messages[&900].content, "edited");
+    assert_eq!(open.shown.messages[&900].content.as_ref(), "edited");
     let (_, saved) = open.take_changes().unwrap();
     assert_eq!(
-        saved.last().map(|message| message.id.as_str()),
+        saved.last().map(|message| message.id.as_ref()),
         Some("1050"),
         "the newest go to disk, not the window"
     );
@@ -798,7 +797,7 @@ fn a_window_of_older_messages_shows_in_place_of_the_newest_until_it_reaches_them
     open.loaded(Load::Later, shown(page(975..1025)));
     assert!(!open.detached());
     assert_eq!(ids(&open).last(), Some(&1050));
-    assert_eq!(open.shown.messages[&1050].content, "1050");
+    assert_eq!(open.shown.messages[&1050].content.as_ref(), "1050");
     assert!(open.live(&Live::Created(message("1051", None))));
 
     // Back to the present, the newest show again as they were kept.
@@ -1199,7 +1198,7 @@ async fn a_thread_beside_the_open_channel_shows_its_own_pages() {
     )
     .await;
     assert!(
-        authors.iter().any(|author| author == "Carol"),
+        authors.iter().any(|author| author.as_ref() == "Carol"),
         "{authors:?}"
     );
     assert_eq!(channels.open.as_ref().unwrap().room, general);
@@ -1285,7 +1284,7 @@ async fn a_thread_beside_the_open_channel_plays_its_videos() {
     chat.command(
         Command::PlayVideo {
             room: plans.clone(),
-            item: item.clone(),
+            item: item.to_string(),
             index,
             width: 320,
             height: 180,
@@ -1301,7 +1300,7 @@ async fn a_thread_beside_the_open_channel_plays_its_videos() {
         .expect("the video started");
     assert_eq!(
         (playing.room.as_str(), playing.item.as_str()),
-        (plans.as_str(), item.as_str())
+        (plans.as_ref(), item.as_ref())
     );
     assert_ne!(
         playing.error.as_deref(),
@@ -1380,7 +1379,11 @@ async fn a_jump_shows_the_messages_around_one_then_newer_pages_to_the_present() 
         },
     )
     .await;
-    assert_eq!(window[0].item, format!("d:{welcome}"), "the first message");
+    assert_eq!(
+        &*window[0].item,
+        format!("d:{welcome}"),
+        "the first message"
+    );
     assert!(
         window.len() <= yapfast_discord::api::PAGE / 2 + 1,
         "half a page of newer messages, and nothing before the first"
@@ -1525,7 +1528,7 @@ async fn a_file_marked_as_a_spoiler_arrives_as_one() {
         spoiler(Delivery::Sent),
     )
     .await;
-    assert!(sent.spoiler && sent.name == "SPOILER_plot.txt");
+    assert!(sent.spoiler && sent.name.as_ref() == "SPOILER_plot.txt");
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -1586,9 +1589,9 @@ async fn a_sent_picture_has_a_link_and_downloads_to_copy() {
                         && message
                             .attachments
                             .iter()
-                            .any(|file| file.name == "copied.png")
+                            .any(|file| file.name.as_ref() == "copied.png")
                 })
-                .map(|message| (message.item.clone(), message.attachments[0].url.clone())),
+                .map(|message| (message.item.to_string(), message.attachments[0].url.clone())),
             _ => None,
         },
     )
@@ -1699,10 +1702,13 @@ async fn previews_follow_the_view_and_share_cache_across_channels() {
             url: "".into(),
             image: true,
             dimensions: Some((720, 540)),
-            preview_url: Some(format!(
-                "{}/external/viewport-{id}/720x540.png",
-                yapfast_discord::client::test_server().unwrap()
-            )),
+            preview_url: Some(
+                format!(
+                    "{}/external/viewport-{id}/720x540.png",
+                    yapfast_discord::client::test_server().unwrap()
+                )
+                .into(),
+            ),
             view_url: None,
             still_url: None,
             video_url: None,
@@ -1844,7 +1850,7 @@ async fn a_server_channels_pins_and_search_show_its_members() {
         panic!("the pins came")
     };
     assert_eq!(pins.len(), 1);
-    assert_eq!(pins[0].author, "Bob");
+    assert_eq!(&*pins[0].author, "Bob");
     assert_eq!(pins[0].color, Some(0x3498db), "Bob is a Mod");
     // Then again with their pictures, of which the welcome has none.
     let Event::Pins {
@@ -1876,8 +1882,8 @@ async fn a_server_channels_pins_and_search_show_its_members() {
     assert_eq!(total, 2);
     assert_eq!(hits[0].room, room);
     let first = &hits[0].message;
-    assert_eq!(first.body, "The welcome has the plan");
-    assert_eq!(first.author, "Bob");
+    assert_eq!(&*first.body, "The welcome has the plan");
+    assert_eq!(&*first.author, "Bob");
     assert_eq!(first.color, Some(0x3498db));
     assert!(
         first
@@ -1952,12 +1958,14 @@ async fn forwards_with_the_message_added_and_refuses_what_cant_go() {
             {
                 shown.push(message);
             }
-            Ok(Live::Created(message)) if message.content == "look at this" => shown.push(message),
+            Ok(Live::Created(message)) if message.content.as_ref() == "look at this" => {
+                shown.push(message)
+            }
             _ => {}
         }
     }
     assert!(shown[0].forwarded && shown[0].content == original.content);
-    assert_eq!(shown[1].content, "look at this");
+    assert_eq!(shown[1].content.as_ref(), "look at this");
     // Nothing goes with a message added too long, nor into Matrix.
     forward(
         format!("d:{}", original.id),
@@ -2078,13 +2086,13 @@ async fn an_apps_answer_says_who_used_which_command() {
     });
     assert_eq!(
         (
-            slash.user.as_str(),
-            slash.name.as_str(),
+            slash.user.as_ref(),
+            slash.name.as_ref(),
             slash.slash.as_deref()
         ),
         ("Alice", "/config set", Some("config"))
     );
-    assert_eq!(slash.sender, discord::sender_id("1400000000000000001"));
+    assert_eq!(&*slash.sender, discord::sender_id("1400000000000000001"));
     let user = used(Interaction {
         id: "8".into(),
         user_id: "1400000000000000001".into(),
@@ -2095,7 +2103,7 @@ async fn an_apps_answer_says_who_used_which_command() {
         ..Default::default()
     });
     assert_eq!(
-        (user.name.as_str(), user.slash, user.target.as_deref()),
+        (user.name.as_ref(), user.slash, user.target.as_deref()),
         ("High five", None, Some("Bob"))
     );
     // A button's answer, or one that quotes a message, has none.

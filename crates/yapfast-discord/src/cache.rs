@@ -1235,9 +1235,9 @@ mod tests {
 
         // A channel's newest messages.
         let message = |id: u64| Message {
-            id: id.to_string(),
+            id: id.to_string().into(),
             channel_id: "40".into(),
-            content: format!("message {id}"),
+            content: format!("message {id}").into(),
             ..Default::default()
         };
         save_messages(
@@ -1246,7 +1246,7 @@ mod tests {
         );
         let kept = messages("40");
         assert_eq!(kept.len(), CHANNEL_MESSAGES);
-        assert_eq!(kept[0].id, "6", "the oldest go");
+        assert_eq!(&*kept[0].id, "6", "the oldest go");
         assert!(messages("../40").is_empty() && messages("41").is_empty());
         // A channel kept before Yapfast encrypted them goes.
         let earlier = messages_directory().unwrap().join("41.json");

@@ -203,7 +203,7 @@ impl Timeline {
         let item = state.first_unread.as_deref()?;
         self.messages
             .iter()
-            .position(|message| message.item == item)
+            .position(|message| &*message.item == item)
     }
 
     /// The timeline's whole height.
@@ -276,13 +276,13 @@ impl<'a> Lanes<'a> {
         self.timeline
             .messages
             .iter()
-            .rposition(|message| message.item == item)
+            .rposition(|message| &*message.item == item)
             .or_else(|| {
                 let index = self
                     .aside?
                     .messages
                     .iter()
-                    .rposition(|message| message.item == item)?;
+                    .rposition(|message| &*message.item == item)?;
                 Some(ASIDE + index)
             })
     }

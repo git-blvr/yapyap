@@ -323,7 +323,7 @@ impl Application {
     /// A member's roles in the Discord server a place names, shared with
     /// what learned them: the service's names, else the member list's row.
     #[cfg(feature = "discord")]
-    pub fn member_roles(&self, place: &str, user: &str) -> Arc<[String]> {
+    pub fn member_roles(&self, place: &str, user: &str) -> Arc<[Box<str>]> {
         let Some((server, _, me)) = self.discord_place(place) else {
             return Arc::default();
         };
@@ -405,7 +405,7 @@ impl Application {
             self.server_roles(place)
                 .into_iter()
                 .map(|role| RoleChoice {
-                    held: held.contains(&role.id),
+                    held: held.iter().any(|held| held.as_ref() == role.id),
                     grantable: self.may_grant(place, &role.id),
                     role,
                 })
@@ -509,7 +509,7 @@ impl Application {
                 None => (None, None),
             };
             let name = name
-                .or_else(|| self.state.person(&user).map(|person| person.name))
+                .or_else(|| self.state.person(&user).map(|person| person.name.into()))
                 .unwrap_or_else(|| "this member".into());
             let text = match ask {
                 PersonAsk::ServerNickname => nickname.unwrap_or_default(),

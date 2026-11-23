@@ -201,11 +201,11 @@ async fn shows_the_example_environment() {
         .unwrap()
         .messages;
     assert_eq!(history.len(), 8);
-    assert_eq!(history[0].author, "Theo");
+    assert_eq!(&*history[0].author, "Theo");
     let photo = &history[1];
     assert_eq!(
         (
-            photo.reactions[0].emoji.as_str(),
+            &*photo.reactions[0].emoji,
             photo.reactions[0].count,
             photo.reactions[0].me
         ),
@@ -213,7 +213,7 @@ async fn shows_the_example_environment() {
     );
     let image = &photo.attachments[0];
     assert_eq!(
-        (image.name.as_str(), image.dimensions),
+        (&*image.name, image.dimensions),
         ("sunrise.jpg", Some((960, 600)))
     );
     let jpeg = discord.download(&image.url, 1 << 20).await.unwrap();
@@ -232,7 +232,7 @@ async fn shows_the_example_environment() {
         .unwrap();
     assert!(poster.starts_with(b"\x89PNG"), "the clip's first frame");
     assert_eq!(
-        history[7].content,
+        &*history[7].content,
         "<@1400000000000000001> can you check the shed key is back on its hook?"
     );
 

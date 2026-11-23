@@ -703,7 +703,12 @@ fn stage_tile(
                     bottom: 16.0,
                     ..Padding::ZERO
                 });
-                (content.into(), theme.raised)
+                // The tile takes their picture's tint, as a profile's
+                // banner takes it, so a stage of avatars isn't one grey.
+                let ground =
+                    app.ctx()
+                        .avatar_ground(person.avatar.as_deref(), &person.user, theme.raised);
+                (content.into(), ground)
             };
             if streams_here && !watched {
                 on_press = Message::Call(Event::Watch(person.id.clone()));

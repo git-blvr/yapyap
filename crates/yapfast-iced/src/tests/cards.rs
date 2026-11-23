@@ -31,7 +31,7 @@ fn a_role_mentions_card_lists_its_people_who_open_their_own() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
+        .find(|member| member.name.as_ref() == "Riley")
         .cloned()
         .expect("Riley in the preview");
     let role = app.client.app.state.role.as_mut().expect("open");
@@ -71,8 +71,8 @@ fn a_mutual_servers_card_shows_it_and_goes_there() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     app.client
         .dispatch(Action::ShowProfile { user, large: true });
@@ -171,8 +171,8 @@ fn an_activitys_menu_shows_all_activity_or_its_privacy() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(500.0, 200.0));
     let rows = |app: &crate::app::App| -> Vec<String> {
@@ -216,8 +216,8 @@ fn a_profile_without_a_banner_takes_its_avatars_colour() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
-        .map(|member| member.id.clone())
+        .find(|member| member.name.as_ref() == "Riley")
+        .map(|member| member.id.to_string())
         .expect("Riley in the preview");
     let _ = app.open_card(user, Point::new(500.0, 200.0));
     let view = app
@@ -290,7 +290,7 @@ fn a_stickers_card_names_the_server_it_is_from_which_opens() {
     };
     let (mut app, _folder) = preview();
     let (server_id, server_name) = ("discord:70".to_owned(), "Wavers".to_owned());
-    let item = app.client.state().messages[0].item.clone();
+    let item = app.client.state().messages[0].item.to_string();
     super::change(&mut app, |state| {
         state
             .servers
@@ -350,7 +350,7 @@ fn a_stickers_card_names_the_server_it_is_from_which_opens() {
 fn a_stickers_card_goes_with_its_message() {
     use yapfast_core::chat::{Attachment, Placement};
     let (mut app, _folder) = preview();
-    let item = app.client.state().messages[0].item.clone();
+    let item = app.client.state().messages[0].item.to_string();
     super::change(&mut app, |state| {
         let messages = std::sync::Arc::make_mut(&mut state.messages);
         let message = std::sync::Arc::make_mut(&mut messages[0]);
@@ -423,11 +423,11 @@ fn a_click_on_an_emoji_in_a_message_opens_its_card() {
 #[test]
 fn an_authors_card_is_theirs_by_their_discord_id() {
     let (mut app, _folder) = preview();
-    let item = app.client.state().messages[0].item.clone();
+    let item = app.client.state().messages[0].item.to_string();
     super::change(&mut app, |state| {
         let messages = std::sync::Arc::make_mut(&mut state.messages);
         std::sync::Arc::make_mut(&mut messages[0]).sender =
-            yapfast_core::discord::sender_id("1450000000000000000");
+            yapfast_core::discord::sender_id("1450000000000000000").into();
     });
     let _ = app.update(Message::Timeline(crate::timeline::Event::OpenAuthor(
         item.as_str().into(),

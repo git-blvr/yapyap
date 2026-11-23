@@ -601,7 +601,8 @@ impl OpenChannel {
         }
         self.dirty = true;
         if let Some(nonce) = &message.nonce {
-            self.pending.retain(|pending| &pending.nonce != nonce);
+            self.pending
+                .retain(|pending| pending.nonce.as_str() != nonce.as_ref());
         }
         self.rendered.remove(&message.order());
         self.shown.messages.insert(message.order(), message);
@@ -613,7 +614,8 @@ impl OpenChannel {
             return;
         }
         if let Some(nonce) = &message.nonce {
-            self.pending.retain(|pending| &pending.nonce != nonce);
+            self.pending
+                .retain(|pending| pending.nonce.as_str() != nonce.as_ref());
         }
         if let Some(latest) = &mut self.latest {
             self.dirty = true;
@@ -639,7 +641,7 @@ impl OpenChannel {
         // The newest kept behind a window follow it as a closed channel's do.
         if self.latest.is_some() {
             if let Live::Created(message) = event
-                && message.channel_id == self.channel
+                && message.channel_id.as_ref() == self.channel
             {
                 self.insert_latest(message.clone());
             } else if let Some(latest) = &mut self.latest {
@@ -665,7 +667,7 @@ impl OpenChannel {
     fn apply_live(&mut self, event: &Live) -> bool {
         match event {
             // A window of older messages takes no new ones.
-            Live::Created(message) if message.channel_id == self.channel => {
+            Live::Created(message) if message.channel_id.as_ref() == self.channel => {
                 if self.detached() {
                     return false;
                 }
@@ -981,12 +983,12 @@ impl OpenChannel {
         let known = message
             .reactions
             .iter()
-            .find(|reaction| reaction.key == key || reaction.emoji == key);
+            .find(|reaction| reaction.key.as_ref() == key || reaction.emoji.as_ref() == key);
         let emoji = known
-            .map_or(key, |reaction| reaction.emoji.as_str())
+            .map_or(key, |reaction| reaction.emoji.as_ref())
             .to_owned();
         let add = !known.is_some_and(|reaction| reaction.me);
-        let pending = (message.id.clone(), emoji.clone());
+        let pending = (message.id.to_string(), emoji.clone());
         if !self.reacting.lock().unwrap().insert(pending.clone()) {
             return;
         }
@@ -1021,7 +1023,7 @@ impl OpenChannel {
         let Some(emoji) = message
             .reactions
             .iter()
-            .find(|reaction| reaction.key == key)
+            .find(|reaction| reaction.key.as_ref() == key)
             .map(|reaction| reaction.emoji.clone())
         else {
             return;
@@ -1055,7 +1057,7 @@ impl OpenChannel {
                 let reaction = message
                     .reactions
                     .iter()
-                    .find(|reaction| reaction.key == key)?;
+                    .find(|reaction| reaction.key.as_ref() == key.as_str())?;
                 Some((message.id.clone(), reaction.emoji.clone()))
             });
         let room = self.room.clone();
@@ -1222,8 +1224,8 @@ impl OpenChannel {
         }
         for (order, message) in &self.shown.messages {
             if message.attachments.iter().any(|attachment| {
-                attachment.preview_url.as_ref() == Some(&url)
-                    || attachment.still_url.as_ref() == Some(&url)
+                attachment.preview_url.as_deref() == Some(url.as_str())
+                    || attachment.still_url.as_deref() == Some(url.as_str())
             }) {
                 self.rendered.remove(order);
             }
@@ -1249,9 +1251,10 @@ impl OpenChannel {
             .filter(|(order, _)| self.visible.contains(order))
             .flat_map(|(_, message)| &message.attachments)
             .flat_map(|attachment| attachment.preview_url.iter().chain(&attachment.still_url))
-            .collect();
-        self.pictures.retain(|url, _| urls.contains(url));
-        self.requested.retain(|url| urls.contains(url));
+            .map(|url| url.as_ref())
+            .collect::<HashSet<_>>();
+        self.pictures.retain(|url, _| urls.contains(url.as_str()));
+        self.requested.retain(|url| urls.contains(url.as_str()));
         // Rows with a preview render again, to take theirs or let it go;
         // the rest show the same wherever the view is. Following a busy
         // channel moves the view at each message.
@@ -1275,9 +1278,9 @@ impl OpenChannel {
             .iter()
             .filter_map(|order| match &self.shown.messages.get(order)?.reply {
                 Some(DiscordReply::Unknown { id })
-                    if !id.is_empty() && !self.originals.contains_key(id) =>
+                    if !id.is_empty() && !self.originals.contains_key(&**id) =>
                 {
-                    Some(id.clone())
+                    Some(id.to_string())
                 }
                 _ => None,
             })
@@ -1345,7 +1348,7 @@ impl OpenChannel {
                 None
             }
         };
-        let quotes = |message: &Message| matches!(&message.reply, Some(DiscordReply::Unknown { id: original }) if original == id);
+        let quotes = |message: &Message| matches!(&message.reply, Some(DiscordReply::Unknown { id: original }) if **original == *id);
         for run in std::iter::once(&mut self.shown).chain(self.latest.as_mut()) {
             for (order, message) in run
                 .messages
@@ -1572,13 +1575,13 @@ impl OpenChannel {
         for (order, message) in &self.shown.messages {
             // Its row's id, written out only for a row made anew.
             let (prefix, key) = match &message.nonce {
-                Some(nonce) if self.sent.contains(nonce) => ("n:", nonce),
+                Some(nonce) if self.sent.contains(nonce.as_ref()) => ("n:", nonce),
                 _ => ("d:", &message.id),
             };
             let row = match kept.remove(order) {
                 // A thread it leads to changes apart from the message.
                 Some(row)
-                    if row.id.strip_prefix(prefix) == Some(key.as_str())
+                    if row.id.strip_prefix(prefix) == Some(key.as_ref())
                         && row.thread
                             == self.thread_link(
                                 &snapshot.names,
@@ -1602,15 +1605,15 @@ impl OpenChannel {
         for pending in pending {
             let (body, mentions) = rendered(discord, server.map(|server| &**server), &pending.body);
             rows.push(Arc::new(ChatMessage {
-                id: format!("n:{}", pending.nonce),
-                item: format!("n:{}", pending.nonce),
-                author: me_name.clone(),
-                sender: discord::sender_id(&me),
+                id: format!("n:{}", pending.nonce).into(),
+                item: format!("n:{}", pending.nonce).into(),
+                author: me_name.clone().into(),
+                sender: discord::sender_id(&me).into(),
                 spoilers: true,
-                avatar: Some(me_avatar.clone()),
+                avatar: Some(me_avatar.clone().into()),
                 color: me_color,
                 // Sent with its mentions in Discord's form, shown with their names.
-                body,
+                body: body.into(),
                 mentions,
                 formatted: true,
                 own: true,
@@ -1624,11 +1627,15 @@ impl OpenChannel {
                     let (body, emoji) =
                         reply_snippet(discord, server.map(|server| &**server), &original.content);
                     Some(Reply {
-                        author: name(&original.author_id, &original.author),
-                        avatar: Some(discord.avatar(Some(&self.guild), &original.author_id)),
-                        body,
+                        author: name(&original.author_id, &original.author).into(),
+                        avatar: Some(
+                            discord
+                                .avatar(Some(&self.guild), &original.author_id)
+                                .into(),
+                        ),
+                        body: body.into(),
                         emoji,
-                        item: Some(format!("d:{id}")),
+                        item: Some(format!("d:{id}").into()),
                         color: server.and_then(|server| discord.color(server, &original.author_id)),
                         tag: discord::server_tag(discord.server_tag(&original.author_id)),
                     })
@@ -1637,7 +1644,7 @@ impl OpenChannel {
                     .files
                     .iter()
                     .map(|file| Attachment {
-                        name: file.name.clone(),
+                        name: file.name.clone().into(),
                         size: Some(file.size),
                         image: false,
                         dimensions: None,
@@ -1677,7 +1684,7 @@ impl OpenChannel {
                 .name(&self.guild, user)
                 .unwrap_or_else(|| fallback.to_owned())
         };
-        let own = message.author_id == me;
+        let own = message.author_id.as_ref() == me;
         let author = name(&message.author_id, &message.author);
         let marks = server.map(|server| &*server.marks);
         let server = server.map(|server| &*server.server);
@@ -1690,7 +1697,7 @@ impl OpenChannel {
             .attachments
             .iter()
             .map(|attachment| {
-                let mut preview_of = |url: &String| match self.pictures.get(url) {
+                let mut preview_of = |url: &str| match self.pictures.get(url) {
                     Some(picture) => Some(picture.clone()),
                     None => {
                         if !self.visible.contains(&message.order()) {
@@ -1704,11 +1711,11 @@ impl OpenChannel {
                         {
                             return Some(Some(picture));
                         }
-                        wanted.push(url.clone());
+                        wanted.push(url.to_owned());
                         None
                     }
                 };
-                let mut preview = attachment.preview_url.as_ref().and_then(&mut preview_of);
+                let mut preview = attachment.preview_url.as_deref().and_then(&mut preview_of);
                 // A GIF's video that can't be shown gives way to its picture.
                 if matches!(preview, Some(None))
                     && let Some(still) = &attachment.still_url
@@ -1735,10 +1742,11 @@ impl OpenChannel {
                     url: Some(
                         attachment
                             .link_url
-                            .clone()
-                            .unwrap_or_else(|| attachment.url.clone()),
+                            .as_deref()
+                            .unwrap_or(attachment.url.as_ref())
+                            .into(),
                     ),
-                    description: attachment.description.clone(),
+                    description: attachment.description.clone().map(Into::into),
                 }
             })
             .collect();
@@ -1761,17 +1769,17 @@ impl OpenChannel {
             } => {
                 let (body, emoji) = reply_snippet(discord, server, content);
                 Reply {
-                    author: name(author_id, author),
-                    avatar: Some(discord.avatar(Some(&self.guild), author_id)),
-                    body,
+                    author: name(author_id, author).into(),
+                    avatar: Some(discord.avatar(Some(&self.guild), author_id).into()),
+                    body: body.into(),
                     emoji,
-                    item: Some(format!("d:{id}")),
+                    item: Some(format!("d:{id}").into()),
                     color: server.and_then(|server| discord.color(server, author_id)),
                     tag: discord::server_tag(discord.server_tag(author_id)),
                 }
             }
             DiscordReply::Deleted => Reply {
-                author: String::new(),
+                author: Default::default(),
                 avatar: None,
                 body: "The original message was deleted.".into(),
                 emoji: Vec::new(),
@@ -1780,16 +1788,16 @@ impl OpenChannel {
                 tag: None,
             },
             DiscordReply::Unknown { id } => Reply {
-                author: String::new(),
+                author: Default::default(),
                 avatar: None,
-                body: if id.is_empty() || self.originals.get(id) == Some(&true) {
+                body: if id.is_empty() || self.originals.get(id.as_ref()) == Some(&true) {
                     "The original message couldn't be loaded."
                 } else {
                     "Loading the original message..."
                 }
                 .into(),
                 emoji: Vec::new(),
-                item: (!id.is_empty()).then(|| format!("d:{id}")),
+                item: (!id.is_empty()).then(|| format!("d:{id}").into()),
                 color: None,
                 tag: None,
             },
@@ -1801,8 +1809,8 @@ impl OpenChannel {
         // or delete.
         let shared = !message.ephemeral;
         ChatMessage {
-            id,
-            item: format!("d:{}", message.id),
+            id: id.into(),
+            item: format!("d:{}", message.id).into(),
             application_id: message.application_id.clone(),
             interaction: message
                 .interaction
@@ -1810,10 +1818,10 @@ impl OpenChannel {
                 .map(|interaction| interaction.id.clone()),
             used: used_command(discord, Some(&self.guild), server, message),
             flags: message.flags,
-            author,
-            sender: discord::sender_id(&message.author_id),
+            author: author.into(),
+            sender: discord::sender_id(&message.author_id).into(),
             spoilers: true,
-            avatar: Some(discord.avatar(Some(&self.guild), &message.author_id)),
+            avatar: Some(discord.avatar(Some(&self.guild), &message.author_id).into()),
             decoration: discord.decoration(Some(&self.guild), &message.author_id),
             style: discord
                 .style(Some(&self.guild), &message.author_id)
@@ -1832,15 +1840,21 @@ impl OpenChannel {
                         .is_some_and(|joined| now.saturating_sub(joined) < NEW_MEMBER_MS)
             },
             forwarded: message.forwarded,
-            body,
+            body: body.into(),
             formatted: ordinary,
-            time: crate::clock::time(timestamp),
+            time: crate::clock::time(timestamp).into(),
             timestamp,
             own,
             edited: message.edited,
             deleted: false,
-            blocked: snapshot.blocked.contains(&message.author_id),
-            ignored: snapshot.ignored.contains(&message.author_id),
+            blocked: snapshot
+                .blocked
+                .iter()
+                .any(|id| id.as_str() == message.author_id.as_ref()),
+            ignored: snapshot
+                .ignored
+                .iter()
+                .any(|id| id.as_str() == message.author_id.as_ref()),
             mentions_me: message.names_me(me, marks),
             replies_to_me: message.replies_to(me),
             delivery: Delivery::Sent,
@@ -1904,7 +1918,7 @@ impl OpenChannel {
     ) -> Option<ThreadLink> {
         let link = message.thread.as_ref()?;
         let known =
-            server.and_then(|server| server.threads.iter().find(|known| known.id == link.id));
+            server.and_then(|server| server.threads.iter().find(|known| *known.id == *link.id));
         let details = known.and_then(|known| known.thread.as_deref());
         let recent = server
             .zip(details.and_then(|details| details.recent.as_deref()))
@@ -1916,8 +1930,8 @@ impl OpenChannel {
             .or_else(|| link.id.parse().ok())
             .unwrap_or_default();
         Some(ThreadLink {
-            room: discord::room_id(&self.guild, &link.id),
-            name: known.map_or_else(|| link.name.clone(), |known| known.name.clone()),
+            room: discord::room_id(&self.guild, &link.id).into(),
+            name: known.map_or_else(|| link.name.clone(), |known| known.name.clone().into()),
             // A notice of a thread doesn't carry its count.
             messages: details
                 .map(|details| details.messages)
@@ -2014,7 +2028,7 @@ const SPOILER: &str = "SPOILER_";
 /// it changes; the snowflake of the one it changed, if any.
 fn change(messages: &mut BTreeMap<u64, Message>, channel: &str, event: &Live) -> Option<u64> {
     match event {
-        Live::Updated(message) if message.channel_id == channel => {
+        Live::Updated(message) if message.channel_id.as_ref() == channel => {
             let known = messages.get_mut(&message.order())?;
             // Updates don't always carry reactions; keep the counted ones,
             // and a poll's votes unless it carries them, and the original a

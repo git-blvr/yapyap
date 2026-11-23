@@ -182,7 +182,7 @@ fn choice_emoji<'a>(ctx: crate::ctx::Ctx<'a>, item: &str, emoji: &str) -> Elemen
     let custom = ctx
         .state
         .message(item)
-        .and_then(|message| message.emoji.iter().find(|custom| custom.text == emoji));
+        .and_then(|message| message.emoji.iter().find(|custom| *custom.text == *emoji));
     match custom.and_then(|custom| ctx.picture(&custom.picture, 18, 18, false)) {
         Some(handle) => crate::widgets::Pic::square(handle, 18.0).into(),
         None if custom.is_some() => Space::new().width(18).height(18).into(),

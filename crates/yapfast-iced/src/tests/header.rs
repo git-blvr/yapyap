@@ -461,7 +461,7 @@ fn search_results_show_their_count_channel_pages_and_a_sort_menu() {
     let hit = |n: u32, bot: bool| SearchHit {
         room: "discord:10:11".into(),
         message: ChatMessage {
-            item: format!("d:{n}"),
+            item: format!("d:{n}").into(),
             body: "The plan for tonight".into(),
             author: "Bob".into(),
             bot,
@@ -644,7 +644,7 @@ fn results_from_someone_blocked_hide_behind_a_row_that_shows_them() {
             item: item.into(),
             body: body.into(),
             author: user.into(),
-            sender: discord::sender_id(user),
+            sender: discord::sender_id(user).into(),
             ..ChatMessage::default()
         },
         thread: None,

@@ -135,7 +135,7 @@ pub fn app_card<'a>(
 ) -> Element<'a, Message> {
     let theme = ctx.look.theme;
     let state = ctx.state;
-    let busy = state.interactions.newest_busy() == Some(message.item.as_str());
+    let busy = state.interactions.newest_busy() == Some(message.item.as_ref());
     let mut rows = column![].spacing(8).width(Length::Fill);
     let mut texts = bodies.iter().enumerate();
     for each in &card.rows {
@@ -232,13 +232,13 @@ pub fn app_card<'a>(
                     ctx,
                     select_box(
                         ctx,
-                        shown,
+                        shown.as_ref(),
                         options.iter().any(|option| option.default),
                         enabled,
                         enabled.then(|| {
                             Message::BotSelect(crate::bot_select::Event::Open(
-                                message.item.clone(),
-                                custom_id.clone(),
+                                message.item.to_string(),
+                                custom_id.to_string(),
                             ))
                         }),
                     ),
@@ -321,8 +321,8 @@ fn card_button<'a>(
     } else if let Some(custom_id) = &card_button.custom_id {
         (!busy).then(|| {
             Message::Timeline(crate::timeline::Event::UseButton(
-                message.item.clone(),
-                custom_id.clone(),
+                message.item.to_string(),
+                custom_id.to_string(),
             ))
         })
     } else if let Some(store) = store {
@@ -331,12 +331,12 @@ fn card_button<'a>(
         card_button
             .url
             .clone()
-            .map(|url| Message::Link(url, Point::ORIGIN))
+            .map(|url| Message::Link(url.into(), Point::ORIGIN))
     };
     let label = if card_button.style == ButtonStyle::Premium {
         "Open in Discord"
     } else {
-        card_button.label.as_str()
+        card_button.label.as_ref()
     };
     let mut face = action(theme, label, kind, press)
         .surface(theme, "card-button")
@@ -356,7 +356,7 @@ pub fn bot_failed<'a>(
     message: &ChatMessage,
 ) -> Option<Element<'a, Message>> {
     let (item, why) = ctx.state.interaction_failed.as_ref()?;
-    if *item != message.item {
+    if *item != *message.item {
         return None;
     }
     let theme = ctx.look.theme;
