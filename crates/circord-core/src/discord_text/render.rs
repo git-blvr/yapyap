@@ -219,7 +219,7 @@ pub(super) fn chat_notice(message: &Message) -> Option<crate::chat::Notice> {
     };
     Some(crate::chat::Notice {
         kind,
-        text: message.system.clone()?.into(),
+        text: message.system.clone()?,
     })
 }
 

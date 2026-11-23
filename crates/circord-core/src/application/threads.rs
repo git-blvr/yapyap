@@ -488,7 +488,7 @@ impl Application {
                 .state
                 .messages
                 .iter()
-                .find(|known| &*known.item == *item)
+                .find(|known| *known.item == *item)
             {
                 Some(found) if public && item.starts_with("d:") => default_thread_name(found),
                 _ => return vec![],

@@ -7,12 +7,12 @@
 //! to the composer. While it steps the window's focus is on nobody, so the
 //! keys come here.
 
+use circord_core::{application::Action, chat::Delivery};
 use iced::{
     Task,
     keyboard::{self, Key, key::Named},
     widget::operation,
 };
-use circord_core::{application::Action, chat::Delivery};
 
 use crate::{
     app::{App, Message, NOBODY},
@@ -33,7 +33,7 @@ fn keyed_index(app: &App) -> Option<usize> {
     app.timeline
         .messages
         .iter()
-        .position(|message| &*message.item == *item)
+        .position(|message| *message.item == *item)
 }
 
 fn step_to(app: &mut App, index: usize) -> Task<Message> {

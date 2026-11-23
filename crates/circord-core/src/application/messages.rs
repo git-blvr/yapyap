@@ -17,7 +17,7 @@ impl Application {
         let there = message
             .reactions
             .iter()
-            .find(|reaction| &*reaction.key == key);
+            .find(|reaction| *reaction.key == key);
         let adding = !there.is_some_and(|reaction| reaction.mine);
         // A reaction nobody added yet needs leave to add any; adding to one
         // there, or taking one's own back, doesn't.
@@ -37,7 +37,7 @@ impl Application {
                 if let Some(index) = message
                     .reactions
                     .iter()
-                    .position(|reaction| &*reaction.key == key)
+                    .position(|reaction| *reaction.key == key)
                 {
                     let reaction = &mut message.reactions[index];
                     reaction.mine = !reaction.mine;
@@ -578,7 +578,7 @@ impl Application {
             .and_then(|messages| {
                 messages
                     .iter()
-                    .find(|message| &*message.item == forwarding.item)
+                    .find(|message| *message.item == forwarding.item)
             })
             .cloned()
         else {
@@ -750,7 +750,7 @@ impl Application {
                 .state
                 .messages
                 .iter()
-                .any(|message| &*message.item == item)
+                .any(|message| *message.item == item)
         {
             return self.seek();
         }
@@ -917,7 +917,7 @@ impl Application {
             .state
             .messages
             .iter()
-            .any(|message| &*message.item == seeking.item)
+            .any(|message| *message.item == seeking.item)
         {
             if seeking.unread {
                 self.state.unread_jump += 1;
@@ -1011,7 +1011,7 @@ impl Application {
             }
             None => messages
                 .iter()
-                .position(|message| &*message.item == marker)
+                .position(|message| *message.item == marker)
                 .and_then(|at| {
                     let next = messages[at + 1..].iter().position(unread)?;
                     Some(at + 1 + next)

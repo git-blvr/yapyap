@@ -207,7 +207,13 @@ impl Matcher {
 
     /// The desktop says a keybind went down or came up, as the portal does,
     /// having matched its keys itself.
-    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    #[cfg_attr(
+        not(target_os = "linux"),
+        allow(
+            dead_code,
+            reason = "only the portal's keybinds call it, which is Linux's"
+        )
+    )]
     fn set(&mut self, binding: usize, down: bool, out: Out<'_>) {
         let Some(compiled) = self.bindings.get(binding) else {
             return;
@@ -392,6 +398,7 @@ mod linux {
     };
 
     use anyhow::{Context, Result, anyhow, bail};
+    use circord_core::runtime::{BackgroundRuntime, BackgroundTask};
     use futures_util::StreamExt;
     use x11rb::{
         connection::Connection as _,
@@ -402,7 +409,6 @@ mod linux {
         },
         rust_connection::RustConnection,
     };
-    use circord_core::runtime::{BackgroundRuntime, BackgroundTask};
     use zbus::{
         Connection, MessageStream,
         zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value},
@@ -1470,7 +1476,7 @@ mod windows {
                 return;
             };
             matcher.resync(None, |code| key_down(seen, code), &mut |action, down| {
-                sink.act(action, down)
+                sink.act(action, down);
             });
             timing(matcher, timer);
         });

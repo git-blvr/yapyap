@@ -88,12 +88,12 @@ impl crate::timeline::Lanes<'_> {
                         .aside?
                         .messages
                         .iter()
-                        .position(|message| &*message.item == sel.item)?
+                        .position(|message| *message.item == sel.item)?
             } else {
                 self.timeline
                     .messages
                     .iter()
-                    .position(|message| &*message.item == sel.item)?
+                    .position(|message| *message.item == sel.item)?
             };
             Some(Mark {
                 row,

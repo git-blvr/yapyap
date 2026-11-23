@@ -182,7 +182,7 @@ pub fn create(folder: &Path, new: &NewTheme) -> Result<Vec<PathBuf>, String> {
             None => {
                 return Err(format!(
                     "the template names {}, which it doesn't hold",
-                    relative.display()
+                    check::shown(&relative)
                 ));
             }
         };
@@ -270,7 +270,9 @@ mod tests {
         assert!(!written.iter().any(|path| path.starts_with("cursors")));
         // The template's own layout survives: its blank lines and the order
         // of its fields.
-        let text = std::fs::read_to_string(folder.join(MANIFEST)).unwrap();
+        let text = std::fs::read_to_string(folder.join(MANIFEST))
+            .unwrap()
+            .replace("\r\n", "\n");
         assert!(
             text.starts_with("{\n  \"theme_api\": 1,\n  \"id\": \"io.github.ada-lovelace.tide\"")
         );

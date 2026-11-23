@@ -1959,7 +1959,7 @@ async fn forwards_with_the_message_added_and_refuses_what_cant_go() {
                 shown.push(message);
             }
             Ok(Live::Created(message)) if message.content.as_ref() == "look at this" => {
-                shown.push(message)
+                shown.push(message);
             }
             _ => {}
         }

@@ -1746,7 +1746,7 @@ impl OpenChannel {
                             .unwrap_or(attachment.url.as_ref())
                             .into(),
                     ),
-                    description: attachment.description.clone().map(Into::into),
+                    description: attachment.description.clone(),
                 }
             })
             .collect();

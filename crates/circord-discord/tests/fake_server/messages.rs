@@ -224,7 +224,7 @@ async fn reads_history_and_member_lists() {
     let newest = latest.last().unwrap().id.clone();
     snapshot_where(&discord, |snapshot| {
         let general = snapshot.servers[0].text_channels().next().unwrap().marks;
-        !general.unread && general.last_read.to_string() == &*newest
+        !general.unread && general.last_read.to_string() == *newest
     })
     .await;
 }

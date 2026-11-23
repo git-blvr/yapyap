@@ -7,11 +7,11 @@
 //! Escape or the hint's cancel closes it. It takes `@` and `:name`
 //! suggestions and the emoji picker.
 
+use circord_core::application::Action;
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{Id, button, column, container, operation, row, scrollable::AbsoluteOffset, text},
 };
-use circord_core::application::Action;
 
 use crate::{
     app::{App, Message, NOBODY},
@@ -50,7 +50,7 @@ pub fn take_edit(app: &mut App) -> Task<Message> {
         .timeline
         .messages
         .iter()
-        .position(|message| &*message.item == item)
+        .position(|message| *message.item == item)
         .map_or_else(Task::none, |index| reveal_row(app, index));
     Task::batch([app.sync(), reveal, operation::focus(EDIT)])
 }

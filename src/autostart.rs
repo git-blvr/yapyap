@@ -247,6 +247,7 @@ mod windows {
             })
             .collect();
         let value = wide(&line.join(" "));
+        // SAFETY: the strings are NUL-terminated and outlive the call.
         let status = unsafe {
             RegSetKeyValueW(
                 HKEY_CURRENT_USER,
@@ -268,6 +269,7 @@ mod windows {
     }
 
     fn delete(key: &str) -> io::Result<()> {
+        // SAFETY: the strings are NUL-terminated and outlive the call.
         let status = unsafe {
             RegDeleteKeyValueW(
                 HKEY_CURRENT_USER,
@@ -285,6 +287,7 @@ mod windows {
     fn query(key: &str, kind: u32) -> Option<Vec<u8>> {
         let (key, name) = (wide(key), wide(super::NAME));
         let mut size = 0u32;
+        // SAFETY: the strings are NUL-terminated and outlive the call.
         let status = unsafe {
             RegGetValueW(
                 HKEY_CURRENT_USER,
@@ -300,6 +303,8 @@ mod windows {
             return None;
         }
         let mut data = vec![0u8; size as usize];
+        // SAFETY: `size` bytes of `data` are written, and the strings are
+        // NUL-terminated and outlive the call.
         let status = unsafe {
             RegGetValueW(
                 HKEY_CURRENT_USER,
@@ -357,6 +362,8 @@ mod windows {
             );
             // Task Manager turns it off with an odd first byte.
             let disabled = [3u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            // SAFETY: the strings and bytes are NUL-terminated or sized, and
+            // outlive the call.
             let status = unsafe {
                 RegSetKeyValueW(
                     HKEY_CURRENT_USER,

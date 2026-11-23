@@ -1362,7 +1362,7 @@ impl AppState {
                 name: name.to_string(),
                 // Matrix names people by their user id.
                 username: if on_discord {
-                    username.clone().map(|name| name.to_string())
+                    username.map(|name| name.to_string())
                 } else {
                     Some(id.to_owned())
                 },

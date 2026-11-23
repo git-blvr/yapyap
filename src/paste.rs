@@ -584,7 +584,10 @@ fn bitmap(dib: &[u8]) -> Option<image::RgbaImage> {
 }
 
 /// The existing local files a `text/uri-list` names.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only Wayland's drag and drop reads a uri-list")
+)]
 pub fn files(list: &str) -> Vec<PathBuf> {
     list.lines()
         .map(str::trim)

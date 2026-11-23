@@ -491,7 +491,7 @@ impl Application {
                     channel_types,
                     min_values,
                     max_values,
-                } if &**id == custom_id => Some((
+                } if **id == custom_id => Some((
                     text.to_string(),
                     *kind,
                     options.clone(),
@@ -529,7 +529,7 @@ impl Application {
             }
         }
         for choice in &mut choices {
-            choice.selected |= defaults.iter().any(|default| &**default == choice.value);
+            choice.selected |= defaults.iter().any(|default| **default == choice.value);
         }
         let mut seen = std::collections::HashSet::new();
         choices.retain(|choice| seen.insert(choice.value.clone()));

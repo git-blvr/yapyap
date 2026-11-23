@@ -92,7 +92,7 @@ pub fn keep_reading(app: &mut App, reading: Option<(String, f32)>) -> Task<Messa
         .timeline
         .messages
         .iter()
-        .position(|message| &*message.item == item)
+        .position(|message| *message.item == item)
     else {
         return Task::none();
     };

@@ -1,11 +1,11 @@
 //! A message's hover bar: quick reactions, Edit or Reply, Forward and More,
 //! and where their menus open.
 
+use circord_core::chat::{self};
 use iced::{
     Alignment, Element, Point,
     widget::{container, mouse_area, row},
 };
-use circord_core::chat::{self};
 
 use crate::{app::Message, controls, menus::MenuAct, pictures::Icon};
 
@@ -107,10 +107,7 @@ pub fn hover_bar<'a>(ctx: crate::ctx::Ctx<'a>, index: usize) -> Option<Element<'
                     20,
                     BAR_BUTTON,
                     (None, hover_wash),
-                    Message::Menu(crate::menus::Event::React(
-                        item.to_string(),
-                        key.to_string(),
-                    )),
+                    Message::Menu(crate::menus::Event::React(item.to_string(), key.clone())),
                 ));
             }
             buttons = buttons.push(

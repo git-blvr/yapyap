@@ -32,8 +32,8 @@ use std::{
     },
 };
 
-use sha2::{Digest, Sha256};
 use circord_core::runtime::BackgroundRuntime;
+use sha2::{Digest, Sha256};
 
 use super::{Asset, Release, Source, signature};
 
@@ -368,7 +368,10 @@ fn smoke_test(program: &Path) -> Result<(), String> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Prepared {
     /// The AppImage was replaced; start this file.
-    #[cfg_attr(not(unix), allow(dead_code))]
+    #[cfg_attr(
+        not(unix),
+        allow(dead_code, reason = "the AppImage it starts is a Unix file")
+    )]
     Replaced(PathBuf),
     /// The installer is checked and waiting; running it replaces the program.
     Installer {
