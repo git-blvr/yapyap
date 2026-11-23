@@ -1,12 +1,12 @@
 # Tests
 
-`cargo test -p yapfast-iced-kit` runs the kit's own tests, with a message
+`cargo test -p circord-iced-kit` runs the kit's own tests, with a message
 of their own (`testing::Message`) and without the core.
-`cargo test -p yapfast-iced` runs the client's.
+`cargo test -p circord-iced` runs the client's.
 
 ## The window's tests
 
-`crates/yapfast-iced/src/tests/` drives the window through `iced_test`'s
+`crates/circord-iced/src/tests/` drives the window through `iced_test`'s
 headless simulator on the core's preview: a test builds the view, clicks and
 types into it, and hands the messages that come out to `App::update`.
 

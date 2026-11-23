@@ -1,4 +1,4 @@
-//! Yapfast port: copying premultiplied pixels onto the frame directly.
+//! Circord port: copying premultiplied pixels onto the frame directly.
 //!
 //! tiny-skia draws a pixmap through its pattern shader in the high-precision
 //! (f32) pipeline, several times the cost per pixel of a plain source-over
@@ -29,7 +29,7 @@ pub fn blit(
     pixels: &mut tiny_skia::PixmapMut<'_>,
 ) {
     let (width, height) = (width as i32, height as i32);
-    // Yapfast port (patch 38): the box whose corners are cut, which may be
+    // Circord port (patch 38): the box whose corners are cut, which may be
     // smaller than the picture (one that overhangs its clip, cut to it).
     let [box_left, box_top, box_right, box_bottom] =
         corners.unwrap_or([x, y, x + width, y + height]);
@@ -47,7 +47,7 @@ pub fn blit(
     if x0 >= x1 || y0 >= y1 || opacity == 0 {
         return;
     }
-    // Yapfast port (round 3): each corner its own radius, as a card's
+    // Circord port (round 3): each corner its own radius, as a card's
     // banner has round top corners only.
     let radius = radius.map(|radius| {
         radius
@@ -96,7 +96,7 @@ pub fn blit(
             target_row.copy_from_slice(source_row);
             continue;
         }
-        // Yapfast port (patch 29): a see-through row clear of the corners
+        // Circord port (patch 29): a see-through row clear of the corners
         // (art with soft edges, a faded picture) is laid over pixel by
         // pixel without looking for corners.
         if left.is_none()
@@ -164,7 +164,7 @@ pub fn blit(
     }
 }
 
-/// Yapfast port (patch 24): `source`, `width` by `height` premultiplied
+/// Circord port (patch 24): `source`, `width` by `height` premultiplied
 /// pixels, scaled to `to_width` by `to_height`: each pixel's centre sampled
 /// between the four source pixels round it (`nearest`: the one it falls
 /// in), as tiny-skia's bilinear filter samples, in the same byte order.
@@ -251,7 +251,7 @@ fn scaled(pixel: u32, scale: u32) -> u32 {
     even | odd << 8
 }
 
-/// Yapfast port (patch 19): fills the whole pixels from (`left`, `top`) to
+/// Circord port (patch 19): fills the whole pixels from (`left`, `top`) to
 /// (`right`, `bottom`) of `pixels` with `color`, straight, laid source over,
 /// or put in place of what's there (`replace`). tiny-skia filled a plain
 /// rectangle through its pipeline, a span at a time.
@@ -286,7 +286,7 @@ pub fn fill(
     }
 }
 
-/// Yapfast port (patch 18): a premultiplied pixel laid source over another.
+/// Circord port (patch 18): a premultiplied pixel laid source over another.
 pub fn over(pixel: u32, below: u32) -> u32 {
     match pixel >> 24 {
         0 => below,
@@ -303,7 +303,7 @@ fn times_255ths(pixel: u32, factor: u32) -> u32 {
     even | odd << 8
 }
 
-/// Yapfast port: fills a linear gradient over `bounds` onto `pixels`,
+/// Circord port: fills a linear gradient over `bounds` onto `pixels`,
 /// source over, within `clip_bounds`, with its corners cut round to
 /// `radius` (top left, top right, bottom right, bottom left). As
 /// tiny-skia's linear gradient with `SpreadMode::Pad` colours each pixel's
@@ -386,7 +386,7 @@ pub fn gradient(
     };
     let stride = pixels.width() as usize * 4;
     let target = pixels.data_mut();
-    // Yapfast port (patch 29): within the filled span, how far along the
+    // Circord port (patch 29): within the filled span, how far along the
     // gradient moves across the columns and down the rows. A gradient
     // along x has the same colours on every row, made once; one along y (a
     // panel's top-to-bottom fade) one colour across each row, worked out
@@ -458,11 +458,11 @@ pub fn gradient(
                 bytemuck::try_cast_slice_mut::<u8, u32>(&mut target_row[inner.start * 4..inner.end * 4])
         {
             if opaque {
-                // Yapfast port (patch 12): an opaque span clear of the
+                // Circord port (patch 12): an opaque span clear of the
                 // corners, as most of a panel's rows are, is one copy.
                 span.copy_from_slice(&colors[inner.clone()]);
             } else {
-                // Yapfast port (patch 29): a see-through one (a glass
+                // Circord port (patch 29): a see-through one (a glass
                 // panel's tint) is laid over pixel by pixel without
                 // looking for corners.
                 for (below, &pixel) in span.iter_mut().zip(&colors[inner.clone()]) {

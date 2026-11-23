@@ -20,13 +20,13 @@ pub struct Surface {
         Box<dyn compositor::Window>,
     >,
     clip_mask: tiny_skia::Mask,
-    /// Yapfast port (14): each past frame's layers with the background it
+    /// Circord port (14): each past frame's layers with the background it
     /// was drawn on. Stock kept one background for all of them, so after
     /// the background changed, a buffer two frames old was diffed as if it
     /// had the new one, and kept the old one where nothing else changed.
     layer_stack: VecDeque<(Vec<Layer>, Color)>,
     max_age: u8,
-    /// Yapfast port (patch 27): the scale its last frame was drawn at.
+    /// Circord port (patch 27): the scale its last frame was drawn at.
     scale_factor: f32,
 }
 
@@ -41,7 +41,7 @@ impl crate::graphics::Compositor for Compositor {
         _shell: Shell,
         backend: Option<&str>,
     ) -> Result<Self, Error> {
-        // Yapfast port (patch 26): off while the app draws with the GPU.
+        // Circord port (patch 26): off while the app draws with the GPU.
         if !crate::enabled::enabled() {
             return Err(Error::GraphicsAdapterNotFound {
                 backend: "tiny-skia",
@@ -169,7 +169,7 @@ pub fn present(
     on_pre_present: impl FnOnce(),
 ) -> Result<(), compositor::SurfaceError> {
     let physical_size = viewport.physical_size();
-    // Yapfast port (patch 22): the frame's timings, while a hook asks.
+    // Circord port (patch 22): the frame's timings, while a hook asks.
     let hook = crate::timing::hook();
     let start = hook.map(|_| Instant::now());
 
@@ -179,7 +179,7 @@ pub fn present(
         .map_err(|_| compositor::SurfaceError::Lost)?;
     let waited = start.map(|_| Instant::now());
 
-    // Yapfast port (patch 27): a new scale (the app's zoom, which doesn't
+    // Circord port (patch 27): a new scale (the app's zoom, which doesn't
     // reconfigure the surface) redraws the window whole. Past frames'
     // layers are in logical pixels, so diffed across it they'd damage the
     // old scale's places, leaving the new one's stale. The renderer's
@@ -202,7 +202,7 @@ pub fn present(
         }
     };
 
-    // Yapfast port (patch 32): what each layer changed since the frame
+    // Circord port (patch 32): what each layer changed since the frame
     // presented last, for the renderer's backdrop: a layer that's new
     // changed what it draws (patch 27's extent).
     let front = surface
@@ -213,7 +213,7 @@ pub fn present(
     let changes = {
         let current = renderer.layers();
         match front {
-            // Yapfast port (patch 41): paired by place where they lie, the
+            // Circord port (patch 41): paired by place where they lie, the
             // layers that came or went partway between.
             Some(previous) => crate::layer::changes(previous, current),
             None => crate::layer::Changes {
@@ -224,7 +224,7 @@ pub fn present(
         }
     };
 
-    // Yapfast port (patch 23): the compositor is told what differs from
+    // Circord port (patch 23): the compositor is told what differs from
     // the frame it shows, the one presented last, not the whole window.
     // That is `changes` and what the layers that went drew (patch 32
     // already worked it out). The draw's `damage` is against the buffer's
@@ -238,7 +238,7 @@ pub fn present(
         physical_size,
     );
 
-    // Yapfast port (patch 27): a layer that came or went damages what it
+    // Circord port (patch 27): a layer that came or went damages what it
     // drew (`Layer::extent`), not its bounds; (patch 41) paired as above.
     let damage = last_layers
         .and_then(|(last_layers, last_background)| {
@@ -330,7 +330,7 @@ pub fn screenshot(
     background_color: Color,
 ) -> Vec<u8> {
     let size = viewport.physical_size();
-    // Yapfast port (patch 32): a screenshot draws whole. Changes told for a
+    // Circord port (patch 32): a screenshot draws whole. Changes told for a
     // frame that had no damage, and so wasn't drawn, are left unused.
     renderer.backdrop.fresh = false;
 
@@ -375,7 +375,7 @@ pub fn screenshot(
     )
 }
 
-/// Yapfast port (patch 23): `regions`, in logical pixels, as the buffer's
+/// Circord port (patch 23): `regions`, in logical pixels, as the buffer's
 /// pixels they touch, within it.
 fn physical(regions: &[Rectangle], viewport: &Viewport) -> Vec<softbuffer::Rect> {
     let scale = viewport.scale_factor();
@@ -399,7 +399,7 @@ fn physical(regions: &[Rectangle], viewport: &Viewport) -> Vec<softbuffer::Rect>
         .collect()
 }
 
-/// Yapfast port: the damaged regions with any two merged whose union adds
+/// Circord port: the damaged regions with any two merged whose union adds
 /// no more than iced's own threshold (20,000 px) beyond what they cover
 /// together. `damage::group` merges each region only into the one before
 /// it, in order of distance from the window's corner, so in a scrolled list

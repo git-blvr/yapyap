@@ -1,9 +1,9 @@
-# Yapfast
+# Circord
 
 - Run every cargo command in the dev shell, with the `fast` profile:
   `nix develop path:./nix --command cargo build --profile fast`.
 - While working, build and test only what changed, such as
-  `cargo test --profile fast -p yapfast-core history`; incremental builds take
+  `cargo test --profile fast -p circord-core history`; incremental builds take
   seconds. Run `scripts/check --fast` once, before the last commit of a piece
   of work, not before each commit. It enters the dev shell itself and checks
   the default build, the window with Discord; `--matrix` adds the builds with
@@ -21,20 +21,20 @@
   from the `fast` ones everyday work replaces.
 - Discord's API, as its own apps use it: https://docs.discord.food. Look up
   an endpoint, payload or gateway event there before adding or changing one,
-  and give the fake the same shape. How Yapfast does each Discord feature,
+  and give the fake the same shape. How Circord does each Discord feature,
   one doc per area: `docs/discord/`; adding a feature, layer by layer:
   `docs/discord/adding-a-feature.md`.
 - Discord service tests: `scripts/test-fake-discord [FILTER]`. While
   working, run the tests of the area you changed by name (`forum`,
   `calls_in_dms`), a second or so each. Run the whole suite, about 30 s, once
-  before the last commit of work on `crates/yapfast-discord`,
+  before the last commit of work on `crates/circord-discord`,
   `discord_text` or `testing/fake_discord.ts`; `scripts/check` doesn't run
   it. Matrix and LiveKit: `scripts/test-stack up`.
 - Where code lives, and how a UI change flows from the window to
   `application/`: `docs/architecture.md`. Changing the window
-  (`crates/yapfast-iced`, its kit `crates/yapfast-iced-kit`): where an
+  (`crates/circord-iced`, its kit `crates/circord-iced-kit`): where an
   area's code goes and adding a screen, `docs/client/structure.md`; how each
-  area behaves, its doc in `docs/client/`. Shells, logging (`YAPFAST_LOG`,
+  area behaves, its doc in `docs/client/`. Shells, logging (`CIRCORD_LOG`,
   not `RUST_LOG`), dependency sources and media libraries:
   `docs/building.md`.
 - Docs describe how things work now; history and measurements go in the

@@ -26,7 +26,7 @@ impl Pipeline {
         &self,
         handle: &raster::Handle,
     ) -> Result<raster::Allocation, raster::Error> {
-        // Yapfast port: see `native`.
+        // Circord port: see `native`.
         if let Some(image) = native(handle) {
             #[allow(unsafe_code)]
             return Ok(unsafe {
@@ -77,7 +77,7 @@ impl Pipeline {
             },
         };
 
-        // Yapfast port (patch 13): a video frame the app draws itself,
+        // Circord port (patch 13): a video frame the app draws itself,
         // copied or scaled into the frame inside the clip, at any scale
         // factor; see video.rs.
         if transform.kx == 0.0
@@ -101,7 +101,7 @@ impl Pipeline {
             return;
         }
 
-        // Yapfast port: a picture drawn unrotated is put on whole pixels and
+        // Circord port: a picture drawn unrotated is put on whole pixels and
         // copied in with source-over, its corners cut to `border_radius`
         // (which tiny-skia's path ignores): at its own size as it is, else
         // scaled to the pixels it covers (patch 24), as at a zoom other
@@ -184,7 +184,7 @@ impl Pipeline {
             return;
         }
 
-        // Yapfast port (patch 42): a turned picture all of one colour (a
+        // Circord port (patch 42): a turned picture all of one colour (a
         // leaning card's ground, shadow and edge under Zine) is filled as
         // its turned rectangle in that colour, covering the pixels
         // `draw_pixmap` covers, with no picture sampled per pixel. Through
@@ -234,7 +234,7 @@ impl Pipeline {
             raster::FilterMethod::Nearest => tiny_skia::FilterQuality::Nearest,
         };
 
-        // Yapfast port (patch 10): a scaled picture with round corners
+        // Circord port (patch 10): a scaled picture with round corners
         // (any scale factor but 1, as 125% and 150% on Windows) is filled
         // as its rounded rectangle with the picture as the pattern. Stock,
         // `draw_pixmap` fills the whole rectangle: square avatars.
@@ -272,7 +272,7 @@ impl Pipeline {
             return;
         }
 
-        // Yapfast port (patch 36): placed at the bounds' own position, then
+        // Circord port (patch 36): placed at the bounds' own position, then
         // scaled.
         // Stock, the position was divided by the scale and cut to whole
         // pixels of the picture, so a small picture stretched far (a
@@ -304,11 +304,11 @@ impl Pipeline {
     }
 }
 
-/// Yapfast port: an `Rgba` handle's pixels are taken to be in tiny-skia's
+/// Circord port: an `Rgba` handle's pixels are taken to be in tiny-skia's
 /// own format already, premultiplied BGRA as this renderer stores them, and
 /// drawn from the handle's bytes: no converted copy in the cache, nothing to
 /// convert again after a frame whose damage missed the image (the cache
-/// keeps only images drawn in the last frame). Only the Yapfast port makes
+/// keeps only images drawn in the last frame). Only the Circord port makes
 /// `Rgba` handles, and it makes them in this format (`pictures::handle`,
 /// `pictures::shared`, its fitter's copies, video frames). A handle of
 /// straight RGBA bytes made anywhere else would draw with red and blue
@@ -331,7 +331,7 @@ struct Cache {
     hits: FxHashSet<raster::Id>,
 }
 
-/// Yapfast port (patch 19): whether each picture drawn in the last frame or
+/// Circord port (patch 19): whether each picture drawn in the last frame or
 /// this one is opaque all over, and those drawn in this one. Patch 42: and
 /// whether it's all one colour.
 #[derive(Debug, Default)]
@@ -340,7 +340,7 @@ struct Opaque {
     hits: FxHashSet<raster::Id>,
 }
 
-/// Yapfast port (patches 19, 42): what a picture's pixels are all over.
+/// Circord port (patches 19, 42): what a picture's pixels are all over.
 #[derive(Debug, Clone, Copy)]
 struct Look {
     opaque: bool,
@@ -370,7 +370,7 @@ impl Opaque {
     }
 }
 
-/// Yapfast port (patch 24): pictures drawn at a size other than their own
+/// Circord port (patch 24): pictures drawn at a size other than their own
 /// (all of them at a zoom other than 100%), each scaled once to the whole
 /// pixels it covers and copied in from then on, kept while it's in the
 /// frame's layers at that size. Scaling them through tiny-skia's pattern pipeline on every
@@ -382,7 +382,7 @@ struct Resized {
     hits: FxHashSet<Shown>,
 }
 
-/// Yapfast port (patch 24): a picture as drawn: its handle, the whole
+/// Circord port (patch 24): a picture as drawn: its handle, the whole
 /// pixels it covers across and down, and whether it's sampled nearest.
 pub type Shown = (raster::Id, u32, u32, bool);
 
@@ -402,7 +402,7 @@ fn whole_span(bounds: Rectangle, transform: tiny_skia::Transform) -> (i32, i32, 
     )
 }
 
-/// Yapfast port (patch 24): a picture at `bounds` in a frame at `scale`, as
+/// Circord port (patch 24): a picture at `bounds` in a frame at `scale`, as
 /// [`Resized`] keeps its copy.
 pub fn shown_at(image: &raster::Image, bounds: Rectangle, scale: f32) -> Shown {
     let (left, top, right, bottom) =

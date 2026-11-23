@@ -1,8 +1,8 @@
 // A fake Discord for tests and memory measurements: the gateway and the parts
-// of the HTTP API Yapfast uses, with one deterministic server, "Server", that
+// of the HTTP API Circord uses, with one deterministic server, "Server", that
 // mirrors the Matrix fixture (Alice reads #general, Bob posts, three people sit
 // in the Lounge voice channel). Run `bun testing/fake_discord.ts --port 18400`,
-// then start Yapfast with YAPFAST_DISCORD_TEST_SERVER=http://127.0.0.1:18400.
+// then start Circord with CIRCORD_DISCORD_TEST_SERVER=http://127.0.0.1:18400.
 // `--env PATH` puts an environment's content in place of all of the below's,
 // for demos, promo recordings and screenshots: the account, people with
 // their pictures, presences and friendships, DMs and groups, servers with
@@ -206,7 +206,7 @@
 // /users/@me/settings-proto/2, with the places she used, and a sent GIF's
 // page unfurls into a gifv embed a moment later, a direct link to a GIF's
 // file into an image embed.
-// Alice's custom status, "Testing Yapfast", is in her settings; PATCH
+// Alice's custom status, "Testing Circord", is in her settings; PATCH
 // /users/@me/settings-proto/1 replaces each top-level field it sends, and GET
 // /_control/presence shows the presence her session last sent with op 3, GET
 // /_control/settings her settings as GET /users/@me/settings-proto/1 gives them,
@@ -324,7 +324,7 @@
 // brings X-Captcha-Key "solved" with the rqtoken and session it was given.
 // Add ?twice to ask for a second challenge with different request data.
 // Add ?reject to reject the ticket after its challenges are answered.
-// Start Yapfast with YAPFAST_DISCORD_TEST_UNLINKED=1 to link. POST
+// Start Circord with CIRCORD_DISCORD_TEST_UNLINKED=1 to link. POST
 // /auth/logout ends the session, and GET /_control/logouts counts them.
 // A gateway session whose connection drops resumes with op 6, getting the
 // events it missed; a close with 1000 or 1001 ends it instead. POST
@@ -419,7 +419,7 @@ const { values: args } = parseArgs({
 const env = args.env ? await readEnv(args.env) : undefined;
 let world: World | undefined;
 
-const TOKEN = "yapfast-test-token";
+const TOKEN = "circord-test-token";
 // The login the API and gateway take, which POST /_control/refresh-token
 // changes through the next READY.
 let apiToken = TOKEN;
@@ -698,7 +698,7 @@ function joinSound(guild: string | null): [string, bigint] | undefined {
 // How many times GET /users/@me/settings-proto/1 was asked.
 let settingsReads = 0;
 let settings = Buffer.from(
-  protoBytes(11, protoBytes(2, new Uint8Array([...protoBytes(1, text("Testing Yapfast")), ...protoBytes(3, text("🧪"))]))),
+  protoBytes(11, protoBytes(2, new Uint8Array([...protoBytes(1, text("Testing Circord")), ...protoBytes(3, text("🧪"))]))),
 ).toString("base64");
 // The presence Alice's session last sent, if any.
 let alicePresence: unknown = null;
@@ -1669,7 +1669,7 @@ const notesFile = addFile({
 const welcome = post(
   GENERAL,
   users.bob,
-  "Welcome to **Yapfast**, with `code` and a [link](https://example.org)",
+  "Welcome to **Circord**, with `code` and a [link](https://example.org)",
   HISTORY_START,
 );
 welcome.reactions.push({ name: "👍", id: null, users: new Set([users.carol.id, ALICE]) });
@@ -1704,7 +1704,7 @@ for (let index = 0; index < extra; index++) {
       png(w, h, (x, y) => [shade[0]! + Math.floor((55 * x) / w), shade[1]! + Math.floor((55 * y) / h), shade[2]!, 255]);
     files.push(addFile({ id: snowflake(ms, 1), channel: GENERAL, filename: `photo-${index}.png`, contentType: "image/png", data: draw(480, 320), width: 480, height: 320, draw }));
   }
-  // The oldest of the latest page is a boost, which Yapfast doesn't show but
+  // The oldest of the latest page is a boost, which Circord doesn't show but
   // which still counts toward the page.
   if (index === extra - 50) post(GENERAL, users.bob, "", ms, { type: 8 });
   else if (index < extra - 1) post(GENERAL, users.bob, sample(index), ms, { files });
@@ -3414,7 +3414,7 @@ function gatewayMessage(ws: Socket, text: string) {
         send(ws, 0, ready(ws), "READY");
       }
       send(ws, 0, readySupplemental(), "READY_SUPPLEMENTAL");
-      // Calls going on, as Yapfast's capabilities ask.
+      // Calls going on, as Circord's capabilities ask.
       for (const channel of calls.keys()) send(ws, 0, wireCall(channel), "CALL_CREATE");
       break;
     case 6: {
@@ -3788,7 +3788,7 @@ function ring(channel: string, people: string[], origin: string) {
 
 // --- Voice server -------------------------------------------------------------
 // Discord's voice gateway, version 8, and UDP address discovery. The session
-// has no DAVE and its audio is dropped, which is enough for Yapfast to connect.
+// has no DAVE and its audio is dropped, which is enough for Circord to connect.
 
 const VOICE_TOKEN = "fake-voice-token";
 /** The token of the server POST /_control/voice-move moves Alice's call to. */
@@ -5715,9 +5715,9 @@ function mergeProto(kept: string, patch: string): string {
 const DETECTABLE_GAMES = [{ id: "123456789012345680", name: "Detected Fixture",
   description: "Discard this unrelated catalogue metadata when caching",
   executables: [
-    { os: "linux", name: "yapfast_detected_game", is_launcher: false },
-    { os: "darwin", name: "yapfast_detected_game", is_launcher: false },
-    { os: "win32", name: "yapfast_detected_game.exe", is_launcher: false }
+    { os: "linux", name: "circord_detected_game", is_launcher: false },
+    { os: "darwin", name: "circord_detected_game", is_launcher: false },
+    { os: "win32", name: "circord_detected_game.exe", is_launcher: false }
   ], third_party_skus: [] }];
 
 async function api(req: Request, path: string, origin: string): Promise<Response> {
@@ -7073,7 +7073,7 @@ async function api(req: Request, path: string, origin: string): Promise<Response
     return empty();
   }
 
-  // Alice's settings: Yapfast changes the status, the custom status, the
+  // Alice's settings: Circord changes the status, the custom status, the
   // soundboard's volume or the join sounds, which every session hears of.
   // Each top-level field sent replaces hers whole, as on Discord.
   if (method === "GET" && path === "/content-inventory/users/@me") {
@@ -8116,7 +8116,7 @@ function postEmbeds(origin: string, channel = GENERAL) {
         provider: { name: "YouTube", url: "https://www.youtube.com" },
         author: { name: "Example City", url: "https://www.youtube.com/@example" },
         thumbnail: proxied(origin, "timelapse", 1280, 720),
-        video: { url: "https://www.youtube.com/embed/yapfast", width: 1280, height: 720 },
+        video: { url: "https://www.youtube.com/embed/circord", width: 1280, height: 720 },
       },
     ],
   });
@@ -8306,7 +8306,7 @@ function postComponents(origin: string): string {
           { type: 14, id: 4, divider: true, spacing: 1 },
           {
             type: 9, id: 5,
-            components: [{ type: 10, id: 6, content: "**Linux · Yapfast**" }, { type: 10, id: 7, content: "Prague, Czechia" }],
+            components: [{ type: 10, id: 6, content: "**Linux · Circord**" }, { type: 10, id: 7, content: "Prague, Czechia" }],
             accessory: { type: 11, id: 8, media: { ...proxied(origin, "device", 160, 160), loading_state: 2 } },
           },
           {
@@ -8830,7 +8830,7 @@ if (env) {
   voiceStarted.clear();
   syncVoiceStarted(Math.floor(Date.now() / 1000) - 47 * 60, false);
   // The env's servers, in its order: without a list, clients sort them
-  // their own way, as Yapfast does by name.
+  // their own way, as Circord does by name.
   const list = world.guilds.map((server) => [...folderEntry([server.id])]).flat();
   settings = Buffer.concat([Buffer.from(settings, "base64"), protoBytes(14, new Uint8Array(list))]).toString("base64");
 }

@@ -1,6 +1,6 @@
 //! Files dragged onto the window from a file manager. winit reports them on
 //! X11 and Windows; on Wayland, where winit has no drag and drop, a data
-//! device of Yapfast's own on winit's connection does.
+//! device of Circord's own on winit's connection does.
 
 use std::path::PathBuf;
 
@@ -16,7 +16,7 @@ pub enum Drag {
     /// Files came over the window.
     Entered,
     /// The pointer dragging them is here, in the window's logical pixels as
-    /// the platform has them, before Yapfast's zoom.
+    /// the platform has them, before Circord's zoom.
     Moved { x: f64, y: f64 },
     /// They left it, or the drag ended elsewhere.
     Left,
@@ -126,7 +126,7 @@ pub mod wayland {
 
     const URI_LIST: &str = "text/uri-list";
 
-    /// Watches for files dragged over Yapfast's windows on the connection whose
+    /// Watches for files dragged over Circord's windows on the connection whose
     /// `wl_display` this is, reporting each step to `report` from a thread.
     ///
     /// # Safety
@@ -139,7 +139,7 @@ pub mod wayland {
     ) {
         let display = display.as_ptr() as usize;
         let thread = std::thread::Builder::new()
-            .name("yapfast-drop".into())
+            .name("circord-drop".into())
             // It keeps little: the device, an offer, and a dropped list.
             .stack_size(128 * 1024)
             .spawn(move || {
@@ -286,7 +286,7 @@ pub mod wayland {
                         }
                     }
                 }
-                // The clipboard's offers: Yapfast reads the clipboard elsewhere.
+                // The clipboard's offers: Circord reads the clipboard elsewhere.
                 wl_data_device::Event::Selection { id: Some(offer) } => offer.destroy(),
                 _ => {}
             }

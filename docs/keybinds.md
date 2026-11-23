@@ -24,8 +24,8 @@ all up again; Escape, pressed first, stops without changing anything. On
 Windows, Mouse 4 (Back) and Mouse 5 (Forward) record too. While anything
 records, keybinds don't fire, so pressing a toggle's keys to record them
 doesn't toggle it; ones held already go on until their keys come up.
-`crates/yapfast-iced/src/settings/keybinds.rs` has the page and records the
-keys with the core's `Recorder` (`yapfast_core::keybinds`); the client's
+`crates/circord-iced/src/settings/keybinds.rs` has the page and records the
+keys with the core's `Recorder` (`circord_core::keybinds`); the client's
 `keybinds.rs` starts the watcher, which is the root crate's
 (`src/keybinds.rs`).
 
@@ -53,7 +53,7 @@ others are removed; the Voice page's is `push-to-talk`, as before.
 
 What a keybind is (its keys, its action, what `layout.json` keeps, the
 recorder and the notes on where keybinds work) is the core's
-(`yapfast_core::keybinds`), which both clients read. `src/keybinds.rs`
+(`circord_core::keybinds`), which both clients read. `src/keybinds.rs`
 turns key events into keybinds on whichever thread hears
 them, looking through the few keys bound; it allocates only when the
 keybinds change.
@@ -72,7 +72,7 @@ keybinds change.
 - Losing the keys, as when the window loses the focus or the X server goes,
   lets everything go.
 
-Push to talk and push to mute set `yapfast_core::push_to_talk`'s atomics
+Push to talk and push to mute set `circord_core::push_to_talk`'s atomics
 from that thread, so the microphone never waits on the window. Toggles go to
 the window's event loop and run as its mute and deafen buttons do, sounds
 included; Toggle VAD changes the Voice page's input mode.
@@ -89,7 +89,7 @@ On Windows the hook names a key as winit does, so it matches what the window
 recorded: a key with a scan code of 0, as keyboard software and remappers
 send, takes it from its virtual key in the focused window's keyboard layout,
 and every code goes through winit's own mapping. Before this the hook missed
-such keys altogether, in other apps and in Yapfast. Windows' made-up Left
+such keys altogether, in other apps and in Circord. Windows' made-up Left
 Ctrl that AltGr sends holds nothing.
 
 Windows may never send a key-up: the secure desktop (UAC, the lock screen)
@@ -99,19 +99,19 @@ checks with `GetAsyncKeyState`, by the virtual key the key last went down
 with: a held key that goes down again but reads up lost its key-up, the other
 keys of a combination are checked as its last key goes down, and while push to
 talk or push to mute holds, a timer checks every 250 ms and lets go of a key
-that's up. `YAPFAST_LOG=debug` logs a few key events that might be a bound key
+that's up. `CIRCORD_LOG=debug` logs a few key events that might be a bound key
 heard as another (a scan code of 0, or a bound key's virtual key with another
 scan code); other keys are never logged.
 
-The hooks heard nothing while Yapfast's own window had the focus, in every
+The hooks heard nothing while Circord's own window had the focus, in every
 release up to 0.4.1 (issue #249): keybinds worked with another app in front
-and stopped as Yapfast came to the front. winit registers the process for raw
-keyboard and mouse input as its event loop starts, for device events Yapfast
+and stopped as Circord came to the front. winit registers the process for raw
+keyboard and mouse input as its event loop starts, for device events Circord
 never reads, and Windows calls no low-level hook of a process registered so
 while one of its windows has the focus. So the hook's start removes that
 registration (`RIDEV_REMOVE`), and logs it. As a second line, the window's own
 key and side-button events go to the hook's thread, which runs keybinds by
-them until a hook has heard a bound key with Yapfast focused. Windows hands a
+them until a hook has heard a bound key with Circord focused. Windows hands a
 key to the hook before the window, so each key counts once. If that ever
 happens the log says "the window's keys stand in". Wine calls the hooks
 whatever is registered, so neither half shows there: the raw-input cause
@@ -120,7 +120,7 @@ real Windows.
 
 Where none of these works, as on a wlroots desktop such as Sway, which has no
 GlobalShortcuts, the window's own key events stand in, so keybinds work while
-Yapfast is in front, and settings say so, as Discord's browser client does.
+Circord is in front, and settings say so, as Discord's browser client does.
 The watcher runs while any keybind is set, in calls or not, and with the
 window closed to the tray: a thread blocked on the X server or in the hooks'
 message loop, or the portal's task on the network runtime. Changing a keybind

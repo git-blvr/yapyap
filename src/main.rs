@@ -1,6 +1,6 @@
 // Matrix sync's encrypted-event futures exceed rustc's default trait depth.
 #![recursion_limit = "256"]
-// Opened from Explorer, Yapfast opens no console window beside its own; see
+// Opened from Explorer, Circord opens no console window beside its own; see
 // `has_console`.
 #![cfg_attr(all(windows, feature = "desktop"), windows_subsystem = "windows")]
 
@@ -31,7 +31,7 @@ mod protocol;
 /// The window's app ID on Linux, and the name of its desktop entry and
 /// icon; keybinds' portal session goes by it too.
 #[cfg(feature = "desktop")]
-pub const APP_ID: &str = "io.github.yapfast.Yapfast";
+pub const APP_ID: &str = "io.github.circord.Circord";
 #[cfg(feature = "desktop")]
 mod tray;
 #[cfg(feature = "desktop")]
@@ -40,14 +40,14 @@ mod update;
 mod window_place;
 
 use anyhow::{Context, Result, bail};
-use yapfast_core::{cli, logging, runtime::BackgroundRuntime};
+use circord_core::{cli, logging, runtime::BackgroundRuntime};
 #[cfg(feature = "matrix")]
-use yapfast_core::{experiment, voice_demo};
+use circord_core::{experiment, voice_demo};
 
 /// glibc maps a block of 128 KiB or more on its own and unmaps it when freed,
 /// but each such free raises that threshold to the block's size, up to 32 MiB:
 /// after the first decoded picture, every later one stayed in the heap. With a
-/// fixed threshold and glibc's own count of arenas, Yapfast held 9.3 MiB less in
+/// fixed threshold and glibc's own count of arenas, Circord held 9.3 MiB less in
 /// a call than with two arenas, and 5.1 MiB less after it; see
 /// docs/measurements/README.md. The environment's own setting wins.
 fn fix_mmap_threshold() {
@@ -60,7 +60,7 @@ fn fix_mmap_threshold() {
         unsafe extern "C" {
             fn mallopt(parameter: std::ffi::c_int, value: std::ffi::c_int) -> std::ffi::c_int;
         }
-        // SAFETY: this runs first in main, before Yapfast starts any other thread.
+        // SAFETY: this runs first in main, before Circord starts any other thread.
         unsafe { mallopt(M_MMAP_THRESHOLD, 128 * 1024) };
     }
 }
@@ -69,12 +69,12 @@ fn main() -> Result<()> {
     fix_mmap_threshold();
     // A stream worker starts nothing else: no UI, runtime or TLS.
     #[cfg(feature = "discord")]
-    if std::env::args().nth(1).as_deref() == Some(yapfast_core::stream_worker::ARGUMENT) {
+    if std::env::args().nth(1).as_deref() == Some(circord_core::stream_worker::ARGUMENT) {
         logging::init_to_stderr();
-        return yapfast_core::stream_worker::run();
+        return circord_core::stream_worker::run();
     }
     let mut arguments: Vec<_> = std::env::args().skip(1).collect();
-    // `yapfast theme check | install | new | export`: a theme's tools, with
+    // `circord theme check | install | new | export`: a theme's tools, with
     // no window.
     #[cfg(feature = "desktop")]
     if arguments
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
         #[cfg(all(windows, feature = "desktop"))]
         let _ = has_console();
         logging::init_to_stderr();
-        std::process::exit(yapfast_iced::theme_cli::run(&arguments[1..]));
+        std::process::exit(circord_iced::theme_cli::run(&arguments[1..]));
     }
     // First, so nothing a desktop handed over with the link is read as an option.
     let handed = handed_link(&mut arguments);
@@ -108,7 +108,7 @@ fn main() -> Result<()> {
 
     #[cfg(all(windows, feature = "desktop"))]
     match data_directory(&arguments) {
-        Some(directory) if !has_console() => logging::init_to_file(&directory.join("yapfast.log")),
+        Some(directory) if !has_console() => logging::init_to_file(&directory.join("circord.log")),
         _ => logging::init(),
     }
     #[cfg(not(all(windows, feature = "desktop")))]
@@ -122,11 +122,11 @@ fn main() -> Result<()> {
     let open_link = links.pop().and_then(|link| {
         let written = written_link(&link);
         if written.is_none() {
-            tracing::info!("Yapfast has no place for the link it was handed; starting without it");
+            tracing::info!("Circord has no place for the link it was handed; starting without it");
         }
         written
     });
-    yapfast_core::init_tls()?;
+    circord_core::init_tls()?;
 
     let runtime = BackgroundRuntime::new().context("could not start background workers")?;
     #[cfg(feature = "matrix")]
@@ -145,9 +145,9 @@ fn main() -> Result<()> {
         open_link,
     };
     match arguments.as_slice() {
-        [] => launch(runtime, yapfast_core::default_directory()?, false, start),
+        [] => launch(runtime, circord_core::default_directory()?, false, start),
         [argument] if argument == "--preview" => {
-            launch(runtime, yapfast_core::default_directory()?, true, start)
+            launch(runtime, circord_core::default_directory()?, true, start)
         }
         [argument, path] if argument == "--data-dir" => launch(runtime, path.into(), false, start),
         [preview, argument, path] if preview == "--preview" && argument == "--data-dir" => {
@@ -155,13 +155,13 @@ fn main() -> Result<()> {
         }
         #[cfg(feature = "desktop")]
         [argument] if argument == RELEASE_DISCORD_LINKS => {
-            protocol::set_discord_enabled(&yapfast_core::default_directory()?, false)
+            protocol::set_discord_enabled(&circord_core::default_directory()?, false)
                 .context("could not give Discord links back")
         }
         [argument] if argument == "--smoke-test" => {
-            runtime.block_on(runtime.spawn(yapfast_core::check_build()))?;
+            runtime.block_on(runtime.spawn(circord_core::check_build()))?;
             println!(
-                "Yapfast {}: Tokio, LiveKit{}{} build check passed.",
+                "Circord {}: Tokio, LiveKit{}{} build check passed.",
                 env!("CARGO_PKG_VERSION"),
                 if cfg!(feature = "matrix") {
                     ", Matrix SDK, MatrixRTC"
@@ -195,11 +195,11 @@ fn main() -> Result<()> {
             println!("{}", help());
             Ok(())
         }
-        _ => bail!("unknown argument; run yapfast --help"),
+        _ => bail!("unknown argument; run circord --help"),
     }
 }
 
-/// Whether Yapfast's output reaches someone: a file or pipe it was given, or
+/// Whether Circord's output reaches someone: a file or pipe it was given, or
 /// the console it was started from, which it joins. A Windows program
 /// without a console of its own gets neither when opened from Explorer.
 #[cfg(all(windows, feature = "desktop"))]
@@ -208,7 +208,7 @@ fn has_console() -> bool {
         Foundation::INVALID_HANDLE_VALUE,
         System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, GetStdHandle, STD_OUTPUT_HANDLE},
     };
-    // SAFETY: neither call takes a pointer; Yapfast's other threads haven't started.
+    // SAFETY: neither call takes a pointer; Circord's other threads haven't started.
     unsafe {
         let output = GetStdHandle(STD_OUTPUT_HANDLE);
         (!output.is_null() && output != INVALID_HANDLE_VALUE)
@@ -216,7 +216,7 @@ fn has_console() -> bool {
     }
 }
 
-/// The folder Yapfast keeps its files in, which holds the log without a console.
+/// The folder Circord keeps its files in, which holds the log without a console.
 #[cfg(all(windows, feature = "desktop"))]
 fn data_directory(arguments: &[String]) -> Option<std::path::PathBuf> {
     match arguments
@@ -224,7 +224,7 @@ fn data_directory(arguments: &[String]) -> Option<std::path::PathBuf> {
         .position(|argument| argument == "--data-dir")
     {
         Some(index) => arguments.get(index + 1).map(Into::into),
-        None => yapfast_core::default_directory().ok(),
+        None => circord_core::default_directory().ok(),
     }
 }
 
@@ -232,11 +232,11 @@ fn data_directory(arguments: &[String]) -> Option<std::path::PathBuf> {
 /// in this build's window.
 fn help() -> String {
     let window = if cfg!(feature = "desktop") {
-        "Without arguments, opens Yapfast's window and restores a saved session.\n\
+        "Without arguments, opens Circord's window and restores a saved session.\n\
          --renderer selects tiny-skia (software) or wgpu (gpu) for this start, over the setting.\n\
-         If wgpu fails to start, Yapfast restarts with tiny-skia.\n\
+         If wgpu fails to start, Circord restarts with tiny-skia.\n\
          --background starts in the system tray with a saved session, as starting at sign-in does.\n\
-         LINK opens a Discord server, channel, message, profile or invite link in Yapfast.\n\
+         LINK opens a Discord server, channel, message, profile or invite link in Circord.\n\
          --release-discord-links gives discord:// links back to the app that had them, as uninstalling does.\n"
     } else {
         "This build has no window; only the commands below that need none run.\n"
@@ -247,22 +247,22 @@ fn help() -> String {
         ""
     };
     format!(
-        "Usage: yapfast [--preview] [--data-dir PATH] [--renderer gpu|software] [--background] [--default-theme] [--theme-dev FOLDER] [LINK]\n\
-         \x20      yapfast [--smoke-test | --version | --help{links}]\n\
-         \x20      yapfast --call-experiment [--resume PATH]\n\
-         \x20      yapfast [--voice-demo | --audio-devices]\n\
-         \x20      yapfast theme check FOLDER [--marketplace]\n\
-         \x20      yapfast theme install FOLDER [--data-dir PATH]\n\
-         \x20      yapfast theme new NAME [--light] [--from THEME] [--author NAME]\n\
-         \x20      yapfast theme export CUSTOM-THEME FOLDER\n\
-         \x20      yapfast session login --homeserver URL --user USER --password-stdin [--data-dir PATH]\n\
-         \x20      yapfast session status [--data-dir PATH]\n\
-         \x20      yapfast session recover --key-stdin [--data-dir PATH]\n\
-         \x20      yapfast session logout [--data-dir PATH]\n\
+        "Usage: circord [--preview] [--data-dir PATH] [--renderer gpu|software] [--background] [--default-theme] [--theme-dev FOLDER] [LINK]\n\
+         \x20      circord [--smoke-test | --version | --help{links}]\n\
+         \x20      circord --call-experiment [--resume PATH]\n\
+         \x20      circord [--voice-demo | --audio-devices]\n\
+         \x20      circord theme check FOLDER [--marketplace]\n\
+         \x20      circord theme install FOLDER [--data-dir PATH]\n\
+         \x20      circord theme new NAME [--light] [--from THEME] [--author NAME]\n\
+         \x20      circord theme export CUSTOM-THEME FOLDER\n\
+         \x20      circord session login --homeserver URL --user USER --password-stdin [--data-dir PATH]\n\
+         \x20      circord session status [--data-dir PATH]\n\
+         \x20      circord session recover --key-stdin [--data-dir PATH]\n\
+         \x20      circord session logout [--data-dir PATH]\n\
          \n\
          {window}\
          --theme-dev FOLDER shows the theme in FOLDER and shows it again each time a file in it is saved.\n\
-         --default-theme starts in the default look, keeping the theme chosen; Ctrl+Shift+T turns a theme off while Yapfast runs.\n\
+         --default-theme starts in the default look, keeping the theme chosen; Ctrl+Shift+T turns a theme off while Circord runs.\n\
          --preview opens local sample conversations without connecting to Matrix.\n\
          --smoke-test checks the linked stack without signing in or opening audio devices.\n\
          --version prints which build this is: its version, whether it is a stable release, a nightly or a development build, and its commit.\n\
@@ -279,9 +279,9 @@ fn help() -> String {
 
 /// Set only for a process that replaces a failed GPU start.
 #[cfg(feature = "desktop")]
-const GPU_FALLBACK_REASON: &str = "YAPFAST_GPU_FALLBACK_REASON";
+const GPU_FALLBACK_REASON: &str = "CIRCORD_GPU_FALLBACK_REASON";
 
-/// How Yapfast starts its window, besides its folder and the preview.
+/// How Circord starts its window, besides its folder and the preview.
 #[cfg_attr(
     not(feature = "desktop"),
     allow(dead_code, reason = "only the window uses it")
@@ -351,7 +351,7 @@ fn finish_update(prepared: update::install::Prepared, arguments: &[String]) -> R
 /// [`Start::restart_arguments`].
 #[cfg(feature = "desktop")]
 fn relaunch(arguments: &[String], gpu_failure: Option<&str>, link: Option<&str>) -> Result<()> {
-    let program = std::env::current_exe().context("could not find Yapfast to restart it")?;
+    let program = std::env::current_exe().context("could not find Circord to restart it")?;
     relaunch_program(&program, arguments, gpu_failure, link)
 }
 
@@ -379,19 +379,19 @@ fn relaunch_program(
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
-        Err(command.exec()).context("could not restart Yapfast")
+        Err(command.exec()).context("could not restart Circord")
     }
     #[cfg(not(unix))]
     {
         // Waiting for the replacement would keep this process and its stopped
         // window alive until the new client closes.
-        command.spawn().context("could not restart Yapfast")?;
+        command.spawn().context("could not restart Circord")?;
         std::process::exit(0);
     }
 }
 
 /// Opens the window (docs/client/window.md) with the desktop around it
-/// (`desktop`): one Yapfast for each data folder, the desktop entry,
+/// (`desktop`): one Circord for each data folder, the desktop entry,
 /// starting at sign-in and Discord's links kept up to date.
 #[cfg(feature = "desktop")]
 fn launch(
@@ -424,13 +424,13 @@ fn launch(
         }
         autostart::refresh();
     }
-    yapfast_core::keep_discord_files(&root);
+    circord_core::keep_discord_files(&root);
     let runtime = std::sync::Arc::new(runtime);
     let shell = desktop::Shell::new(runtime.clone(), preview, instance);
-    let ran = yapfast_iced::run(
+    let ran = circord_iced::run(
         runtime,
         root,
-        yapfast_iced::Options {
+        circord_iced::Options {
             preview,
             renderer: start.renderer.map(|renderer| renderer == "gpu"),
             gpu_failure: std::env::var(GPU_FALLBACK_REASON).ok(),
@@ -441,7 +441,7 @@ fn launch(
             desktop: shell.clone(),
             build: {
                 let build = build_info::current();
-                yapfast_iced::Build {
+                circord_iced::Build {
                     headline: build.headline(),
                     channel: build.channel().label().to_owned(),
                     details: build.details(),
@@ -455,20 +455,20 @@ fn launch(
     shell.closed();
     let restart = start.restart_arguments();
     match ran? {
-        yapfast_iced::Exit::Closed => Ok(()),
-        yapfast_iced::Exit::Update => match shell.take_prepared() {
+        circord_iced::Exit::Closed => Ok(()),
+        circord_iced::Exit::Update => match shell.take_prepared() {
             Some(prepared) => finish_update(prepared, &restart),
             None => Ok(()),
         },
         // The GPU failed before anything opened the link: the next start does.
-        yapfast_iced::Exit::UseSoftware(reason) => {
+        circord_iced::Exit::UseSoftware(reason) => {
             relaunch(&restart, Some(&reason), start.open_link.as_deref())
         }
-        yapfast_iced::Exit::Restart => relaunch(&restart, None, None),
+        circord_iced::Exit::Restart => relaunch(&restart, None, None),
     }
 }
 
-/// Whether Settings → Advanced allows more than one Yapfast on a folder, as
+/// Whether Settings → Advanced allows more than one Circord on a folder, as
 /// `layout.json` keeps it.
 #[cfg(feature = "desktop")]
 fn multiple_windows(root: &std::path::Path) -> bool {
@@ -493,8 +493,8 @@ fn flag_argument(arguments: &mut Vec<String>, flag: &str) -> bool {
     arguments.len() != before
 }
 
-/// Comes before the link a desktop hands Yapfast, as its registrations
-/// write it: `yapfast --open-link LINK`.
+/// Comes before the link a desktop hands Circord, as its registrations
+/// write it: `circord --open-link LINK`.
 const OPEN_LINK: &str = "--open-link";
 
 /// Gives `discord:` back to the app that had it; the uninstaller runs it.
@@ -520,22 +520,22 @@ fn handed_link(arguments: &mut Vec<String>) -> Result<Option<String>, usize> {
 }
 
 /// Links given as arguments, taking them out of `arguments`: anything
-/// under `discord:` or `yapfast:`, whether or not Yapfast has a place for
+/// under `discord:` or `circord:`, whether or not Circord has a place for
 /// it, and Discord's web links that it has.
 fn link_arguments(arguments: &mut Vec<String>) -> Vec<String> {
     arguments
         .extract_if(.., |argument| {
             argument.split_once(':').is_some_and(|(scheme, _)| {
-                scheme.eq_ignore_ascii_case("discord") || scheme.eq_ignore_ascii_case("yapfast")
+                scheme.eq_ignore_ascii_case("discord") || scheme.eq_ignore_ascii_case("circord")
             }) || written_link(argument).is_some()
         })
         .collect()
 }
 
-/// A link as one word, when it names a place this Yapfast can open.
+/// A link as one word, when it names a place this Circord can open.
 fn written_link(link: &str) -> Option<String> {
     #[cfg(feature = "desktop")]
-    return yapfast_core::discord::discord_link(link);
+    return circord_core::discord::discord_link(link);
     #[cfg(not(feature = "desktop"))]
     {
         let _ = link;
@@ -641,7 +641,7 @@ mod tests {
         assert_eq!(handed_link(&mut arguments), Ok(Some("--preview".into())));
         assert_eq!(arguments, ["--data-dir", "folder"]);
         // `discord://-/channels/1/2" --data-dir "\\host\share`, put
-        // into `"yapfast.exe" --open-link "%1"` as Windows does.
+        // into `"circord.exe" --open-link "%1"` as Windows does.
         let mut arguments = strings(&[
             OPEN_LINK,
             "discord://-/channels/1/2",
@@ -661,12 +661,12 @@ mod tests {
             "--data-dir",
             "folder",
             "discord://-/library",
-            "YAPFAST://channels/@me",
+            "CIRCORD://channels/@me",
             "https://example.com/channels/10/11",
         ]);
         assert_eq!(
             link_arguments(&mut arguments),
-            ["discord://-/library", "YAPFAST://channels/@me"]
+            ["discord://-/library", "CIRCORD://channels/@me"]
         );
         assert_eq!(
             arguments,

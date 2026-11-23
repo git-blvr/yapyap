@@ -17,10 +17,10 @@ use tract_onnx::{prelude::*, tract_hir::shapefactoid};
 use tract_pulse::{internal::ToDim, model::*};
 
 use crate::*;
-// Yapfast: tract 0.23 no longer exports SimpleState in its prelude.
+// Circord: tract 0.23 no longer exports SimpleState in its prelude.
 use tract_core::plan::SimpleState;
 
-// Yapfast: tract 0.23 dropped `with_output_names`; this puts it back over
+// Circord: tract 0.23 dropped `with_output_names`; this puts it back over
 // `select_outputs_by_name`, which takes `&mut self`.
 trait WithOutputNames: Sized {
     fn with_output_names(
@@ -154,7 +154,7 @@ pub struct RuntimeParams {
     pub max_db_erb_thresh: f32,
     pub max_db_df_thresh: f32,
     pub reduce_mask: ReduceMask,
-    /// Yapfast: how many hops the networks take per call; see
+    /// Circord: how many hops the networks take per call; see
     /// [`DfTract::process_frames`].
     pub frames: usize,
 }
@@ -221,7 +221,7 @@ impl RuntimeParams {
             frames: 1,
         }
     }
-    /// Yapfast: the networks take `frames` hops per call.
+    /// Circord: the networks take `frames` hops per call.
     pub fn with_frames(mut self, frames: usize) -> Self {
         assert!(frames > 0);
         self.frames = frames;
@@ -269,11 +269,11 @@ pub struct DfTract {
     rolling_spec_buf_y: VecDeque<Tensor>, // Enhanced stage 1 spec buf
     rolling_spec_buf_x: VecDeque<Tensor>, // Noisy spec buf
     skip_counter: usize,  // Increment when wanting to skip processing due to low RMS
-    /// Yapfast: hops the networks take per call, and each one's noisy
+    /// Circord: hops the networks take per call, and each one's noisy
     /// spectrum, kept from its analysis until it joins the rolling buffers.
     pub frames: usize,
     specs: Vec<Tensor>,
-    /// Yapfast: the spectrum synthesis takes as scratch.
+    /// Circord: the spectrum synthesis takes as scratch.
     synthesis_buf: Vec<Complex32>,
 }
 
@@ -495,7 +495,7 @@ impl DfTract {
     ///     - gains: Gain estimates of shape `[n_ch, 1, 1, n_erb]`.
     ///     - coefs: Real-valued DF coefficients estimates of shape `[n_ch, 1, 1, n_erb, 2]`.
     ///
-    /// Yapfast: only for networks built for one hop.
+    /// Circord: only for networks built for one hop.
     pub fn process_raw(&mut self) -> Result<(f32, Option<Tensor>, Option<Tensor>)> {
         ensure!(self.frames == 1, "process_raw takes one hop");
         let spec = self.spec_buf.to_plain_array_view()?;
@@ -580,7 +580,7 @@ impl DfTract {
 
     /// Process a noisy time domain sample and return the enhanced sample via mutable argument.
     ///
-    /// Yapfast: one hop, for networks built for one ([`RuntimeParams::frames`]);
+    /// Circord: one hop, for networks built for one ([`RuntimeParams::frames`]);
     /// [`Self::process_frames`] takes several.
     pub fn process(&mut self, noisy: ArrayView2<f32>, enh: ArrayViewMut2<f32>) -> Result<f32> {
         let mut lsnr = [0.];
@@ -588,7 +588,7 @@ impl DfTract {
         Ok(lsnr[0])
     }
 
-    /// Yapfast: processes [`Self::frames`] hops at once, one after another in
+    /// Circord: processes [`Self::frames`] hops at once, one after another in
     /// `noisy` and `enh` (`[n_ch, frames * hop_size]`), writing each hop's
     /// local SNR estimate to `lsnr`. Each network runs once for all of them,
     /// which costs much less than once per hop, and each hop comes out as it
@@ -830,7 +830,7 @@ impl DfTract {
         Ok(())
     }
 
-    /// Yapfast: moves hop `f`'s noisy spectrum into both rolling buffers, in
+    /// Circord: moves hop `f`'s noisy spectrum into both rolling buffers, in
     /// the tensors leaving them rather than new ones.
     fn roll(&mut self, f: usize) -> Result<()> {
         let spec = self.specs[f].to_plain_array_view::<f32>()?;
@@ -926,7 +926,7 @@ impl DfTract {
 ///     - n_freqs: Number of FFT bins
 ///     - spec_out: Ouput buffer of shape `[C, F, 2]`, `F`: `n_freqs`
 ///
-/// Yapfast: `coefs` is one hop's, `[C, F', N]`, from [`DfTract::process_frames`].
+/// Circord: `coefs` is one hop's, `[C, F', N]`, from [`DfTract::process_frames`].
 fn df(
     spec: &VecDeque<Tensor>,
     coefs_arr: ArrayView3<Complex32>,
@@ -1293,7 +1293,7 @@ pub fn as_arrayview_mut_complex<'a>(
         ArrayViewMutD::from_shape_ptr(shape, ptr)
     }
 }
-// Yapfast: tract 0.23's TValue is a plain Arc<Tensor>, no longer an enum.
+// Circord: tract 0.23's TValue is a plain Arc<Tensor>, no longer an enum.
 pub fn tvalue_to_array_view_mut(x: &mut TValue) -> ArrayViewMutD<'_, f32> {
     unsafe {
         let shape = x.shape().to_vec();

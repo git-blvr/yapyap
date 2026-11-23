@@ -16,20 +16,20 @@ TICKS = os.sysconf('SC_CLK_TCK')
 
 
 # The other people, the fixture and the tests run from the `fast` profile, which
-# everyday builds keep current. The Yapfast a script measures comes separately,
+# everyday builds keep current. The Circord a script measures comes separately,
 # from the `measure` profile.
 
 
 def test_binary():
-    """The yapfast-core test executable, which runs the other people."""
-    output = subprocess.run(['cargo', 'test', '--locked', '--profile', 'fast', '-p', 'yapfast-core', '--features', 'matrix',
+    """The circord-core test executable, which runs the other people."""
+    output = subprocess.run(['cargo', 'test', '--locked', '--profile', 'fast', '-p', 'circord-core', '--features', 'matrix',
                              '--no-run', '--message-format=json'], check=True, capture_output=True, text=True, cwd=ROOT).stdout
     for line in output.splitlines():
         message = json.loads(line)
         if message.get('reason') == 'compiler-artifact' and message.get('executable') \
-                and message['target']['name'] == 'yapfast_core' and 'lib' in message['target']['kind']:
+                and message['target']['name'] == 'circord_core' and 'lib' in message['target']['kind']:
             return message['executable']
-    raise SystemExit('could not find the yapfast-core test executable')
+    raise SystemExit('could not find the circord-core test executable')
 
 
 def provision(env=None):
@@ -44,7 +44,7 @@ def provision(env=None):
 
 def capture(folder, name):
     time.sleep(.3)
-    with tempfile.TemporaryDirectory(prefix='yapfast-voice-shot-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='circord-voice-shot-') as temporary:
         subprocess.run(['weston-screenshooter'], env=dict(os.environ, XDG_PICTURES_DIR=temporary),
                        check=True, timeout=10, capture_output=True)
         picture = next(Path(temporary).glob('*.png'))
@@ -55,8 +55,8 @@ def capture(folder, name):
 
 
 def locate_rail(picture, minimum_height=HEIGHT // 2):
-    """Top-left corner of Yapfast's window content in screenshot pixels, found by the rail's exact colour."""
-    # Fresh iced layouts use Bonfire (#121214); older fixtures can keep Yap
+    """Top-left corner of Circord's window content in screenshot pixels, found by the rail's exact colour."""
+    # Fresh iced layouts use Bonfire (#121214); older fixtures can keep Circord
     # (#111215). Both rails form the window's long left edge.
     output_width, output_height = (int(value) for value in subprocess.check_output(
         ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height',
@@ -74,7 +74,7 @@ def locate_rail(picture, minimum_height=HEIGHT // 2):
         y = next(y for y in range(output_height)
                  if pixels[(y * output_width + x) * 3:(y * output_width + x) * 3 + 3] == target)
         return x, y
-    raise RuntimeError(f'Yapfast rail was not found; inspect {picture}')
+    raise RuntimeError(f'Circord rail was not found; inspect {picture}')
 
 
 class Container:
@@ -150,8 +150,8 @@ class Participant:
         self.process = subprocess.Popen(
             [executable, '--exact', 'matrix_voice::tests::stress_participant', '--ignored', '--nocapture'],
             cwd=ROOT, stdout=self.log, stderr=self.log, start_new_session=True,
-            env=dict(os.environ, YAPFAST_TEST_VOICE_ROOT=str(fixture), YAPFAST_TEST_ACCOUNT_DIR=str(account),
-                     YAPFAST_TEST_INDEX=str(index), YAPFAST_TEST_COUNT=str(count)))
+            env=dict(os.environ, CIRCORD_TEST_VOICE_ROOT=str(fixture), CIRCORD_TEST_ACCOUNT_DIR=str(account),
+                     CIRCORD_TEST_INDEX=str(index), CIRCORD_TEST_COUNT=str(count)))
 
     def send(self, command):
         with self.commands.open('a') as commands:

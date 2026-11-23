@@ -1,6 +1,6 @@
 # Themes
 
-Settings → Appearance offers the themes Yapfast comes with and the person's
+Settings → Appearance offers the themes Circord comes with and the person's
 own as quick choices. Settings → Themes is the dedicated theme-management
 destination. It currently manages installed packages and custom themes, their
 options, content permission, performance and reduced motion. Its Marketplace
@@ -10,24 +10,24 @@ not persist anything until Install. An
 installed theme shown in Appearance links
 back to that page. Built-in and custom
 themes are a full set of the colours of `Theme` in
-`yapfast_core::theme` (`crates/yapfast-core/src/theme.rs`), plus whether it's
+`circord_core::theme` (`crates/circord-core/src/theme.rs`), plus whether it's
 dark, which sets the scrollbars' shade and the colours worked out from the
 others. The core holds the built-in ones as `BUILT_IN` and reads custom
-themes and hex colours; `crates/yapfast-iced/src/themes.rs` makes the chosen
-one the kit's `Theme` (`crates/yapfast-iced-kit/src/theme.rs`), which every
+themes and hex colours; `crates/circord-iced/src/themes.rs` makes the chosen
+one the kit's `Theme` (`crates/circord-iced-kit/src/theme.rs`), which every
 widget paints with. An installed package is read from the core theme store,
 resolved with `Package::resolve_with`, and converted at that same boundary;
 see [the client's theme](client/window.md#theme). The
 choice is kept in `layout.json` as `theme`, the theme's id, and applied
 before the window's first frame, and again to a window made anew. With none
-kept, the window shows Bonfire. An id Yapfast doesn't know, or a deleted
-theme's, shows Yap. The window-control command `theme ID` chooses and keeps
+kept, the window shows Bonfire. An id Circord doesn't know, or a deleted
+theme's, shows Circord. The window-control command `theme ID` chooses and keeps
 one as Appearance and Themes do.
 
 ## Installed themes
 
 Settings → Themes reads installed packages from `<data>/themes` through
-`yapfast_core::themes::install::Themes`. Their layout ids are
+`circord_core::themes::install::Themes`. Their layout ids are
 `installed:<package-id>`, keeping them separate from built-in and `custom:`
 ids. The page reads as the other settings pages: a title, what themes are,
 and underlined tabs (Installed, Marketplace, Add from URL, Create). Installed
@@ -51,13 +51,13 @@ target intact, and restoring a theme after Turn off consumes that target.
 colour-only theme stays as it is), held keys counting once, and is
 handled above settings and other overlays, and while a field such as the
 composer has the keys, so a problematic package cannot trap the person
-behind themed UI. Sign-in, a link's confirmation (leaving Yapfast, an app's
+behind themed UI. Sign-in, a link's confirmation (leaving Circord, an app's
 authorization, a gift) and a theme's review always show the whole window in
 the stock look, with no theme's colours, faces, icons, art, overlays, tint or
 particles, so a theme can't dress up or draw over what it asks the person to
 judge. Removing the theme on trial ends the trial. Themes can't set the
 danger colours; danger text is darkened or lightened, keeping its hue, until
-it reads at 4.5:1 on the theme's chat. Started with `--default-theme`, Yapfast shows the default
+it reads at 4.5:1 on the theme's chat. Started with `--default-theme`, Circord shows the default
 look for that run only, keeping the theme chosen (Back offers it). A package missing its preferred dark
 variant uses its light variant. A dual-variant package's Auto choice follows
 iced's live system light/dark mode without changing its persisted package id.
@@ -75,7 +75,7 @@ folder (its files' digest, so one never goes stale); a start reads those,
 making any missing ones side by side, and drops those of removed packages.
 
 Installed rows identify the package's authors, version, available dark/light
-modes and description, and name any package fields this Yapfast left out.
+modes and description, and name any package fields this Circord left out.
 An entry whose stored manifest is missing, changed or otherwise refused by
 the core remains visible under **Themes that couldn't be opened**, together
 with the verification error; it is never silently treated as uninstalled.
@@ -269,33 +269,33 @@ pattern.
 ## Making a theme
 
 A theme is a folder: `theme.json` and the files it names. Four commands work
-on one with no window (`crates/yapfast-iced/src/theme_cli.rs`):
+on one with no window (`crates/circord-iced/src/theme_cli.rs`):
 
-- `yapfast theme new NAME [--light] [--from THEME] [--author NAME] [--id ID]
+- `circord theme new NAME [--light] [--from THEME] [--author NAME] [--id ID]
   [--dir FOLDER] [--data-dir PATH]` makes `NAME`'s folder from `themes/template/`, or with
   `--from` from a built-in theme, one of the person's own or an installed
   one, checks it and says what to do next.
-- `yapfast --theme-dev FOLDER` shows the theme in `FOLDER` over the theme
+- `circord --theme-dev FOLDER` shows the theme in `FOLDER` over the theme
   chosen and shows it again each time a file in it is saved (looked at twice
   a second, two folders deep, off the window's thread). What fails the checks
   is logged and the look before stays, and the folder isn't checked again
   until the next save. Ctrl+Shift+T turns the dev theme off for the rest of
   the run.
-- `yapfast theme check FOLDER [--marketplace]` prints the checks an install
+- `circord theme check FOLDER [--marketplace]` prints the checks an install
   runs, and with `--marketplace` those for a listing, and on a pass the
   `sha256` a catalog entry pins. A theme gets into the marketplace with a pull
   request adding its entry to `catalog.json` in
-  [yapfast/themes](https://github.com/yapfast/themes), whose README says how.
-- `yapfast theme install FOLDER [--data-dir PATH]` installs a checked local
+  [circord/themes](https://github.com/circord/themes), whose README says how.
+- `circord theme install FOLDER [--data-dir PATH]` installs a checked local
   folder into the store, as Add from URL does a repository's.
-- `yapfast theme export CUSTOM-THEME FOLDER [--author NAME] [--data-dir PATH]`
+- `circord theme export CUSTOM-THEME FOLDER [--author NAME] [--data-dir PATH]`
   writes one of
   the person's own themes as a package, as the creator's Export does, only
   into a folder that's empty or not there yet.
 
 On Windows the commands print into the PowerShell or cmd window they're run
-from. Yapfast is a window program there, so the prompt may come back before
-the output; piping it (`yapfast theme check .\mytheme | Out-Host`) waits for
+from. Circord is a window program there, so the prompt may come back before
+the output; piping it (`circord theme check .\mytheme | Out-Host`) waits for
 it.
 
 Themes don't change the mouse cursor: the system's cursor always shows. An
@@ -310,7 +310,7 @@ fills the settings frame: a bar with the name, Undo, Start over, Cancel and
 Save; the steps; the controls scrolling beside a live preview of the window
 (above them where the frame is narrow); Export and Delete.
 Its Start, Colours, Shape, Fonts and Advanced steps derive the package through
-`yapfast_core::themes::creator`: accent, light/dark or a chosen picture,
+`circord_core::themes::creator`: accent, light/dark or a chosen picture,
 picture blur and dim, message layout, corners, density, outlines, glass and
 built-in or imported body/heading fonts. Advanced lists every derived colour
 by its token name, swatch and hex. Undo restores the preceding recipe and Start
@@ -329,7 +329,7 @@ shows the theme from before and removes the draft. The separate Colour editor
 keeps the earlier palette-only workflow: its hex fields accept `#rgb`,
 `#rrggbb` or `#rrggbbaa` and mark anything else. A saved theme's card has a
 pencil that opens it again to rename, change or delete it; deleting the chosen
-one shows Yap. Closing the window to the
+one shows Circord. Closing the window to the
 [tray](tray.md) closes Settings, so it drops the unsaved edit too.
 
 `layout.json` keeps them in `custom_themes`, in the order Appearance shows
@@ -339,7 +339,7 @@ them after the built-in ones and Themes shows them under Your themes:
 {
   "id": "custom:1",
   "name": "Plum",
-  "base": "yap",
+  "base": "circord",
   "dark": true,
   "colours": { "rail": "#111215", "chat": "#2a1a3a", "row-hover": "#1a1b20" },
   "creator": { "accent": 16760647, "messages": "cards", "corners": 80 },
@@ -348,23 +348,23 @@ them after the built-in ones and Themes shows them under Your themes:
 ```
 
 `base` is the built-in theme the first copy came from (a copy of a custom
-theme takes its base). Yapfast writes every colour, but a colour that's missing,
+theme takes its base). Circord writes every colour, but a colour that's missing,
 such as one added in a later version, or that isn't a colour, takes the
-base's value, and a name Yapfast doesn't know is ignored, so themes survive new
+base's value, and a name Circord doesn't know is ignored, so themes survive new
 colours. Guided themes additionally keep their `creator` recipe and a relative
 `folder` containing their package assets. Ids are `custom:` and a number, and no built-in id has a colon, so
-they can't collide; on reading, Yapfast gives a fresh one to any custom theme
+they can't collide; on reading, Circord gives a fresh one to any custom theme
 whose id isn't of that form or repeats another's. The editor's temporary fields
 exist only while it's open.
 
-At startup, a missing folder under Yapfast's exact managed
+At startup, a missing folder under Circord's exact managed
 `themes/creator/<id>` path can be regenerated from its saved creator recipe
 when it uses only reproducible built-in assets. Arbitrary custom folder paths,
 and recipes whose imported font or picture bytes are gone, are never rewritten.
 
 | Theme | Id | Dark | Accent | From |
 | --- | --- | --- | --- | --- |
-| Yap | `yap` | yes | marigold | Yapfast's own |
+| Circord | `circord` | yes | marigold | Circord's own |
 | Bonfire | `bonfire` | yes | blurple | Discord's Dark theme, the default |
 | Catppuccin Mocha | `catppuccin-mocha` | yes | mauve | [Catppuccin](https://github.com/catppuccin/catppuccin) |
 | Dracula | `dracula` | yes | purple | [Dracula](https://draculatheme.com/contribute) |
@@ -373,13 +373,13 @@ and recipes whose imported font or picture bytes are gone, are never rewritten.
 | Tokyo Night | `tokyo-night` | yes | blue | [Tokyo Night](https://github.com/tokyo-night/tokyo-night-vscode-theme), Night style |
 | Catppuccin Latte | `catppuccin-latte` | no | mauve | [Catppuccin](https://github.com/catppuccin/catppuccin) |
 | Rosé Pine Dawn | `rose-pine-dawn` | no | rose | [Rosé Pine](https://rosepinetheme.com/palette/) |
-| Sakura | `sakura` | no | blossom pink | Yapfast's own |
+| Sakura | `sakura` | no | blossom pink | Circord's own |
 
 The palettes of Catppuccin, Dracula, Nord, Gruvbox, Tokyo Night and Rosé Pine
 are published under the MIT licence; thanks to their authors. For Tokyo
 Night, the steps between its grounds and text (bg_highlight, fg_gutter, dark3,
-dark5) are named as folke's tokyonight.nvim names them. Yapfast takes their
-colours, not their names for UI parts, so each mapping is Yapfast's:
+dark5) are named as folke's tokyonight.nvim names them. Circord takes their
+colours, not their names for UI parts, so each mapping is Circord's:
 
 - The ground steps go rail, sidebar, chat from the deepest to the one text
   sits on, with raised surfaces (popovers, reactions, stage tiles) and the
@@ -388,7 +388,7 @@ colours, not their names for UI parts, so each mapping is Yapfast's:
   darken it, and hover and some row grounds are halfway mixes of two palette
   colours.
 - Text, secondary, muted and faint take the palette's text ramp; faint keeps
-  at least 2.5:1 against the sidebar, near Yap's 2.8:1.
+  at least 2.5:1 against the sidebar, near Circord's 2.8:1.
 - Content on the accent and on red (on-accent, on-danger) takes the palette's
   darkest or lightest colour, whichever reads; on pastel accents, as in
   Catppuccin and Tokyo Night, that's dark.
@@ -419,4 +419,4 @@ custom theme made from Bonfire keeps them while its link colour is
 Bonfire's; every other theme draws those from its own colours.
 
 Discord role colours stay as servers set them, and some read faintly on a
-light theme; Yapfast doesn't adjust them yet.
+light theme; Circord doesn't adjust them yet.

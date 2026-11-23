@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-// Yapfast: ndarray 0.17 deprecates `into_shape`, whose replacement reads a
+// Circord: ndarray 0.17 deprecates `into_shape`, whose replacement reads a
 // column-major array differently, and newer Rust warns on elided lifetimes.
 #![allow(deprecated, mismatched_lifetime_syntaxes)]
 

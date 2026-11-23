@@ -58,9 +58,9 @@ run clippy "${clippy[@]}" --workspace -- -D warnings
 run test cargo test --locked "${profile[@]}" --workspace
 run build cargo build --locked "${profile[@]}" --workspace
 # The binary the build step made: `cargo run` would resolve the dependencies'
-# features for yapfast alone, not the workspace, and compile it again.
+# features for circord alone, not the workspace, and compile it again.
 if [[ "$(cat "$logs/build.rc")" == 0 ]]; then
-  run smoke "target/$profile_dir/yapfast" --smoke-test
+  run smoke "target/$profile_dir/circord" --smoke-test
 else
   echo "=== smoke: skipped, as the build failed"
 fi
@@ -72,13 +72,13 @@ fi
 # after the steps above, not beside them: two compiles at once ran the
 # machine out of memory.
 if [[ $matrix ]]; then
-  full=(--workspace --features yapfast/matrix,yapfast-core/matrix)
+  full=(--workspace --features circord/matrix,circord-core/matrix)
   run clippy-matrix "${clippy[@]}" "${full[@]}" -- -D warnings
   run test-matrix cargo test --locked "${profile[@]}" "${full[@]}"
   export CARGO_TARGET_DIR=target/check-combinations
-  run clippy-matrix-only "${clippy[@]}" -p yapfast -p yapfast-core \
-    --no-default-features --features yapfast/matrix,yapfast-core/matrix -- -D warnings
-  run clippy-headless "${clippy[@]}" -p yapfast --no-default-features --features matrix,discord -- -D warnings
+  run clippy-matrix-only "${clippy[@]}" -p circord -p circord-core \
+    --no-default-features --features circord/matrix,circord-core/matrix -- -D warnings
+  run clippy-headless "${clippy[@]}" -p circord --no-default-features --features matrix,discord -- -D warnings
   run smoke-headless cargo run --locked "${profile[@]}" --no-default-features --features matrix,discord -- --smoke-test
   steps+=(clippy-matrix test-matrix clippy-matrix-only clippy-headless smoke-headless)
 fi

@@ -1,4 +1,4 @@
-//! Yapfast port (patch 13): pictures the app draws into the frame itself.
+//! Circord port (patch 13): pictures the app draws into the frame itself.
 //!
 //! A video frame is a new picture every frame, at the size it was made at,
 //! in the channel order its decoder wrote: a watched stream's frames come

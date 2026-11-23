@@ -1,8 +1,8 @@
 # The client
 
-Yapfast's window is `crates/yapfast-iced`, written in
-[iced](https://iced.rs) 0.14 on the widgets of `crates/yapfast-iced-kit`. It
-drives `yapfast-core` through `Action`s, `AppState`, effects and the
+Circord's window is `crates/circord-iced`, written in
+[iced](https://iced.rs) 0.14 on the widgets of `crates/circord-iced-kit`. It
+drives `circord-core` through `Action`s, `AppState`, effects and the
 backend's events ([architecture](../architecture.md)), so drafts, sending,
 the member list and voice are the core's and the window draws them. It draws
 with tiny-skia on the CPU, or with wgpu on the GPU when Settings → Advanced →

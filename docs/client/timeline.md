@@ -197,7 +197,7 @@ slash command, where one may write, is written in the composer
   Unpin, Mark Unread, Copy Message Link, Delete and Copy Message ID.
   A right click on a link in its text adds Copy Link and Open Link, with
   the web address the link goes to, which a masked link's words don't say;
-  a mention or one of Yapfast's own links adds none.
+  a mention or one of Circord's own links adds none.
   View Reactions opens who reacted (`reactions.rs`): the reactions down
   the left, the most first, and the people with the one chosen, a page at
   a time as the list nears its end; one's own reaction, or as a moderator
@@ -227,7 +227,7 @@ in its colour alone),
 links, and spoilers covered until clicked. A web address opens the browser; a
 mention or a notice's name opens the person's card, and a role's mention
 the role's card beside it (`info_cards.rs`):
-the role in its colour, then who Yapfast has seen with it, each opening
+the role in its colour, then who Circord has seen with it, each opening
 their card over it, or "Loading..." until Discord answers; Escape or a
 click outside closes their card first, then the role's. An emoji in a
 message's text is a link too (a shortcode sent unexpanded, such as

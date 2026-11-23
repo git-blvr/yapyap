@@ -2,9 +2,9 @@
 
 ## How it's built
 
-The client is two crates. `crates/yapfast-iced-kit` knows nothing of the
+The client is two crates. `crates/circord-iced-kit` knows nothing of the
 core or the app: the theme's struct, styles, fonts, icons and the
-widgets (see [the kit](kit.md)). `crates/yapfast-iced` is the app: what
+widgets (see [the kit](kit.md)). `crates/circord-iced` is the app: what
 knows the core, and every screen.
 
 The app is one `App` (`app/mod.rs`) and one `Message` type. `App` holds
@@ -120,7 +120,7 @@ what costs is kept out of the view:
   own memory (`picture::set_frame_buffers`) at their tile's size, and a
   watched stream's frames come from the stream worker's shared mapping.
   The renderer's hook (patch 13 in `vendor/iced_tiny_skia`'s
-  `README.yapfast.md`, see [the toolkit](toolkit.md)) copies or scales
+  `README.circord.md`, see [the toolkit](toolkit.md)) copies or scales
   them into the window with libyuv. The core wakes the client for each
   frame made
   (`picture::set_frame_wake`): a camera's as it's decoded, and a stream
@@ -157,7 +157,7 @@ Each part of the window has its module:
   parts), `browser`, and `control_file` (the command file the test display
   drives);
 - what runs with no screen open: `keybinds` (the keybinds' watcher),
-  `away` (whether someone is using Yapfast), `updates` (the update
+  `away` (whether someone is using Circord), `updates` (the update
   check).
 
 `themes` makes the kit's theme from the core's palette, and `layout`
@@ -277,7 +277,7 @@ message does and the settle pass (`app/`), taking in the core's state
   `Request::Focus`, the last ask wins, and nothing works it out from
   what's open, since a dozen updates refocus with nothing opened or
   closed and some layers leave the keys where they are on purpose. With
-  `YAPFAST_LOG=debug`, an update that changed the top layer and asked
+  `CIRCORD_LOG=debug`, an update that changed the top layer and asked
   nothing through `Request::Focus` is logged ("the top layer changed with
   no focus asked", with both layers), which finds one that leaves the
   keys in a field that's gone. Updates that focus with a task of their
@@ -326,7 +326,7 @@ smaller scale, as a section of Settings rather than a screen of its own
 - Its state is Settings', so it goes with them: the keybind being
   recorded (`Settings::record`) and the action menu open. What a keybind
   is and how its keys are recorded is the core's
-  (`yapfast_core::keybinds`), and the keybinds themselves are kept in
+  (`circord_core::keybinds`), and the keybinds themselves are kept in
   `layout.json`.
 - Its `Event` (Add, Remove, an action chosen) is wrapped as
   `settings::Event::Keybind`, so it adds no `Message` and no arm at the

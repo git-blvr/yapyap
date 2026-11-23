@@ -26,7 +26,7 @@ pub mod layer;
 pub mod primitive;
 pub mod settings;
 pub mod window;
-// Yapfast port: whether this renderer may start.
+// Circord port: whether this renderer may start.
 mod enabled;
 pub use enabled::set_enabled;
 
@@ -675,7 +675,7 @@ impl Renderer {
 
 impl core::Renderer for Renderer {
     fn start_layer(&mut self, bounds: Rectangle) {
-        // Yapfast port: a layer started inside another is cut to
+        // Circord port: a layer started inside another is cut to
         // it, as a clip inside a clip is. Stock, it replaced its parent's:
         // a picture cut to its box (`ContentFit::Cover`) or a themed
         // button's own layer inside a scrolled page drew over the page's
@@ -932,7 +932,7 @@ impl renderer::Headless for Renderer {
         default_text_size: Pixels,
         backend: Option<&str>,
     ) -> Option<Self> {
-        // Yapfast port: not unless the app draws with the GPU.
+        // Circord port: not unless the app draws with the GPU.
         if !enabled::enabled()
             || backend.is_some_and(|backend| backend != "wgpu")
         {

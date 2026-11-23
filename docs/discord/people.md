@@ -14,14 +14,14 @@ their custom status or what they're doing under the name. As in Discord's
 DM list, a presence comes from friends' presences, and for anyone in a DM or
 group DM also from the servers the account shares with them:
 READY_SUPPLEMENTAL's `merged_presences`, a server's PRESENCE_UPDATE and
-member list rows. Yapfast keeps servers' presences only for people in a DM,
+member list rows. Circord keeps servers' presences only for people in a DM,
 not for every member (`Tracker::in_private`). Someone with none shows the
 grey offline ring. These follow PRESENCE_UPDATE live. The header of an open
 one-to-one DM shows the same dot on their avatar, and their custom status or
 what they're doing in a bubble beside the name. A group DM
 shows how many are in it. A group DM lists its members by name, with their
 presence, and a crown on whoever made it (the channel's `owner_id`), named
-"Group Owner", as a server's member list crowns its owner. Yapfast downloads the pictures of the first
+"Group Owner", as a server's member list crowns its owner. Circord downloads the pictures of the first
 150 DMs listed; the rest keep their initials.
 
 Friend requests, message requests and spam have their own screen. A
@@ -33,28 +33,28 @@ lists each person once, under "Requests": their friend request, with Accept
 and Ignore, and under it the latest message of their message request, which
 opens the conversation; an unread one is marked New. Discord's own client
 keeps the two apart, friend requests under Friends and message requests on a
-screen of their own; Yapfast puts them together, as one person's asking.
+screen of their own; Circord puts them together, as one person's asking.
 Friend requests this account sent follow under "Sent". Those Discord marks
 as spam, friend requests and message requests alike, fold away under
 "Spam", so a person Discord misjudged can still be found. The entry stays
 highlighted while a request from the screen is open. Opening one shows its messages with Accept and Ignore in place of the
 composer: replying waits for accepting, as in Discord. Accepting makes it an
 ordinary DM; ignoring removes it, and the sender isn't told. Requests count
-no mentions, spam isn't marked unread, and Yapfast never opens a request on its
+no mentions, spam isn't marked unread, and Circord never opens a request on its
 own when it picks a conversation.
 
 A request's message comes as Discord's client loads it:
 `GET /users/@me/message-requests/supplemental-data` with up to 25
 `channel_ids`, repeated, answers `[{channel_id, message_preview}]` with a
-message object each. Yapfast asks once for each request it hasn't a message
+message object each. Circord asks once for each request it hasn't a message
 for, after connecting and when a request arrives; MESSAGE_CREATE and
 MESSAGE_UPDATE in a request replace it with a newer one, and deleting the
 one shown asks again.
 
 The pen in the DM list's header starts a DM: it lists the account's friends
-(from READY's relationships), then anyone else Yapfast knows by name, and
+(from READY's relationships), then anyone else Circord knows by name, and
 opening one posts to `/users/@me/channels`, which finds the DM with them or
-starts one. Yapfast opens it once its CHANNEL_CREATE lists it.
+starts one. Circord opens it once its CHANNEL_CREATE lists it.
 
 ## Friends and requests
 
@@ -104,9 +104,9 @@ shows a timer, and a row with Rich Presence's details and state where an
 activity has them. Clicking a card's head opens its first friend's menu. The
 cards are made only while the friends page shows, as Discord makes them only
 while its column is mounted, from the presence and voice states the list
-already keeps (`crates/yapfast-iced/src/active_now.rs`); nothing more
+already keeps (`crates/circord-iced/src/active_now.rs`); nothing more
 is asked of Discord. Unlike Discord's, Active Now doesn't leave out a
-server's AFK channel or someone streaming without an activity, which Yapfast
+server's AFK channel or someone streaming without an activity, which Circord
 doesn't track, sorts by display name rather than username, and doesn't add
 people Discord ranks close to the account who aren't friends.
 
@@ -132,7 +132,7 @@ acceptance that doesn't say so. Ignoring or cancelling is `DELETE` on the
 same path, each with the X-Context-Properties
 header Discord's client sends: `{"location":"User Profile"}` when sending
 from a profile, `{"location":"Friends"}` otherwise, as base64. Discord
-doesn't let a client send many requests quickly, and Yapfast only sends one when
+doesn't let a client send many requests quickly, and Circord only sends one when
 the person clicks. Requests Discord took for spam are listed too, marked
 "Maybe spam".
 
@@ -148,7 +148,7 @@ someone is blocked. Unblock on a row is the menu's `DELETE`.
 Right-clicking a DM offers, besides Profile and copying, these:
 
 - Pin keeps a DM or group DM at the top of the list. Discord's desktop client
-  doesn't pin DMs, so Yapfast keeps the pins in `layout.json`, on this device.
+  doesn't pin DMs, so Circord keeps the pins in `layout.json`, on this device.
 - Start call joins the DM's call, as the phone in its header does.
 - Add note writes this account's note on the other person:
   `GET /users/@me/notes/{id}` fills the dialog, a 404 meaning there's none,
@@ -157,7 +157,7 @@ Right-clicking a DM offers, besides Profile and copying, these:
   USER_NOTE_UPDATE changes it, and a new session forgets them all.
 - Add friend nickname, for a friend, is `PATCH
   /users/@me/relationships/{id}` with `{"nickname": ...}`, or null to remove
-  it. RELATIONSHIP_UPDATE carries it back, and Yapfast shows a friend by their
+  it. RELATIONSHIP_UPDATE carries it back, and Circord shows a friend by their
   nickname in the DM list and the friends list, as Discord does.
 - Close DM is `DELETE /channels/{id}`; Discord answers with CHANNEL_DELETE,
   and the DM returns when either side writes. A Discord DM's row in the list
@@ -169,7 +169,7 @@ Right-clicking a DM offers, besides Profile and copying, these:
   From a profile's More button all three send
   `{"location":"user profile overflow menu"}`; see [profiles](#profiles).
 - Ignore is `PUT /users/@me/relationships/{id}/ignore`, and `DELETE` stops it.
-  Discord marks the relationship `user_ignored`, which Yapfast tracks to offer
+  Discord marks the relationship `user_ignored`, which Circord tracks to offer
   the opposite.
 - Mute is `PATCH /users/@me/guilds/@me/settings` with the channel's override:
   `muted` and a `mute_config` of `selected_time_window`, in seconds or -1 for
@@ -197,7 +197,7 @@ messages, adding friends, the profile or member list, and a search. Its call
 is two buttons, Start Voice Call and Start Video Call, which joins and turns
 the camera on once the call connects. Once someone is in the call, the first
 reads Join Voice Call and the second goes, and in the call both go; Discord's
-keeps a Join Video Call for a call already on video, which Yapfast doesn't
+keeps a Join Video Call for a call already on video, which Circord doesn't
 offer. A server's text channel has, after its icon and name,
 its topic, then on the right Discord's buttons in Discord's order: the bell
 of its [notification settings](messages.md#notification-settings), its pinned
@@ -206,17 +206,17 @@ search. The Threads button comes before the bell; see [a channel's list of
 threads](servers.md#a-channels-list-of-threads).
 
 - The topic is the channel's `topic`, from READY and GUILD_CREATE, which
-  CHANNEL_UPDATE changes. Yapfast keeps it with the channel, shared between the
+  CHANNEL_UPDATE changes. Circord keeps it with the channel, shared between the
   server's snapshots (`Option<Arc<str>>`), and when a channel opens, renders
   its Discord markup as a message's: mentions by name, custom emoji,
   Markdown and links. It sends the result (`Event::Topic`) again only when
-  the topic changes, or when it mentions someone and the names Yapfast knows
+  the topic changes, or when it mentions someone and the names Circord knows
   change. The header shows it on one line, after a rule, cut at the last
   word that fits; clicking it shows it in full under the header, with its
   links. A channel without one shows none.
 
 - Pinned messages open under the pin, the latest pinned first, from `GET
-  /channels/{id}/messages/pins`, whose `items` carry each `message`. Yapfast asks
+  /channels/{id}/messages/pins`, whose `items` carry each `message`. Circord asks
   each time they open, and for the first 50.
 - Notices, such as that someone pinned a message, joined, started a thread
   or a call, or that a poll closed, show as Discord's client shows them: a
@@ -252,16 +252,16 @@ threads](servers.md#a-channels-list-of-threads).
   searched far and wide. Unfortunately, no results were found."; a failed
   search "We dropped the magnifying glass. Can you try searching again?";
   `doing_deep_historical_index` puts "Indexing" by the count. Results in
-  a thread or forum post Yapfast hasn't opened are headed by its name from
+  a thread or forum post Circord hasn't opened are headed by its name from
   the answer's `threads`, with its channel beside it. Discord indexes
   a DM or a server the first time it's searched, answering 202 with code
-  110000; as its client does, Yapfast waits the `Retry-After` header's whole
+  110000; as its client does, Circord waits the `Retry-After` header's whole
   seconds (5 s without one), asks again with `attempts=N`, and after a
   sixth 202 stops and shows that Discord is still indexing.
   `doing_deep_historical_index` on a page says older messages are still
   being indexed.
 - The box reads Discord's filters as its client's tokenizer does
-  (`yapfast_discord::search`). A key may start anywhere, even inside a
+  (`circord_discord::search`). A key may start anywhere, even inside a
   word, any letter case, and its answer may follow a space: `from:` and
   `mentions:` an id of 17 to 19 digits, `@me`, an old `name#1234` or a
   username; `in:` a channel, voice channel or thread of the server by its
@@ -273,7 +273,7 @@ threads](servers.md#a-channels-list-of-threads).
   `fileName:` any word; `before:`, `after:` and `during:` (or `on:`)
   today, yesterday, week (from Sunday), month, year, a month or weekday
   (of this year or week), a year since 2015, or a day as 2026-10-13 or
-  2026-10. Yapfast sends them as the client does, each name where it first
+  2026-10. Circord sends them as the client does, each name where it first
   comes, its values once each: `author_id`, `mentions`, `channel_id`,
   `has` (`snapshot` for forwards), `author_type`, `link_hostname`,
   `attachment_extension`, `attachment_filename`, `pinned`, and `min_id`
@@ -281,7 +281,7 @@ threads](servers.md#a-channels-list-of-threads).
   date for each. An answer that doesn't check out, such as a username
   nobody has or `has:Image`, is words; the rest of the words, each once,
   are `content`. A box holding only keys asks nothing and isn't searched.
-  `from:` and `mentions:` find a username among the people Yapfast knows,
+  `from:` and `mentions:` find a username among the people Circord knows,
   then in a server through the gateway's member search.
 - The box draws its filters as Discord's pills: each key in semibold and
   each answer that checks out joined to it, in Discord's token inks on
@@ -330,7 +330,7 @@ threads](servers.md#a-channels-list-of-threads).
   in, but neither takes the view from the result nor loads the messages
   around the last read one in place of its window. Another server, a DM or
   a voice channel closes the search.
-- In a server, pins and results carry no member profiles, so Yapfast asks the
+- In a server, pins and results carry no member profiles, so Circord asks the
   gateway for those of authors it doesn't know yet and waits up to five
   seconds for them; then they show with their server nickname, avatar and
   role colour.
@@ -354,7 +354,7 @@ enlarges it into a centred one. The card leaves the dates and the roles'
 heading to the full profile, and ends in a box, "Message @name", as
 Discord's does: Enter opens or starts the DM with them and sends what it
 holds there, without touching the DM's own composer. The box shows only for
-someone Yapfast can message, never for this account;
+someone Circord can message, never for this account;
 right-clicking a DM and choosing "Profile" opens the full one. A one-to-one
 DM shows its other person's profile in a panel on the right, with the bio in
 full and the mutual servers and friends. Mutual servers show their icon and
@@ -363,8 +363,8 @@ server's banner, member count (from READY's `member_count`), channel count
 and "Go to server". Mutual friends show their avatar and status dot;
 clicking one opens their profile card beside it, or their full profile from
 a full profile; the person icon in the DM's header
-hides or shows it, and Yapfast remembers the choice in `layout.json`. Yapfast fetches the
-profile once each time the open DM changes to someone else. Yapfast fetches it
+hides or shows it, and Circord remembers the choice in `layout.json`. Circord fetches the
+profile once each time the open DM changes to someone else. Circord fetches it
 from `GET /users/{id}/profile` with the open server's id, so the server's
 nickname, avatar, banner, bio and pronouns win over the person's own, and the
 profile lists their roles in role order, when they joined Discord and the server,
@@ -400,7 +400,7 @@ among equals), with one game at most (`activity::own`,
 a "..." menu, as Discord's: View All Activity opens the full profile on its
 Activity tab, and on one's own game Manage Privacy opens Settings' game
 activity section. Discord's client sends a Spotify or console activity's
-Manage Privacy to its Connections settings, which Yapfast doesn't have, so
+Manage Privacy to its Connections settings, which Circord doesn't have, so
 those have none, as other kinds have none in the client. A song's times read
 as the client's, `03:05` and `01:02:03`.
 The More button of a card, a full profile and a DM's profile panel opens
@@ -427,10 +427,10 @@ it: light when its red, green and blue, weighed 0.299, 0.587 and 0.114, come
 to at least half of full. A light theme lies under 60% white, with text in
 black at 96%, 88% and 76% for the strong, subtle and muted kinds, and tiles
 and boxes in 24% white; a dark one lies under 60% black, with the same text in
-white. Yapfast's own theme, light or dark, changes none of it, as Discord's
+white. Circord's own theme, light or dark, changes none of it, as Discord's
 light and dark themes don't (`Inks` in
-`crates/yapfast-iced/src/profile/look.rs`). A profile
-without a theme is drawn in Yapfast's colours.
+`crates/circord-iced/src/profile/look.rs`). A profile
+without a theme is drawn in Circord's colours.
 
 The profile shows each of the person's activities as a card, as Discord's does:
 what they're playing, streaming, listening to, watching or competing in, or
@@ -451,7 +451,7 @@ Discord's client does: an application's asset from `/app-assets/`, `mp:` keys
 through the media proxy, and `spotify:`, `youtube:` and `twitch:` keys from
 those services' image hosts, which downloads allow for this alone; keys with
 anything but plain characters show no picture. A game Discord detected has no
-pictures, so its card shows the game's icon, which Yapfast asks for once per
+pictures, so its card shows the game's icon, which Circord asks for once per
 game with `GET /applications/public?application_ids={id}` and downloads from
 `/app-icons/`. Application pictures stay in the picture cache. The timers tick
 once a second, and only while a profile with one shows; the same clock ticks
@@ -464,14 +464,14 @@ room role.
 Someone's server tag shows as a small chip, as in Discord: the badge of the
 server they represent, then up to four letters. It comes from the
 `primary_guild` of their user object, which has the `tag`, the
-`identity_guild_id`, a `badge` hash that Yapfast fetches from
+`identity_guild_id`, a `badge` hash that Circord fetches from
 `/clan-badges/{guild}/{badge}.png`, and `identity_enabled`, which is true while
 they wear it. It's false once they stop, and null until they take up a tag
 their server changed; as in Discord's client, those and one without a tag show
 nothing. The chip sits after the name on each message that starts a group,
 after the name in the member list and in a one-to-one DM's row, and beside the
 handle on a profile card. A tag without a badge shows its letters alone.
-Yapfast learns tags from every user object it sees, with the names and avatars,
+Circord learns tags from every user object it sees, with the names and avatars,
 so a tag changes on screen as soon as a message, a member list row or a profile
 carries the new one; a user object without `primary_guild`, as a partial one
 is, changes nothing, and `null` takes it away. They are kept with the names
@@ -496,7 +496,7 @@ failure says "Unable to load server profile" under "Unknown Server", and a
 click on it asks again. An answer, or Missing Access, is given again for a
 minute, as Discord's client does, rather than asked for; a failure isn't
 kept. A server the account is in has Go to Server, and its name opens it
-too, as the server rail does. A server it's not in has no button, as Yapfast
+too, as the server rail does. A server it's not in has no button, as Circord
 joins servers only by invite, where Discord's client offers Join for one it
 lists in Discover. Escape or a click outside closes the card.
 
@@ -507,7 +507,7 @@ the profile lists them. The account's own card in the account menu and the
 profile editor's preview set them the same way. Discord's six and a "+n"
 count belongs to its badge-management experiment, which is off by default. They come from the
 `badges` of `GET /users/{id}/profile`: each has an `id`, a `description`, an
-`icon` hash that Yapfast fetches from `/badge-icons/{icon}.png`, and
+`icon` hash that Circord fetches from `/badge-icons/{icon}.png`, and
 sometimes a `link`. Pointing at one shows its description; clicking one that
 has a link opens it. A badge missing its description or icon is left out, and
 a profile with none shows no row. Badges show on profile cards only, not
@@ -528,7 +528,7 @@ kept profile, as Discord's client keeps its answer. Each of its `badges` has a `
 progress), a `current_tier` naming one of its `tiers`, whose `name` is the
 level and `complex_icon_static_url` the large picture, an SVG. A badge
 without tiers, such as Quests, shows its own name as the title and its
-`simple_icon_url`. Yapfast matches an entry to a profile badge by the
+`simple_icon_url`. Circord matches an entry to a profile badge by the
 level's `simple_icon_url`, which both lists carry, else by the icon hash in
 `simple_icon_raster_url`; one the person doesn't own (`owned: false`) is
 skipped. A badge with no entry, such as Nitro's, keeps the plain tooltip, and
@@ -536,7 +536,7 @@ so does every badge when the request fails. The SVGs are drawn by
 `decode_svg`, with resvg, and only for addresses under Discord's
 `/assets/content/`: an attachment or avatar never reaches it. A badge's icon is
 decoded at 40px at most. The
-card is `badge_level_tip` in `crates/yapfast-iced/src/profile/body.rs`,
+card is `badge_level_tip` in `crates/circord-iced/src/profile/body.rs`,
 shown as the badge's tooltip above everything else, with
 Discord's own values: 200px wide, 8px corners, the picture 64px high, the
 kind and progress in 14px medium and the level in 16px black.
@@ -552,7 +552,7 @@ members shows it.
 The feed comes from `GET /content-inventory/users/@me`, in Discord's ranked
 order, and isn't any one server's: its entries are everything Discord thinks
 this account's people did. A channel shows those whose author is a member of
-its server and can see it, asking the gateway for members Yapfast doesn't know
+its server and can see it, asking the gateway for members Circord doesn't know
 yet, and leaves out a live entry of someone listed offline. Each card has the
 author, the title and a 48 px picture, with their presence's picture while it's
 live and the feed's otherwise. Cards say:
@@ -569,11 +569,11 @@ Times step by the minute, on a timer that runs while there are cards, where
 Discord's client ticks seconds. Other content types and the feed's badges (new
 player, streak, marathon and so on) don't show. Three cards show until the
 header opens the rest, whose pictures aren't asked for until then, and the eye
-in the header hides them all, as Discord's "Hide Activity Cards" does. Yapfast
+in the header hides them all, as Discord's "Hide Activity Cards" does. Circord
 remembers that in `layout.json`, and clicking the header brings them back.
 
-Yapfast asks for the feed only while a server's channel shows, when the window
-is focused, the gateway connected and someone used Yapfast in the last 15
+Circord asks for the feed only while a server's channel shows, when the window
+is focused, the gateway connected and someone used Circord in the last 15
 minutes, and not with the cards hidden once it has a feed. It sends the
 `refresh_token` of the last answer, and asks again after
 `wait_ms_until_next_fetch`, at least a minute. An answer with
@@ -621,7 +621,7 @@ Board and Wishlist come only for the full profile, and only when their tab
 opens, read-only: a small card and the DM's panel ask for neither. A
 wishlist that failed is asked for again when its tab next opens, and a
 profile that arrives after a tab opened asks then. The client fetches a
-wishlist when the window opens, and hides the tab if it's empty; Yapfast
+wishlist when the window opens, and hides the tab if it's empty; Circord
 asks when the tab opens, and an empty one says so in a line. It leaves out
 the wishlist's age check (`nsfwAllowed`), Filter and Browse the Shop.
 
@@ -649,8 +649,8 @@ doesn't know is an "Unknown game", as in the client. Tags aren't shown.
 The Wishlist is `GET /wishlists/{id}?source=user_profile`, which the client
 uses for its own account's and for anyone's, the first id in the profile's
 `wishlist_settings` `{id: {updated_at, visibility}}`, where visibility 0 is
-private. Its only other route Yapfast knows of, `POST
-/users/@me/wishlist/items`, adds an item, which Yapfast never sends. With no
+private. Its only other route Circord knows of, `POST
+/users/@me/wishlist/items`, adds an item, which Circord never sends. With no
 id there's nothing on it, and a 403 or 404 says it's private; a private list
 of one's own loads, and says that. An item in `wishlist_items` is named by
 `sku.name`, else `sku_name`, and pictured by what it is, `sku.product_line`,
@@ -668,7 +668,7 @@ else the item's `sku_product_line`:
 
 A collectible's kind and `asset` are in `sku.tenant_metadata.collectibles.item`,
 else the item's `collectibles_item` or `bundle_items`. The client's card shows
-only lines 1, 7 and 14; Yapfast also shows others it can name, by the store
+only lines 1, 7 and 14; Circord also shows others it can name, by the store
 picture if they have one.
 
 ## Avatar decorations and nameplates
@@ -690,7 +690,7 @@ nameplate among `collectibles` takes them off.
   quote or in a mention, where Discord shows none either. Where the status dot
   sits on an avatar, the dot is drawn over the decoration, on a ring of the
   row's colour, where Discord cuts a hole for it (`Ctx::face` in
-  `crates/yapfast-iced/src/pictures.rs`).
+  `crates/circord-iced/src/pictures.rs`).
 - **Nameplate**, `collectibles.nameplate: {sku_id, asset, label, palette}`: a
   strip behind a member's row, a one-to-one DM's row and this account's card.
   A DM's row shows it only while the row is selected, pointed at or focused, as
@@ -702,8 +702,8 @@ nameplate among `collectibles` takes them off.
   picture at the right end, the row's height tall, at 60% opacity (90%
   selected). Under the row's text the picture shows at 30% of that, fading to
   full 10 to 60 pixels after the text's end, where Discord masks the picture
-  with `mask-image`; Yapfast draws the row's colour over it in the same
-  gradient (`PlateRow` in `crates/yapfast-iced-kit/src/widgets/cosmetic.rs`).
+  with `mask-image`; Circord draws the row's colour over it in the same
+  gradient (`PlateRow` in `crates/circord-iced-kit/src/widgets/cosmetic.rs`).
   The account card's plate is a 10% to 40% gradient
   under the picture at 40% opacity, with no fade, filling the card and a pixel
   over its top and bottom. A row with a plate keeps 12 pixels free at its
@@ -718,7 +718,7 @@ nameplate among `collectibles` takes them off.
 
 Both pictures are served by `https://cdn.discordapp.com/media/v1/collectibles-shop/{sku_id}/static`,
 a PNG: 288 by 288 for a decoration, 448 by 84 or 672 by 126 for a plate. The
-client asks for `/animated`, an APNG, or `/video`, a WebM, and Yapfast
+client asks for `/animated`, an APNG, or `/video`, a WebM, and Circord
 asks for `/animated` (Discord's own client does on Linux and Safari), when
 the [profile switches](#profile-switches) let them animate, as they do
 unless turned off. A decoration plays on a message while the pointer is on the message that starts
@@ -727,7 +727,7 @@ account card while the pointer is on them. Discord's client plays a chat
 decoration while the pointer is on any message of the group, and a card's
 whenever it's open. A nameplate plays while its row is pointed at, and the
 account card's while the card is; a selected row's holds still, as playing
-costs some 7% of a core for as long as it's selected. Everything holds still when Yapfast's window isn't focused
+costs some 7% of a core for as long as it's selected. Everything holds still when Circord's window isn't focused
 (`pictures::plays`), and a surface that stops being pointed at goes back to the
 still picture. The animated picture is fetched the first time it's to play,
 and decodes the frame showing: `Picture`'s frames come from the kept file one
@@ -748,7 +748,7 @@ server's off. `Names` keeps these beside the user's own, by server and user.
 
 A profile names the effect its person equips, `profile_effect: {id,
 expires_at}`, in `user_profile` (or `guild_member_profile`, which wins in its
-server). The effect itself is the shop's: Yapfast asks for it once the card
+server). The effect itself is the shop's: Circord asks for it once the card
 shows, `GET /collectibles-products/{sku}` with the account's own login, as
 Discord's client does, and takes the first item with `effects`: its
 `staticFrameSrc` (else `reducedMotionSrc`, else `thumbnailPreviewSrc`) and
@@ -758,7 +758,7 @@ each layer in place of `src`, the same one in all), `loop`, `start`,
 fields are camelCase, as the client reads them).
 
 Discord's client plays an effect over the card for as long as its window has
-the focus. Yapfast shows the still picture, and plays the layers only while
+the focus. Circord shows the still picture, and plays the layers only while
 the pointer is on the card, starting them over each time, as a card's
 decoration does: playing costs a fifth of a core on the software renderer. An
 effect with no layer that loops stops at the end of its last layer and shows
@@ -777,7 +777,7 @@ asking for frames; a file that says 0 plays for as long as its layer shows.
 
 A profile names the frame its person equips in its `collectibles`, the item
 of type 3 (`profile_frame` in some answers), in `guild_member_profile` before
-`user_profile`. The frame itself is the shop's: Yapfast asks for it with
+`user_profile`. The frame itself is the shop's: Circord asks for it with
 `GET /collectibles-products/{sku}`, as for an effect, and takes the item with
 `layers`, each `{id, type, order, anchor}` and a still at
 `/media/v1/collectibles-shop/{sku}/{id}/static`; the client has no moving
@@ -809,10 +809,10 @@ next trim.
 
 A name can carry a style, `display_name_styles: {font_id, effect_id, colors}`,
 on a user object or a member object (which wins in its server, as the
-decorations do): a font, an effect and up to five colours. Yapfast draws it
+decorations do): a font, an effect and up to five colours. Circord draws it
 where Discord's client does: a message's author, a member list's rows, a
 one-to-one DM's row and the profile card's name. `looks::name_look`
-(`crates/yapfast-iced/src/looks.rs`) makes the colours, as the client's
+(`crates/circord-iced/src/looks.rs`) makes the colours, as the client's
 `lZ` does: lighter against a dark theme's background and darker against a light
 one's, until they read, and against #333 for toon on either. A name with
 its effect is painted whole as a picture (`paint::styled_name`), since iced's
@@ -821,8 +821,8 @@ text draws no gradients or strokes.
 - **Fonts**, by `font_id`: 11 is the usual font, then Sakura 3, Jellybean 4,
   Modern 6, Medieval 7, 8Bit 8, Vampyre 10, Tempo 12, Monkey Bars 13,
   Mainframe 14, Headbang 15 and Journal 16, bundled in
-  `crates/yapfast-iced-kit/fonts` (see [its
-  README](../../crates/yapfast-iced-kit/fonts/README.md) for where each
+  `crates/circord-iced-kit/fonts` (see [its
+  README](../../crates/circord-iced-kit/fonts/README.md) for where each
   came from and its
   licence). A name in a script the font lacks shows in the usual font.
 - **Effects**, by `effect_id`: solid 1, gradient 2 (the colours across the
@@ -886,9 +886,9 @@ next time the profile is fetched.
 ## Editing one's main profile
 
 Edit Profile, in the account's menu bottom left, or Edit profile in My
-account, opens Yapfast's version of the "Main Profile" tab of Discord's
+account, opens Circord's version of the "Main Profile" tab of Discord's
 Profiles settings (`application/profile_editor.rs`, the editor in
-`crates/yapfast-iced/src/profile/editor/`, which it shares with the [server
+`crates/circord-iced/src/profile/editor/`, which it shares with the [server
 profile's](#editing-ones-server-profile)). It reads the profile with `GET
 /users/@me/profile` and edits the fields Discord's tab has:
 
@@ -912,7 +912,7 @@ profile's banner stays 210. The column lists, in Discord's order, the
 nameplate, the avatar and its decoration, the display name style, the theme
 and banner, and the profile effect, each showing what's set: the decoration
 and effect say they're on even when the [profile
-switches](#profile-switches) keep their pictures from showing. Yapfast has no
+switches](#profile-switches) keep their pictures from showing. Circord has no
 windows to choose those collectibles, so their tiles open Discord's shop.
 Hide Styles folds the column away, sliding, and the Show Styles tab on the
 card's edge brings it back.
@@ -936,7 +936,7 @@ Toon, Pop, Gummy or Prism) and its colours, from Discord's presets or one's
 own, with the name on a profile card, a message and a member row, in light or
 dark, and Surprise Me. The window draws each name as names are drawn
 everywhere else (`looks::name_look`, `paint::styled_name`), and
-offers Discord's eleven fonts, bundled in `crates/yapfast-iced-kit/fonts`.
+offers Discord's eleven fonts, bundled in `crates/circord-iced-kit/fonts`.
 The usual font in
 Discord's usual white is no style at all. The server tag's chip beside the
 pronouns lists the servers this account is in that offer a tag, from their
@@ -948,7 +948,7 @@ theme and the name style take `canUsePremiumProfileCustomization`, so
 A GIF avatar without it says "An animated avatar takes Nitro." where the
 client offers Nitro; the rest, the bio and the server tag included, is free.
 The client's colour picker suggests colours from the avatar and has an
-eyedropper; Yapfast's takes the hex or a point on the picker.
+eyedropper; Circord's takes the hex or a point on the picker.
 
 Save Changes sends what changed, in up to three requests, as the client
 does:
@@ -971,7 +971,7 @@ as for server profiles: the same crop and size, as a data URI, or `null`
 to remove it. The client never sends the bio, pronouns or banner to
 `/users/@me`, though Discord's docs list them there.
 
-Saving keeps the editor open, as Discord's does. Afterwards Yapfast asks for
+Saving keeps the editor open, as Discord's does. Afterwards Circord asks for
 the profile again, once, for the editor, and drops the profiles it kept of
 this account. The main profile's answer also fills the account's card,
 which draws the tag, name style and theme from it, so it shows what was
@@ -983,7 +983,7 @@ keeps all that's written, so what Discord took is no longer a change and
 what it refused still is. Save Changes waits until that answer comes.
 
 The client's tab also edits Profile Widgets, an avatar decoration, a
-nameplate, a profile effect, a frame and badges. Yapfast shows those but
+nameplate, a profile effect, a frame and badges. Circord shows those but
 doesn't change them. Changing the username, in My Account with the password,
 is left for later.
 
@@ -993,13 +993,13 @@ Board and Wishlist show what the account has on Discord, read only, as on
 [the full profile](#the-full-profiles-tabs), the board's games named when
 the editor reads the profile and the wishlist asked for when its tab first
 opens, and again if that failed. Where Discord has its Add buttons, a line
-says adding more from Yapfast is coming soon. Activity shows what the
+says adding more from Circord is coming soon. Activity shows what the
 account's own profile lists it doing.
 
 ## Editing one's server profile
 
 Edit server profile, in a server's menu, its header's dropdown and one's
-own entry in its member list, opens Yapfast's version of Discord's "Per-server
+own entry in its member list, opens Circord's version of Discord's "Per-server
 Profiles" settings page (`application/profile_editor.rs`, the same card
 as the [main profile's](#editing-ones-main-profile)). Discord's client
 offers it to everyone; it reads the profile with `GET
@@ -1025,10 +1025,10 @@ Classic (1). Without it Discord still shows them, greyed, under an offer:
 "Make unique profiles for each server", "Customize your profile for every
 server, from avatar decorations to bios. Only with Nitro.", and "Unlock
 with Nitro", or "Upgrade Nitro" with a lesser Nitro, which opens
-`https://discord.com/nitro`. Yapfast shows the offer under the name, and
+`https://discord.com/nitro`. Circord shows the offer under the name, and
 a lock in place of the pencil on each of them.
 
-Change Avatar and Change Banner use the file chooser attachments use. Yapfast
+Change Avatar and Change Banner use the file chooser attachments use. Circord
 reads the picture off the UI thread, as Discord's cropper sends it: the
 middle square of an avatar, at most 1024 pixels, and the middle 17 by 6 of
 a banner, at most 2400 by 848, from a PNG, JPG, GIF or WebP under 10 MB.
@@ -1043,7 +1043,7 @@ Save Changes sends what changed, as the client does, in up to two
 requests, each only with fields to send:
 
 1. `PATCH /guilds/{id}/members/@me` with `nick` and `avatar`. Discord
-   answers with the member and sends GUILD_MEMBER_UPDATE, which Yapfast's
+   answers with the member and sends GUILD_MEMBER_UPDATE, which Circord's
    names already take in, so the nickname and server avatar show in the
    member list and on messages.
 2. `PATCH /guilds/{id}/profile/@me` with `banner`, `bio` and `pronouns`.
@@ -1056,15 +1056,15 @@ client never sends them there.
 
 Discord's editor also has a profile theme, an avatar decoration, display
 name styles, a nameplate, a profile effect and a frame, all Nitro and most
-bought from its shop. Yapfast leaves them out of the server profile's
+bought from its shop. Circord leaves them out of the server profile's
 editor; it [shows](#avatar-decorations-and-nameplates) what people equip.
 Saving keeps it open and reads the profile back, as for the main profile.
 
-A member's server profile shows wherever Yapfast shows them in that server:
+A member's server profile shows wherever Circord shows them in that server:
 their server avatar in the member list and on their messages, from their
 member object, and their server banner, bio and pronouns on their profile
 card, from `GET /users/{id}/profile?guild_id=...`, whose
-`guild_member_profile` wins over their own where it isn't empty. Yapfast
+`guild_member_profile` wins over their own where it isn't empty. Circord
 keeps a fetched profile for five minutes, but fetches it again once
 GUILD_MEMBER_UPDATE changes their nickname or server avatar, and after
 this account saves its own.
@@ -1077,11 +1077,11 @@ as its file chooser would.
 Games and tools on Linux and Windows tell Discord what they're doing through
 its local RPC socket or named pipe, which the discord-rpc library and
 Discord's game SDK use. While the account shares its game
-([game detection](#game-detection)), Yapfast
+([game detection](#game-detection)), Circord
 serves that IPC endpoint itself, so no bridge such as arRPC needs to run. The
 macOS socket isn't served yet.
 
-On Windows, Yapfast serves the first free `\\.\pipe\discord-ipc-0` to
+On Windows, Circord serves the first free `\\.\pipe\discord-ipc-0` to
 `\\.\pipe\discord-ipc-9` in byte mode and rejects remote clients. It reserves
 the pipe name before accepting clients, so it never adds an instance to
 another program's pipe. Each connection has its own instance, and Windows
@@ -1093,12 +1093,12 @@ On Linux, the socket is the first free `discord-ipc-0` to `discord-ipc-9` in
 another program serves, such as Discord's own app, stays that program's, and
 a game that only tries `discord-ipc-0` talks to it instead. A socket left by
 an ended program of the same user is taken over. The socket has mode `0600`
-and takes only that user's programs. `YAPFAST_DISCORD_RPC=0` turns RPC off
-on both platforms. On Linux, `YAPFAST_DISCORD_RPC_DIR` puts it in another
+and takes only that user's programs. `CIRCORD_DISCORD_RPC=0` turns RPC off
+on both platforms. On Linux, `CIRCORD_DISCORD_RPC_DIR` puts it in another
 directory, for Wine or a sandboxed game that can't see the runtime directory;
-Yapfast doesn't change sandbox permissions or set up Wine's bridge.
+Circord doesn't change sandbox permissions or set up Wine's bridge.
 
-Yapfast answers the handshake with READY, PING with PONG, and CLOSE and
+Circord answers the handshake with READY, PING with PONG, and CLOSE and
 SET_ACTIVITY, where `activity: null` clears the activity; other commands get
 an error. As Discord's desktop client does when a game connects, it asks
 `GET /oauth2/applications/{id}/rpc` for the application's name, and the
@@ -1110,7 +1110,7 @@ older images are dropped while keeping both pictures the current activity
 uses. Timestamps in
 seconds become the gateway's milliseconds, and buttons become labels with
 their addresses in the activity's `metadata`. Playing, Listening, Watching
-and Competing activities show. Yapfast copies only the fields it knows, so a
+and Competing activities show. Circord copies only the fields it knows, so a
 game can't replace the custom status or claim another application.
 
 The game that set its activity last shows. When it clears it or
@@ -1134,11 +1134,11 @@ exceeding that bound closes the connection.
 
 Spotify's apps and libraries don't tell Discord what they play; Discord's
 client follows the player itself, so it shows for any player on the account,
-librespot clients among them. Yapfast does the same, so no other Discord app
+librespot clients among them. Circord does the same, so no other Discord app
 needs to run. `spotify.rs` holds it.
 
 For each Spotify link in READY's `connected_accounts` with `show_activity` on,
-the setting Discord calls "Display Spotify as your status", Yapfast uses the
+the setting Discord calls "Display Spotify as your status", Circord uses the
 link's `access_token`, or else asks
 `GET /users/@me/connections/spotify/{id}/access-token`. With no such link it
 does nothing. It asks `GET https://api.spotify.com/v1/me/player`, then opens
@@ -1149,7 +1149,7 @@ answers the first message, `hm://pusher/v1/connections/{id}`, with
 player again, at most every 3 seconds. With more than one link, the first that
 plays shows.
 
-As Discord's client does, Yapfast renews a token only when Spotify answers 401,
+As Discord's client does, Circord renews a token only when Spotify answers 401,
 and reconnects with a wait that grows from half a second to a minute. It asks
 for the player before each connection, which is what finds a token expired,
 and replaces a socket that hears nothing for three pings. A link Discord
@@ -1178,8 +1178,8 @@ invisible sends none. It joins the presence after the custom status and the
 game, whatever `show_current_game` says, as that setting covers games.
 
 Where it differs from Discord's client: an idle account keeps sharing, since
-Yapfast only sees input in its own window; a link with `show_activity` off has
-no socket, as Yapfast has no playing along; a Spotify private session shares
+Circord only sees input in its own window; a link with `show_activity` off has
+no socket, as Circord has no playing along; a Spotify private session shares
 nothing, where Discord's client doesn't look for one; and a playlist isn't
 given as `context_uri`, since telling a public one from a private one takes a
 request for each.
@@ -1187,7 +1187,7 @@ request for each.
 ## Game detection
 
 Settings → Game activity → Share the game you play is the account's own
-`show_current_game` setting, which Discord's apps change too. Yapfast reads
+`show_current_game` setting, which Discord's apps change too. Circord reads
 it from READY and settings updates and writes it with
 `PATCH /users/@me/settings-proto/1`, keeping the status and custom status
 [as their changes do](messages.md); it's on unless the account turned it
@@ -1215,7 +1215,7 @@ Windows and Wine paths ignore case. Custom games are this device's, kept in
 
 Discord's list comes from
 `https://cdn.discordapp.com/detectables/games-v1.json`, about 4 MB, as
-Discord's desktop client fetches it. Yapfast keeps this platform's executables
+Discord's desktop client fetches it. Circord keeps this platform's executables
 and the Steam ids in `discord-games.json` beside the account cache, which
 accounts share, and the CDN's ETag in `discord-games.etag`. It asks again a day
 later with the ETag, so an unchanged list costs a 304; a failed download keeps
@@ -1232,18 +1232,18 @@ Runtime and any other install with a `toolmanifest.vdf` don't count, nor do
 the Steamworks redistributables. The manifests are read at most once a
 minute, from Steam's usual folders, its Flatpak's and the libraries they
 name, and the list again only when the games installed change; no game's
-files are walked. A sandbox that hides the host's processes from Yapfast
+files are walked. A sandbox that hides the host's processes from Circord
 hides their games too.
 
 These take effect at startup:
 
-- `YAPFAST_DISCORD_GAME_DETECTION=0` turns off scanning and the list's
-  download. Rich Presence stays, under `YAPFAST_DISCORD_RPC`.
-- `YAPFAST_DISCORD_GAMES_CACHE=/path/games.json` keeps the list there.
-- `YAPFAST_DISCORD_GAMES_FILE=/path/rules.json` uses that list instead of
-  Discord's. Steam still matches; point `YAPFAST_STEAM_DIR` at an empty
+- `CIRCORD_DISCORD_GAME_DETECTION=0` turns off scanning and the list's
+  download. Rich Presence stays, under `CIRCORD_DISCORD_RPC`.
+- `CIRCORD_DISCORD_GAMES_CACHE=/path/games.json` keeps the list there.
+- `CIRCORD_DISCORD_GAMES_FILE=/path/rules.json` uses that list instead of
+  Discord's. Steam still matches; point `CIRCORD_STEAM_DIR` at an empty
   folder too to match only the list.
-- `YAPFAST_STEAM_DIR=/path/to/Steam` reads Steam's manifests from there.
+- `CIRCORD_STEAM_DIR=/path/to/Steam` reads Steam's manifests from there.
 
 A list of your own takes Discord's shape. Use `win32` for a Wine game and
 `darwin` on macOS, leave out `id` for a game Discord doesn't know, and give
@@ -1259,19 +1259,19 @@ A list of your own takes Discord's shape. Use `win32` for a Wine game and
 ]
 ```
 
-`shows_status_and_games` in `crates/yapfast-discord/tests/fake_server/account.rs` gives
+`shows_status_and_games` in `crates/circord-discord/tests/fake_server/account.rs` gives
 the socket, the list and its cache private paths, and plays a handshake,
 activities, images, clearing, several clients, the share setting and a detected
 process through to the fake gateway. Other runs against the fake leave Rich
 Presence and detection off unless those paths are set, so they never take the
 desktop's socket.
 
-`yapfast-game-detection-probe` measures the detector alone, without Discord,
+`circord-game-detection-probe` measures the detector alone, without Discord,
 and prints counts, times and heap, never process names or paths:
 
 ```sh
-nix develop path:./nix --command cargo build --profile measure -p yapfast-discord --bin yapfast-game-detection-probe
-target/measure/yapfast-game-detection-probe /path/to/discord-games.json 30
+nix develop path:./nix --command cargo build --profile measure -p circord-discord --bin circord-game-detection-probe
+target/measure/circord-game-detection-probe /path/to/discord-games.json 30
 ```
 
 ## Role icons
@@ -1281,6 +1281,6 @@ shows it 20px beside its group's name in the member list, and the highest role
 with an icon shows 16px before a member's tag in the list. The picture is
 `/role-icons/{role}/{hash}.png?size=64`. Only a server with the `ROLE_ICONS`
 feature, or at boost level 2 or 3, shows them: Discord keeps a role's icon when
-a server loses its boosts, and its client stops drawing it, so Yapfast does too.
+a server loses its boosts, and its client stops drawing it, so Circord does too.
 GUILD_UPDATE brings the change. Unicode-emoji role icons and the icon beside a
 message author aren't drawn.

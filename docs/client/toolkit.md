@@ -1,9 +1,9 @@
 # The vendored toolkit
 
 `vendor/iced_tiny_skia` and `vendor/iced_wgpu` are iced 0.14's renderers
-with Yapfast's changes, patched in through `[patch.crates-io]`; the crate
-pins iced to 0.14.0 to match. Their `README.yapfast.md` files list the
-changes, and each is marked `Yapfast port` in the source. The tiny-skia
+with Circord's changes, patched in through `[patch.crates-io]`; the crate
+pins iced to 0.14.0 to match. Their `README.circord.md` files list the
+changes, and each is marked `Circord port` in the source. The tiny-skia
 ones draw pictures from the app's own pixels, copy pictures and glyphs onto
 the frame directly, clip by rectangles instead of masks, merge damage,
 draw video frames through the app's hook, keep each saved frame's
@@ -23,7 +23,7 @@ and upload large pictures in the frame. Each has a switch that keeps it
 from starting, for the GPU setting (`renderer::choose`).
 
 `vendor/cosmic-text` is the text shaper iced uses, cosmic-text 0.15.0,
-patched in the same way with its own `README.yapfast.md`: the shaper hands
+patched in the same way with its own `README.circord.md`: the shaper hands
 the client each cluster its default, script and common fallbacks can't draw
 and tries the families the client names for it next, and those fallbacks
 match a family's face at the weight nearest the text's.

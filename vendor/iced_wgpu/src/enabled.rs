@@ -1,4 +1,4 @@
-//! Yapfast port: whether this renderer may start, as the app chooses
+//! Circord port: whether this renderer may start, as the app chooses
 //! between it and iced_tiny_skia in one build.
 //!
 //! iced's fallback renderer tries wgpu, then tiny-skia, and reads the

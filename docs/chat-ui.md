@@ -2,8 +2,8 @@
 
 The chat window for Matrix and Discord, laid out after Discord's client.
 Matrix messages are sent through the SDK's Markdown feature, and the window
-lays formatted text out itself (`crates/yapfast-iced/src/markdown.rs`).
-`pulldown-cmark` reads Markdown there, and in `yapfast-core` for links,
+lays formatted text out itself (`crates/circord-iced/src/markdown.rs`).
+`pulldown-cmark` reads Markdown there, and in `circord-core` for links,
 spoilers, reply snippets and notification text (`links.rs`, `spoiler.rs`,
 `chat.rs`). `image` decodes pictures within bounds, and `rfd` opens native
 file dialogs.
@@ -57,7 +57,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   what's typed. Escape in the box clears it and ends the search, keeping the
   focus there; in an empty box it lets go. A keyboard layout without Latin
   letters uses the key in F's place.
-- Restore each server's last selected channel and the last selected DM. Yapfast
+- Restore each server's last selected channel and the last selected DM. Circord
   keeps each server's channel in `layout.json`, so after a restart a server
   opens its last channel; a server opened for the first time shows its top one.
 - List the joined members of the open text channel or group DM on the right,
@@ -73,7 +73,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   tag after its name and the server's owner a crown, in that order, as in
   Discord. Above a server channel's list, an Activity panel shows Discord's
   feed of what people there are doing and did lately; see
-  [the Activity panel](discord/people.md#the-activity-panel). Yapfast subscribes to the list's
+  [the Activity panel](discord/people.md#the-activity-panel). Circord subscribes to the list's
   first 100 rows while the channel is open, and Discord keeps them current.
   The list shows a change at once, then holds for half a second and shows
   the changes from that time together, so a busy server's list draws at most
@@ -99,7 +99,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   under the last one, as scrolling up loads earlier ones. New messages don't
   go in the window, and the conversation stays unread. Jump to present,
   sending a message, or a newer page that reaches the newest shows the
-  newest again, as Yapfast kept them, and leaving the conversation lets the
+  newest again, as Circord kept them, and leaving the conversation lets the
   window go. A jump to a conversation that isn't open opens it at the
   message.
 - Recover encryption keys or recheck verification performed in another client.
@@ -107,28 +107,28 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   plaintext rooms are read-only.
 - Write Markdown. Messages with formatting render bold, italic, strikethrough,
   inline code, lists and links as runs of styled text, and headings, subtext,
-  quotes and fenced code as blocks that `crates/yapfast-core/src/blocks.rs`
-  splits out by Discord's rules (`crates/yapfast-iced/src/markdown.rs` lays
+  quotes and fenced code as blocks that `crates/circord-core/src/blocks.rs`
+  splits out by Discord's rules (`crates/circord-iced/src/markdown.rs` lays
   both out); see [Discord](discord/README.md) for the details. Message text,
   authors and times are selectable across messages: each is a `Piece`
-  (`crates/yapfast-iced-kit/src/piece.rs`) that draws its part of the
+  (`crates/circord-iced-kit/src/piece.rs`) that draws its part of the
   selection, which `timeline/selection.rs` keeps; Ctrl+C or the menu's Copy
   selection copies it, with `[Picture]` on a line for each picture it runs
   through, and Copy text copies a whole message.
-- Fold long messages, a Yapfast addition that Discord doesn't have. With
+- Fold long messages, a Circord addition that Discord doesn't have. With
   "Collapse long messages" on in Settings > Messages (`collapse_long` in
   `layout.json`, off by default), a message whose text, code blocks and all,
   runs past fifteen lines shows its first twelve, cut off, with Show more
   under it; Show more shows it whole, and Show less folds it again. Its
   pictures, embeds and reactions show under it either way. Each message
-  keeps its own choice while Yapfast runs, in the timeline and the thread
+  keeps its own choice while Circord runs, in the timeline and the thread
   beside it, and starts folded again after a restart. Folding measures the
   text as laid out, so it follows the window's width and the text size.
   Clicking either stops the view following the newest message, so the
   message's top stays where it is as it grows, and Show less on a message
   whose top is above the view brings its top back into view.
 - Start a DM from the pen in the DM list's header: type a name to search the
-  homeserver's user directory, or a full Matrix id. Yapfast opens the DM you
+  homeserver's user directory, or a full Matrix id. Circord opens the DM you
   already have with them, or starts an encrypted one and opens it once sync
   lists it.
 - Use the keyboard for messages: Up in an empty composer edits your last
@@ -146,8 +146,8 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   unmuted in a call. Stepping through the messages, only letters and digits go.
 - Clicking a mention, a link to a Matrix user, opens their profile card.
 - Emoji in message text are drawn by Twemoji's picture of them, as the picker's
-  are, in a colour bitmap font made of them when Yapfast is built
-  (`crates/yapfast-iced/build.rs`); see [Discord](discord/messages.md) for
+  are, in a colour bitmap font made of them when Circord is built
+  (`crates/circord-iced/build.rs`); see [Discord](discord/messages.md) for
   how that font is made. A custom emoji is a picture in the text's line: its
   run keeps the picture's room, so the text wraps and selects round it, and
   the picture is drawn there. A picture is drawn 22px in the
@@ -166,7 +166,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   message links to them (`[Name](https://matrix.to/#/@user:server)`) and lists
   them in `m.mentions`, so their client notifies them. Who else is typing
   shows in its own strip over the composer, the names strong, after three
-  dots that pulse in turn, and Yapfast tells the room while you type unless a
+  dots that pulse in turn, and Circord tells the room while you type unless a
   setting turns it off.
 - Hover or click a message for its toolbar: your three most used reactions, Add
   reaction, Edit on your own message or Reply on someone else's, Forward on a
@@ -179,12 +179,12 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   Copy Message Link on a Discord message, and Delete, with Copy Image, Save
   Image, Copy Link and Open Link on a picture or link, then Copy Message ID
   last on a Discord message (`MenuAct` in
-  `crates/yapfast-iced/src/menus.rs`; see
+  `crates/circord-iced/src/menus.rs`; see
   [Discord](discord/messages.md#mark-unread-and-message-links)). View Reactions appears once a message has reactions,
   Copy selection while text is selected, and Edit on your own messages only.
   Delete appears on your own messages, and on anyone's for a Discord moderator
   with Manage Messages. Until you have reacted, the most used reactions are 👍,
-  ❤️, 😂 and 🎉. Yapfast counts the reactions you add, not the ones you remove,
+  ❤️, 😂 and 🎉. Circord counts the reactions you add, not the ones you remove,
   in `layout.json` on this computer. A custom emoji among them shows the
   picture the application keeps of it, fetched for the toolbar when it isn't
   there yet, as after a restart, rather than the picker's own, which goes when
@@ -306,7 +306,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   one that went out. See
   [Discord](discord/messages.md#stickers).
 - GIFs, animated emoji, stickers and the picker's tiles play only while
-  Yapfast's window has the focus, as in Discord: on another screen they hold
+  Circord's window has the focus, as in Discord: on another screen they hold
   still on the frame they were showing, and go on from there when the
   window has the focus again. Animated emoji stop too when nobody has
   touched the window for 15 seconds and while it is minimised, and go on
@@ -326,13 +326,13 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   lists the message's reactions down the left, the most first, and who
   reacted with the chosen one, 100 at a time, the next page as the list nears
   its end. Hovering your own row offers to remove your reaction; a Discord
-  moderator, with Manage Messages, may remove anyone's. Yapfast keeps the last
+  moderator, with Manage Messages, may remove anyone's. Circord keeps the last
   32 tooltips' names while their counts stay, and the window's people only
   while it's open. Matrix rooms answer from the timeline, which holds every
   reaction's senders.
 - Forward a sent message from a dialog with a search field: choose up to five
   conversations on the message's own network, add a message if you like, and
-  send; with one chosen, it opens. On Matrix, Yapfast forwards only into
+  send; with one chosen, it opens. On Matrix, Circord forwards only into
   encrypted conversations and sends the message's current content as a new
   message, without its reply quote. An encrypted attachment keeps its uploaded
   file, and its key travels in the new encrypted event. On Discord it forwards
@@ -365,13 +365,13 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   window dims it under Discord's card, "Upload to #general" (`@Sam` in a DM,
   the name in quotes for a thread, the name alone for a group DM), with "You
   can add comments before uploading." Discord's second line, "Hold shift to
-  upload directly.", is left out: Yapfast can't see Shift during a drag on
+  upload directly.", is left out: Circord can't see Shift during a drag on
   Wayland or X11. A drop goes whole or not at all, as in Discord's client,
   which then says why until Got It, a click or the next drag: "Too many
   uploads!" past ten files with those waiting, "Your files are too powerful"
   with "Max file size is 20.00 MB please." for a file past the limit, and
   "Invalid file type" for a folder. winit takes drops on X11 and Windows; on
-  Wayland, where it has none, Yapfast keeps a data device for each seat on
+  Wayland, where it has none, Circord keeps a data device for each seat on
   winit's own connection, which a small thread watches, and takes
   `text/uri-list`. A drop is taken only where the composer can take files;
   files pasted into a message already carrying ten are refused with "A
@@ -385,14 +385,14 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   stays animated. Wayland's clipboard is read through the data-control
   protocol, and X11's by asking the CLIPBOARD selection's owner, taking large
   pictures in parts (INCR). Windows apps offer a picture under a name they
-  register, "PNG", "GIF", "JFIF" or the MIME type, which Yapfast takes when
+  register, "PNG", "GIF", "JFIF" or the MIME type, which Circord takes when
   the bytes are of that type; one copied only as a bitmap (`CF_DIB` or
-  `CF_DIBV5`, whichever the app put) is decoded by Yapfast and saved as PNG,
+  `CF_DIBV5`, whichever the app put) is decoded by Circord and saved as PNG,
   keeping alpha in a 32-bit bitmap's fourth byte as Chromium writes it, and
   opaque when that byte is zero throughout. On X11 and Windows, text on the
   clipboard wins over a picture beside it, since office suites put a picture
   of the cells or text they copy there too. Pasted pictures are saved as
-  `image.<extension>` in a temporary folder removed when Yapfast closes. Text
+  `image.<extension>` in a temporary folder removed when Circord closes. Text
   on the clipboard pastes as text. In any field, text selected with the
   pointer becomes the primary selection, which a middle click pastes at the
   pointer, as on Linux desktops, and a click with Shift held extends the
@@ -410,7 +410,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   message's pictures, or a link preview's, they shrink to its width, keeping
   their shape, as in Discord's client; they never grow past their size.
 - Click an image to see it large over the window. It opens at the image's full
-  proportions with the preview, then sharpens when Yapfast has downloaded it at up
+  proportions with the preview, then sharpens when Circord has downloaded it at up
   to 1920×1200. The left and right arrow keys or the side buttons step through
   the message's other images, a counter shows which one it is, and Escape, the
   close button or a click outside the image closes it. It can save the image
@@ -421,7 +421,7 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   shows "Not sent yet" and goes out by itself when sync recovers. Sync uses
   the SDK's offline mode, which keeps probing the homeserver. A refused
   message shows "Not sent" with Retry. Queued messages can be cancelled, and
-  they survive closing Yapfast.
+  they survive closing Circord.
 - Save each room's draft in the encrypted session store, so drafts survive
   restarts. Sending clears the saved draft.
 - Show unread channels in bold with a short pill at the sidebar edge, and the
@@ -456,22 +456,22 @@ errors make it taller than the minimum window. SSO and OAuth are still pending.
   always, as Discord's client does; one with its ping off only while it's
   new. Matrix's push rules decide which messages mention the user; a reply
   stays a mention when its text has their user ID or a link to it, or
-  @room. Their own messages are never highlighted. Yapfast counts unread
+  @room. Their own messages are never highlighted. Circord counts unread
   messages on this device; for a room that isn't open, sync often delivers
-  only the newest event, so Yapfast shows that something is
+  only the newest event, so Circord shows that something is
   unread rather than how much.
 - Show sync status in the account panel. Reconnect appears there when offline;
   sign out (which retains encrypted stores) is in settings.
 
 ## Layout and look
 
-Yapfast starts with the window as large as it was left, maximized if it
+Circord starts with the window as large as it was left, maximized if it
 was.
 
 Ctrl with + or -, or with the scroll wheel, zooms the whole window, text and
 layout together, from 50% to 200%: 5% a step up to 150%, then 10%. Ctrl+0
 returns to 100%. The level shows
-for a moment at the top and is kept in `layout.json`. Yapfast multiplies the
+for a moment at the top and is kept in `layout.json`. Circord multiplies the
 display's scale factor by it, so the window lays out in fewer logical pixels,
 and zooming in stops before those would fall below the window's 800×560
 minimum, which would make it grow. On Windows that scale is the one of the
@@ -485,10 +485,10 @@ The window opens 1120×760. One made again from the [tray](tray.md) comes
 back at the size the last one had, maximized if it was.
 
 On Windows, and on Linux desktops that give their windows title bars,
-Yapfast draws its own in place of the desktop's, as Discord does
-(`crates/yapfast-iced/src/window_bar.rs`): a 32px bar on the rail's ground
+Circord draws its own in place of the desktop's, as Discord does
+(`crates/circord-iced/src/window_bar.rs`): a 32px bar on the rail's ground
 across the top, with
-the server's name, "Direct Messages" or "Yapfast" in the middle and
+the server's name, "Direct Messages" or "Circord" in the middle and
 minimize, maximize or restore, and close at the right. Signed in, it also has
 back and forward arrows at the left, which walk the places visited as
 Alt+Left and Alt+Right and a mouse's back and forward buttons do, up to 50 of
@@ -510,7 +510,7 @@ desktop doesn't say whether it would draw a title bar: KWin and Hyprland
 both answer xdg-decoration with server-side, and only KWin draws one. So
 `XDG_CURRENT_DESKTOP` decides (`frame.rs`): KDE, GNOME, Cinnamon, XFCE, MATE,
 LXQt, LXDE,
-Budgie, Pantheon, Deepin, COSMIC, Unity and Enlightenment get Yapfast's bar,
+Budgie, Pantheon, Deepin, COSMIC, Unity and Enlightenment get Circord's bar,
 and a tiling compositor such as Hyprland, sway or niri, or any desktop not
 listed, keeps whatever the desktop draws, which may be nothing. "Use the
 system title bar" in Appearance overrides it either way
@@ -569,7 +569,7 @@ The window follows Discord's arrangement:
   category's menu: Mark as read when its channels have messages to read,
   its mute and notification settings (below), Edit category and Delete
   category where the account may manage it, and Copy ID. The heading
-  names its first channel, or an empty category's own id, and Yapfast finds
+  names its first channel, or an empty category's own id, and Circord finds
   the category from that.
   DMs show the person's avatar. Participants of the call you are in appear under
   its voice channel, with a green ring while they speak and a muted icon; for
@@ -626,9 +626,9 @@ The window follows Discord's arrangement:
   Duplicating asks for the copy's name. Deleting asks first, in red. Text
   channel names become lower case with dashes, as Discord makes them, and
   a text channel made opens. The dialogs are in
-  `crates/yapfast-iced/src/server_dialogs.rs`, and editing in
+  `crates/circord-iced/src/server_dialogs.rs`, and editing in
   `channel_settings.rs` beside it.
-- Menus (`crates/yapfast-iced/src/menus.rs`) are as wide as their rows'
+- Menus (`crates/circord-iced/src/menus.rs`) are as wide as their rows'
   text needs, 224px at least, and each row may open a submenu of its own,
   beside the menu, or on its left near the window's right edge. A row can
   carry a second line under its text, such as the level a notification
@@ -673,7 +673,7 @@ The window follows Discord's arrangement:
   conversation 420px, a double click on the edge gives it its own width
   back, and `layout.json` keeps the width as `members_width`. The member count in a group DM's header shows or hides it,
   as the people icon does in a server channel's, bright while the list
-  shows, and Yapfast remembers a closed list.
+  shows, and Circord remembers a closed list.
 - A right click on someone, in the member list, on a message author's avatar
   or name, or in the friends list, opens their menu: Profile, Message to open
   or start the DM with them, and on Discord Add friend, Accept friend request
@@ -701,13 +701,13 @@ The window follows Discord's arrangement:
 - Copy ID, in every menu that has it, shows only with Settings → Advanced →
   Developer Mode on, as in Discord, where the setting shows the same "Copy …
   ID" items. It's off unless turned on, and kept in `layout.json` on this
-  device: Discord syncs it with its appearance settings, which Yapfast
+  device: Discord syncs it with its appearance settings, which Circord
   doesn't read.
 - A voice stage with participant tiles, a green border while someone speaks,
   and round mute, deafen and leave controls.
 
 DM Sans (SIL Open Font License, embedded in the binary; see
-`crates/yapfast-iced-kit/fonts/README.md`) sets all text in four weights and
+`crates/circord-iced-kit/fonts/README.md`) sets all text in four weights and
 an italic. The palette is layered graphite with one
 marigold accent for selection and primary actions, red only for mentions and
 destructive actions, and green only for live voice. Avatars get one of eight
@@ -725,7 +725,7 @@ messages remain later work.
 
 ## Validation
 
-The Matrix chat integration tests in `crates/yapfast-core/src/matrix_chat.rs`
+The Matrix chat integration tests in `crates/circord-core/src/matrix_chat.rs`
 create disposable accounts and cover restoration, encryption and its gates,
 Spaces, Markdown, replies, reactions, edits, deletion, attachments, drafts,
 offline sending across a restart, and messages missed while a room was
@@ -733,7 +733,7 @@ closed. Run them after `scripts/test-stack up`:
 
 ```sh
 nix develop path:./nix --command cargo test --locked --profile fast -p
-yapfast-core matrix_chat::tests -- --ignored --test-threads=1
+circord-core matrix_chat::tests -- --ignored --test-threads=1
 ```
 
 To check the window by hand, see [Seeing the app](building.md#seeing-the-app).
@@ -741,9 +741,9 @@ The native file dialogs need an XDG portal, which `scripts/ui-session` doesn't
 run, so Attach and Save are checked only through the integration test.
 
 Every emoji is Twemoji's, on every platform, as Discord's client draws them:
-the font `crates/yapfast-iced/build.rs` makes of Twemoji's pictures, each a
-PNG in a CBDT table, is loaded as "Yapfast Twemoji" into a font system of the
-client's own (`fonts::install` in `crates/yapfast-iced-kit/src/fonts.rs`),
+the font `crates/circord-iced/build.rs` makes of Twemoji's pictures, each a
+PNG in a CBDT table, is loaded as "Circord Twemoji" into a font system of the
+client's own (`fonts::install` in `crates/circord-iced-kit/src/fonts.rs`),
 which holds DM Sans, that font and the system's monospace face for code, and
 none of the system's emoji fonts. DM Sans then Twemoji are the fallbacks
 every text tries. So an emoji in any text, a name, a status, a reaction or

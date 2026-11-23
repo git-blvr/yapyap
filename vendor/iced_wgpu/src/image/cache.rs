@@ -232,7 +232,7 @@ impl Cache {
 
         let image = memory.host()?;
 
-        // Yapfast port: a 1080p video frame (8 MiB) comes as a new handle
+        // Circord port: a 1080p video frame (8 MiB) comes as a new handle
         // every frame. Uploaded on the worker, it is never ready before the
         // next one replaces it, and the stream never shows; upload frames up
         // to 4K in the frame itself.

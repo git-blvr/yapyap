@@ -9,7 +9,7 @@ by its module: `controls`, `form`, `style`, `dialog`, `sheet`, `tile`,
 `viewer`, `popover`, `reorder`, `elide`, `widgets` and `Look` are the
 kit's, and `pictures`, `people`, `looks`, `markdown`, `media`, `found`,
 `info_cards`, `picker::kit`, `menus`, `thread` and `Ctx` the app's. The
-kit is a crate of its own, `crates/yapfast-iced-kit`, which knows nothing
+kit is a crate of its own, `crates/circord-iced-kit`, which knows nothing
 of the core or of the app: the theme (`theme`, which the app fills in
 `themes.rs`), `style`, `fonts`, `icons` and `canvas`, `controls`, `form`,
 `sheet`, `dialog`, `tile`, `viewer`, `field`, `piece`, `popover`,

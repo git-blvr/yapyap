@@ -8,11 +8,11 @@ mod layer;
 mod primitive;
 mod settings;
 mod text;
-// Yapfast port (patch 13): the app draws its video frames itself; see video.rs.
+// Circord port (patch 13): the app draws its video frames itself; see video.rs.
 pub mod video;
-// Yapfast port (patch 22): frame timings for the app's trace.
+// Circord port (patch 22): frame timings for the app's trace.
 pub mod timing;
-// Yapfast port (patch 26): whether this renderer may start.
+// Circord port (patch 26): whether this renderer may start.
 mod enabled;
 pub use enabled::set_enabled;
 
@@ -55,16 +55,16 @@ pub struct Renderer {
     default_text_size: Pixels,
     layers: layer::Stack,
     engine: Engine, // TODO: Shared engine
-    // Yapfast port (patch 32): what lies under the layers that change, kept.
+    // Circord port (patch 32): what lies under the layers that change, kept.
     backdrop: Backdrop,
 }
 
-/// Yapfast port (patch 32): whether the window's frames keep what lies
+/// Circord port (patch 32): whether the window's frames keep what lies
 /// under the layers that change (`Backdrop`); off unless the app turns it
 /// on.
 static KEEP_BACKDROP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-/// Yapfast port (patch 32): whether the window's frames keep what lies under
+/// Circord port (patch 32): whether the window's frames keep what lies under
 /// the layers that change, for drawing those again as one copy. Worth it
 /// only when that is costly to draw (a theme's art and glass); the app
 /// turns it on for a theme that decorates its surfaces. Off, what's kept
@@ -73,7 +73,7 @@ pub fn set_keep_backdrop(keep: bool) {
     KEEP_BACKDROP.store(keep, std::sync::atomic::Ordering::Relaxed);
 }
 
-/// Yapfast port (patch 32): regions of the frame as drawn up to the first
+/// Circord port (patch 32): regions of the frame as drawn up to the first
 /// layer that changed in them, kept from one frame to the next. A list
 /// scrolled over a theme's art and glass changed only its own layer, yet
 /// every frame drew the window's art, the panes' glass and grounds under it
@@ -266,7 +266,7 @@ impl Renderer {
         }
     }
 
-    /// Yapfast port (patch 32): what each of this frame's layers changed
+    /// Circord port (patch 32): what each of this frame's layers changed
     /// since the last frame, in logical pixels. A kept region a layer under
     /// its cut changed in goes.
     /// A frame of another size (`size`, physical pixels) or scale keeps
@@ -341,14 +341,14 @@ impl Renderer {
         self.layers.flush();
         let layer_count = self.layers.as_slice().len();
         let (frame_width, frame_height) = (pixels.width() as i32, pixels.height() as i32);
-        // Yapfast port (patch 32): only the window's frame, told its
+        // Circord port (patch 32): only the window's frame, told its
         // layers' changes just before and of the size the regions were
         // kept at, uses them; a `screenshot` draws whole.
         let backdrop_fits = std::mem::take(&mut self.backdrop.fresh)
             && (self.backdrop.width, self.backdrop.height, self.backdrop.scale_factor)
                 == (pixels.width(), pixels.height(), scale_factor);
 
-        // Yapfast port (patch 32): a region partly kept is drawn as the part
+        // Circord port (patch 32): a region partly kept is drawn as the part
         // kept and the parts round it, so a damaged area that grew or moved
         // a little still takes what's kept.
         let regions = if backdrop_fits {
@@ -362,7 +362,7 @@ impl Renderer {
         };
         for damage_bounds in regions {
 
-            // Yapfast port (patch 20): what's under the last opaque quad
+            // Circord port (patch 20): what's under the last opaque quad
             // that covers the whole region isn't drawn: the layers before
             // its own, the quads before it in it, and the clear. A video
             // under Settings' card was drawn, and the call round it, for
@@ -370,7 +370,7 @@ impl Renderer {
             let (first_layer, first_quad) =
                 covered(self.layers.as_slice(), damage_bounds, scale_factor);
 
-            // Yapfast port (patch 32): what's under the changed layers comes
+            // Circord port (patch 32): what's under the changed layers comes
             // from the backdrop when it holds the region; else it's drawn
             // and kept as the first changed layer is reached.
             let region = [
@@ -522,7 +522,7 @@ impl Renderer {
     }
 }
 
-/// Yapfast port (patch 20): the first layer and its first quad to draw in
+/// Circord port (patch 20): the first layer and its first quad to draw in
 /// `region` (physical pixels): those of the last opaque quad that covers
 /// the whole of it, inside its corners and its layer, or (0, 0).
 fn covered(layers: &[Layer], region: Rectangle, scale_factor: f32) -> (usize, usize) {
@@ -580,7 +580,7 @@ fn within_corners(region: Rectangle, bounds: Rectangle, radii: [f32; 4]) -> bool
 
 impl core::Renderer for Renderer {
     fn start_layer(&mut self, bounds: Rectangle) {
-        // Yapfast port (patch 28): a layer started inside another is cut to
+        // Circord port (patch 28): a layer started inside another is cut to
         // it, as a clip inside a clip is. Stock, it replaced its parent's:
         // a picture cut to its box (`ContentFit::Cover`) or a themed
         // button's own layer inside a scrolled page drew over the page's
@@ -830,7 +830,7 @@ impl renderer::Headless for Renderer {
         default_text_size: Pixels,
         backend: Option<&str>,
     ) -> Option<Self> {
-        // Yapfast port (patch 26): not while the app draws with the GPU.
+        // Circord port (patch 26): not while the app draws with the GPU.
         if !enabled::enabled()
             || backend.is_some_and(|backend| {
                 !["tiny-skia", "tiny_skia"].contains(&backend)

@@ -9,7 +9,7 @@ use crate::text;
 #[derive(Debug)]
 pub struct Engine {
     text_pipeline: text::Pipeline,
-    /// Yapfast port (patches 17 and 18): shadows worked out lately, by
+    /// Circord port (patches 17 and 18): shadows worked out lately, by
     /// their shape, each as its nine slices.
     shadows: Vec<(ShadowKey, Sliced)>,
 
@@ -42,14 +42,14 @@ impl Engine {
     ) {
         let physical_bounds = quad.bounds * transformation;
 
-        // Yapfast port (patch 33): a quad with no area draws nothing;
+        // Circord port (patch 33): a quad with no area draws nothing;
         // square-cornered, its path couldn't be built at all (a theme's 0 px
         // corners on a card's empty banner panicked here).
         if !(physical_bounds.width > 0.0 && physical_bounds.height > 0.0) {
             return;
         }
 
-        // Yapfast port (patch 11): a quad whose shadow alone reaches into
+        // Circord port (patch 11): a quad whose shadow alone reaches into
         // the clip still draws (its shadow). Stock, it was skipped, and a
         // damaged region over only the shadow lost it.
         let reach = shadow_reach(quad).map_or(physical_bounds, |reach| reach * transformation);
@@ -58,7 +58,7 @@ impl Engine {
             return;
         }
 
-        // Yapfast port: a plain rectangle of one colour, as most panels and
+        // Circord port: a plain rectangle of one colour, as most panels and
         // backgrounds are, is filled as its part inside the clip: no clip
         // mask and no anti-aliased path, which cost several times more per
         // pixel (a window-sized background was masked for every damaged
@@ -109,7 +109,7 @@ impl Engine {
 
         let shadow = quad.shadow;
 
-        // Yapfast port (patch 11): the shadow is worked out and drawn only
+        // Circord port (patch 11): the shadow is worked out and drawn only
         // inside the clip rectangle (the damaged region and the layer).
         // Stock, its whole rectangle was drawn with no clip for every
         // damaged region: a menu's or the picker's shadow, half-opaque
@@ -119,7 +119,7 @@ impl Engine {
         // of the clip outside it are worked out (a scrolled list in a
         // raised panel damages the panel, and working the shadow out under
         // all of it every frame cost more than drawing the list).
-        // Yapfast port (patch 34): under a see-through quad, the band
+        // Circord port (patch 34): under a see-through quad, the band
         // between its body and its rounded outline takes only the shadow
         // outside its shape (`cut`), as iced_wgpu's quad shader does: the
         // shadow times one less the quad's coverage of each pixel. An
@@ -139,7 +139,7 @@ impl Engine {
                 (physical_bounds.x + physical_bounds.width - corner).floor(),
                 (physical_bounds.y + physical_bounds.height - corner).floor(),
             );
-            // Yapfast port (patch 34): a shadow lies outside its quad, as
+            // Circord port (patch 34): a shadow lies outside its quad, as
             // CSS's box-shadow and Slint's drop shadow do: a see-through
             // quad (a theme's menu, its ground drawn under it with art) no
             // longer shows its own shadow through itself. Its body is
@@ -187,7 +187,7 @@ impl Engine {
                 .into_iter()
                 .map(|radius| radius * transformation.scale_factor())
                 .collect::<Vec<_>>();
-            // Yapfast port (patch 17): a shadow is worked out once, kept by
+            // Circord port (patch 17): a shadow is worked out once, kept by
             // its shape (size, place within a pixel, corners, blur, offset,
             // colour), and each band is a copy from it. The hover bar
             // moving with a scroll had every pixel of its shadow worked out
@@ -205,7 +205,7 @@ impl Engine {
                 transformation.scale_factor(),
                 cut,
             );
-            // Yapfast port (patch 18): a large shadow (a card's, a menu's)
+            // Circord port (patch 18): a large shadow (a card's, a menu's)
             // is kept as its nine slices: the corners whole, each edge one
             // row or column across, and the middle one pixel, which the
             // straight stretches of its edges and its middle repeat
@@ -243,7 +243,7 @@ impl Engine {
             }
         }
 
-        // Yapfast port: a linear gradient (the nameplates' fades and tints)
+        // Circord port: a linear gradient (the nameplates' fades and tints)
         // is filled directly, only inside the clip; see
         // `crate::blit::gradient`. Patch 43: after its shadow, as a quad of
         // one colour is, and at 100% off whole pixels too (a chat bubble as
@@ -282,7 +282,7 @@ impl Engine {
             }
         }
 
-        // Yapfast port (patch 12): a one-colour quad with round corners on
+        // Circord port (patch 12): a one-colour quad with round corners on
         // whole pixels and no border (cards, menus, the picker, buttons and
         // chips) is filled as patch 8's gradient of one colour: only inside
         // the clip rectangle, corners by coverage, no mask. Stock, it went
@@ -342,7 +342,7 @@ impl Engine {
             );
             return;
         }
-        // Yapfast port (patch 21): a quad of no colour (an outline drawn over
+        // Circord port (patch 21): a quad of no colour (an outline drawn over
         // a card, `controls::edged`) fills nothing; stock, its whole area
         // went through the anti-aliased path and the clip mask.
         let clear = matches!(background, Background::Color(color) if color.a <= 0.0);
@@ -743,7 +743,7 @@ impl Engine {
                 bounds,
                 clip_bounds: own,
             } => {
-                // Yapfast port (patch 30): a picture is cut to its own clip
+                // Circord port (patch 30): a picture is cut to its own clip
                 // as well, the box a `ContentFit::Cover` picture overflows.
                 // Stock ignored it, and covered pictures spilled out of
                 // their boxes over their neighbours.
@@ -765,7 +765,7 @@ impl Engine {
                     center.y,
                 );
 
-                // Yapfast port (patch 30): only the direct copy (unrotated,
+                // Circord port (patch 30): only the direct copy (unrotated,
                 // `raster.rs`) cuts by `clip_bounds`; a turned picture (a
                 // Zine card's lean) or one filled through tiny-skia goes
                 // by the mask, which is set to the narrowed clip while it
@@ -789,7 +789,7 @@ impl Engine {
                     _pixels,
                     transform,
                     clip_mask,
-                    // Yapfast port: for the one-to-one copy; each corner's
+                    // Circord port: for the one-to-one copy; each corner's
                     // own radius (round 3), at the picture's own clip
                     // (patch 38).
                     clip_bounds,
@@ -816,7 +816,7 @@ impl Engine {
                 bounds,
                 clip_bounds: own,
             } => {
-                // Yapfast port (patch 30): an SVG is cut to its own clip
+                // Circord port (patch 30): an SVG is cut to its own clip
                 // too, through the mask (it's always drawn through
                 // tiny-skia).
                 let Some(clip_bounds) = _clip_bounds.intersection(&(*own * _transformation)) else {
@@ -874,7 +874,7 @@ impl Engine {
     pub fn trim(&mut self, _layers: &[crate::Layer], _scale_factor: f32) {
         self.text_pipeline.trim_cache();
 
-        // Yapfast port (patch 24): the pictures in the frame's layers keep
+        // Circord port (patch 24): the pictures in the frame's layers keep
         // their scaled copies, drawn this time or not.
         #[cfg(feature = "image")]
         {
@@ -897,9 +897,9 @@ impl Engine {
     }
 }
 
-/// Yapfast port: `bounds` as whole pixels, when they're whole pixels.
+/// Circord port: `bounds` as whole pixels, when they're whole pixels.
 /// `bounds` (in the frame's pixels) as whole pixels, when they are: x, y,
-/// width, height. Yapfast port (patch 25): at a scale other than 1 (a
+/// width, height. Circord port (patch 25): at a scale other than 1 (a
 /// zoom, a desktop's 125%), whose quads seldom fall on whole pixels, each
 /// edge is put on the nearest pixel's, as the pictures are, so neighbours
 /// still meet. Stock, every such quad went through the anti-aliased path
@@ -944,7 +944,7 @@ fn into_transform(transformation: Transformation) -> tiny_skia::Transform {
     }
 }
 
-/// Yapfast port: `pub(crate)` for `raster.rs`'s rounded pictures (patch 10).
+/// Circord port: `pub(crate)` for `raster.rs`'s rounded pictures (patch 10).
 pub(crate) fn rounded_rectangle(
     bounds: Rectangle,
     border_radius: [f32; 4],
@@ -1090,7 +1090,7 @@ fn arc_to(
 }
 
 fn smoothstep(a: f32, b: f32, x: f32) -> f32 {
-    // Yapfast port (patch 35): a hard edge (a shadow with no blur, as
+    // Circord port (patch 35): a hard edge (a shadow with no blur, as
     // themes' offset shadows are) steps at `a`. Stock, 0 / 0 gave NaN inside
     // the shape and the whole shadow came out clear.
     // Samples fall on pixel corners, so the edge itself (and float dust
@@ -1121,7 +1121,7 @@ fn rounded_box_sdf(
     (x.powf(2.0) + y.powf(2.0)).sqrt() - radius
 }
 
-/// Yapfast port (patch 34): the signed distance from a point (`to_center`,
+/// Circord port (patch 34): the signed distance from a point (`to_center`,
 /// from the box's centre) to a rounded box's outline, negative inside.
 /// `rounded_box_sdf` is iced's, right only outside (inside it's minus the
 /// corner's radius throughout).
@@ -1137,7 +1137,7 @@ fn rounded_box_distance(to_center: Vector, size: tiny_skia::Size, radii: &[f32])
     x.max(0.0).hypot(y.max(0.0)) + x.max(y).min(0.0) - radius
 }
 
-/// Yapfast port (patch 30): whether a picture drawn with `transform` takes
+/// Circord port (patch 30): whether a picture drawn with `transform` takes
 /// the direct copy in `raster.rs` (unrotated, unflipped), which cuts by its
 /// clip rectangle rather than the mask.
 #[cfg(feature = "image")]
@@ -1145,7 +1145,7 @@ fn is_direct(transform: tiny_skia::Transform) -> bool {
     transform.kx == 0.0 && transform.ky == 0.0 && transform.sx > 0.0 && transform.sy > 0.0
 }
 
-/// Yapfast port (patch 30): sets the mask to a picture's own `clip` when it
+/// Circord port (patch 30): sets the mask to a picture's own `clip` when it
 /// draws through the mask (`masked`), spills out of that clip, and the clip
 /// is narrower than the layer's (`layer`, what the mask holds now). Returns
 /// whether it did, so the caller puts the layer's back after drawing.
@@ -1165,7 +1165,7 @@ fn narrowed_mask(
 }
 
 pub fn adjust_clip_mask(clip_mask: &mut tiny_skia::Mask, bounds: Rectangle) {
-    // Yapfast port: clip masks here are only ever rectangles, set many times
+    // Circord port: clip masks here are only ever rectangles, set many times
     // a frame (each layer, each partly clipped text); clearing and refilling
     // the whole window-sized mask each time cost a memset of it every time.
     // Only the rows of the previous rectangle are cleared and the new one's
@@ -1219,7 +1219,7 @@ pub fn adjust_clip_mask(clip_mask: &mut tiny_skia::Mask, bounds: Rectangle) {
     LAST.set(Some((identity.0, identity.1, rect)));
 }
 
-/// Yapfast port (patches 11 and 15): where a quad's shadow reaches, if it
+/// Circord port (patches 11 and 15): where a quad's shadow reaches, if it
 /// has one: the quad moved by the shadow's offset and grown by its blur.
 /// Drawing takes the shadow inside it; the layer's damage counts it too.
 /// How many shadows the engine keeps worked out: the hover bar's, a menu's,
@@ -1274,7 +1274,7 @@ impl ShadowKey {
     }
 }
 
-/// Yapfast port (patch 18): one axis of a shadow's reach, as its slices
+/// Circord port (patch 18): one axis of a shadow's reach, as its slices
 /// keep it. Its pixels from `start` to `end`, both in, lie along the
 /// straight stretch of the shadow's edges, where every pixel across is the
 /// same, and are kept as the one at `start`. Pixels are counted from the
@@ -1335,7 +1335,7 @@ impl Slices {
     }
 }
 
-/// Yapfast port (patches 17 and 18): a shadow's pixels, premultiplied in
+/// Circord port (patches 17 and 18): a shadow's pixels, premultiplied in
 /// the frame's byte order, as kept: its nine slices (whole when it has no
 /// straight stretch).
 #[derive(Debug)]
@@ -1468,7 +1468,7 @@ impl Sliced {
         let top = (band.y as i32).max(origin.1).max(0);
         let right = ((band.x + band.width) as i32).min(frame_width);
         let bottom = ((band.y + band.height) as i32).min(frame_height);
-        // Yapfast port (patch 37): every kept pixel plus the stretch the
+        // Circord port (patch 37): every kept pixel plus the stretch the
         // straight one stands for.
         // (The last kept pixel's place undercounts when the stretch runs
         // to the reach's edge: a hard shadow on square corners, whose

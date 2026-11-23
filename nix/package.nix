@@ -1,4 +1,4 @@
-# Yapfast's Discord-only build, as the releases ship it, for the flake at the
+# Circord's Discord-only build, as the releases ship it, for the flake at the
 # repository's root. `pkgs` carries rust-overlay, for the pinned toolchain.
 # `commit` and `date` name what it's built from, which its build script can't
 # ask Git for in the sandbox, and `release` makes it call itself a stable
@@ -10,10 +10,10 @@ let
   native = import ./native.nix { inherit pkgs; };
   toolchain = pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
   rustPlatform = pkgs.makeRustPlatform { cargo = toolchain; rustc = toolchain; };
-  id = "io.github.yapfast.Yapfast";
+  id = "io.github.circord.Circord";
 in
 rustPlatform.buildRustPackage {
-  pname = "yapfast";
+  pname = "circord";
   inherit ((lib.importTOML ../Cargo.toml).package) version;
   # Only what the build reads, so a change to the docs or tests rebuilds nothing.
   src = lib.fileset.toSource {
@@ -50,9 +50,9 @@ rustPlatform.buildRustPackage {
     PROTOC = "${pkgs.protobuf}/bin/protoc";
     LK_CUSTOM_WEBRTC = "${native.webrtc}";
   }
-  // lib.optionalAttrs (commit != "") { YAPFAST_COMMIT = commit; }
-  // lib.optionalAttrs (date != "") { YAPFAST_COMMIT_DATE = date; }
-  // lib.optionalAttrs release { YAPFAST_RELEASE = "1"; };
+  // lib.optionalAttrs (commit != "") { CIRCORD_COMMIT = commit; }
+  // lib.optionalAttrs (date != "") { CIRCORD_COMMIT_DATE = date; }
+  // lib.optionalAttrs release { CIRCORD_RELEASE = "1"; };
   # The tests need a display and the fake Discord server.
   doCheck = false;
   # buildRustPackage turns off the release profile's strip and leaves it to
@@ -67,16 +67,16 @@ rustPlatform.buildRustPackage {
     # NixOS keeps the GPU driver's in /run/opengl-driver. fc-match finds the
     # system's font for a script or character the UI font lacks; the
     # system's own comes first, and NixOS may have none on its PATH.
-    wrapProgram "$out/bin/yapfast" \
+    wrapProgram "$out/bin/circord" \
       --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath native.runtimeLibraries} \
       --suffix LD_LIBRARY_PATH : /run/opengl-driver/lib \
       --suffix PATH : ${lib.makeBinPath [ pkgs.fontconfig ]}
   '';
   meta = {
     description = "Native Discord client that stays light on memory";
-    homepage = "https://github.com/yapfast/yapfast";
+    homepage = "https://github.com/circord/circord";
     license = lib.licenses.gpl3Plus;
-    mainProgram = "yapfast";
+    mainProgram = "circord";
     platforms = [ "x86_64-linux" ];
   };
 }

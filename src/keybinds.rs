@@ -2,10 +2,10 @@
 //! such as push to talk or toggling mute. One [`Watcher`] watches them all:
 //! through the GlobalShortcuts portal on Wayland, XInput 2's raw key events on
 //! X11, and low-level keyboard and mouse hooks on Windows. Where none of these
-//! works, they work while Yapfast's window has the focus, and settings say so.
+//! works, they work while Circord's window has the focus, and settings say so.
 //!
 //! Holding keybinds (push to talk, push to mute) set
-//! [`yapfast_core::push_to_talk`]'s atomics from the thread that hears the
+//! [`circord_core::push_to_talk`]'s atomics from the thread that hears the
 //! key, so the microphone never waits on the window; the others go to the
 //! window's event loop through [`Toggled`].
 use std::sync::{
@@ -13,8 +13,8 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-pub use yapfast_core::keybinds::*;
-use yapfast_core::runtime::BackgroundRuntime;
+pub use circord_core::keybinds::*;
+use circord_core::runtime::BackgroundRuntime;
 
 /// Hears toggling keybinds, from any thread; see [`Action`].
 pub type Toggled = Arc<dyn Fn(Action) + Send + Sync>;
@@ -29,8 +29,8 @@ impl Sink {
     fn act(&self, action: Action, down: bool) {
         match action {
             Action::Unassigned => {}
-            Action::PushToTalk => yapfast_core::push_to_talk::hold(down),
-            Action::PushToMute => yapfast_core::push_to_talk::hold_mute(down),
+            Action::PushToTalk => circord_core::push_to_talk::hold(down),
+            Action::PushToMute => circord_core::push_to_talk::hold_mute(down),
             toggles if down => (self.toggled)(toggles),
             _ => {}
         }
@@ -290,7 +290,7 @@ static FOCUSED_ON: AtomicBool = AtomicBool::new(false);
 /// The window's own key going down or up, by its scan code, or the focus
 /// going (none), as the window hands them on: runs keybinds while no
 /// global keys work. On Windows the hooks' thread takes them, for as long
-/// as the hooks hear nothing with Yapfast focused.
+/// as the hooks hear nothing with Circord focused.
 pub fn window_key(scancode: Option<u32>, pressed: bool) {
     #[cfg(windows)]
     if windows::window_key(scancode, pressed) {
@@ -355,7 +355,7 @@ impl Watcher {
         {
             let _ = (runtime, sink);
             report(Status {
-                reach: Reach::Focused("Yapfast can't watch keys in other apps on this system yet"),
+                reach: Reach::Focused("Circord can't watch keys in other apps on this system yet"),
                 given: HashMap::new(),
             });
         }
@@ -376,8 +376,8 @@ impl Drop for Watcher {
         if let Some((mut matcher, sink)) = taken {
             matcher.release_all(&mut |action, down| sink.act(action, down));
         }
-        yapfast_core::push_to_talk::hold(false);
-        yapfast_core::push_to_talk::hold_mute(false);
+        circord_core::push_to_talk::hold(false);
+        circord_core::push_to_talk::hold_mute(false);
     }
 }
 
@@ -402,7 +402,7 @@ mod linux {
         },
         rust_connection::RustConnection,
     };
-    use yapfast_core::runtime::{BackgroundRuntime, BackgroundTask};
+    use circord_core::runtime::{BackgroundRuntime, BackgroundTask};
     use zbus::{
         Connection, MessageStream,
         zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value},
@@ -417,7 +417,7 @@ mod linux {
     }
 
     /// A shortcut to bind through the portal: its id, what settings call
-    /// it, and the keys Yapfast would like for it.
+    /// it, and the keys Circord would like for it.
     pub(super) struct Wanted {
         pub id: String,
         pub description: &'static str,
@@ -458,7 +458,7 @@ mod linux {
                             );
                             report(Status {
                                 reach: Reach::Focused(
-                                    "Your desktop doesn't offer Yapfast global shortcuts",
+                                    "Your desktop doesn't offer Circord global shortcuts",
                                 ),
                                 given: HashMap::new(),
                             });
@@ -477,7 +477,7 @@ mod linux {
                 Err(error) => {
                     tracing::info!(error = format!("{error:#}"), "no global keybinds on X11");
                     report(Status {
-                        reach: Reach::Focused("Yapfast couldn't watch keys in other apps"),
+                        reach: Reach::Focused("Circord couldn't watch keys in other apps"),
                         given: HashMap::new(),
                     });
                     None
@@ -500,7 +500,7 @@ mod linux {
         report: &Report,
     ) -> Result<()> {
         let connection = Connection::session().await?;
-        // Names Yapfast to the portal, which outside a sandbox can't tell
+        // Names Circord to the portal, which outside a sandbox can't tell
         // the app otherwise; older portals don't have it.
         let _ = connection
             .call_method(
@@ -521,7 +521,7 @@ mod linux {
             .context("no name on the session bus")?
             .trim_start_matches(':')
             .replace('.', "_");
-        let token = format!("yapfast_{}", std::process::id());
+        let token = format!("circord_{}", std::process::id());
         let request = |step: &str| format!("{PATH}/request/{sender}/{token}_{step}");
 
         let options = HashMap::from([
@@ -705,7 +705,7 @@ mod linux {
             let stop = Arc::new(AtomicBool::new(false));
             let (waiting, stopped) = (connection.clone(), stop.clone());
             std::thread::Builder::new()
-                .name("yapfast-keybinds".into())
+                .name("circord-keybinds".into())
                 .spawn(move || {
                     let out = &mut |action, down| sink.act(action, down);
                     while !stopped.load(Ordering::Relaxed) {
@@ -721,7 +721,7 @@ mod linux {
                             Err(error) => {
                                 tracing::warn!(%error, "lost the X server's keys");
                                 report(Status {
-                                    reach: Reach::Focused("Yapfast lost the X server's keys"),
+                                    reach: Reach::Focused("Circord lost the X server's keys"),
                                     given: HashMap::new(),
                                 });
                                 break;
@@ -765,7 +765,7 @@ mod linux {
         /// Waits up to two seconds for push to talk to be `held` or not.
         fn wait_held(held: bool) {
             let until = Instant::now() + Duration::from_secs(2);
-            while yapfast_core::push_to_talk::held() != held {
+            while circord_core::push_to_talk::held() != held {
                 assert!(Instant::now() < until, "the key wasn't held: {held}");
                 std::thread::sleep(Duration::from_millis(10));
             }
@@ -822,7 +822,7 @@ mod linux {
             // Another key leaves it alone.
             xdotool(&["key", "b"]);
             std::thread::sleep(Duration::from_millis(100));
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             // The right Ctrl holds the combination as well as the left.
             xdotool(&["key", "Control_R+m"]);
             xdotool(&["key", "m"]);
@@ -997,7 +997,7 @@ mod linux {
             let _task =
                 runtime.spawn(async move { portal(wanted, &mut matcher, &sink, &report).await });
             let until = Instant::now() + Duration::from_secs(5);
-            while !yapfast_core::push_to_talk::held() {
+            while !circord_core::push_to_talk::held() {
                 assert!(
                     Instant::now() < until,
                     "the shortcut wasn't held: {:?}",
@@ -1096,7 +1096,7 @@ mod windows {
     /// The hook thread, to post the window's keys to; 0 while there's none.
     static THREAD: AtomicU32 = AtomicU32::new(0);
     /// The keyboard hook, and the mouse hook, heard a bound key while
-    /// Yapfast's window had the focus, so the window's own keys aren't
+    /// Circord's window had the focus, so the window's own keys aren't
     /// needed; see [`window_event`]. It's so of every hook after, as when
     /// a keybind that changes what's watched starts new ones mid-press.
     static HEARS_FOCUSED: [AtomicBool; 2] = [AtomicBool::new(false), AtomicBool::new(false)];
@@ -1147,7 +1147,7 @@ mod windows {
                 .collect();
             let (started, thread) = mpsc::sync_channel(1);
             let spawned = std::thread::Builder::new()
-                .name("yapfast-keybinds".into())
+                .name("circord-keybinds".into())
                 .spawn(move || {
                     HOOKED.set(Some(Hooked {
                         matcher,
@@ -1221,7 +1221,7 @@ mod windows {
                     tracing::warn!("Windows didn't install the keybind hooks");
                     report(Status {
                         reach: Reach::Focused(
-                            "Windows didn't let Yapfast watch keys in other apps",
+                            "Windows didn't let Circord watch keys in other apps",
                         ),
                         given: HashMap::new(),
                     });
@@ -1243,9 +1243,9 @@ mod windows {
 
     /// Lets go of the raw keyboard and mouse input winit registers the
     /// process for as its event loop starts, for device events nothing in
-    /// Yapfast reads. While a window of a process registered so has the
+    /// Circord reads. While a window of a process registered so has the
     /// focus, Windows calls none of the process's low-level hooks, so
-    /// keybinds worked in every app but Yapfast itself (issue #249).
+    /// keybinds worked in every app but Circord itself (issue #249).
     fn drop_raw_input() {
         let mut registered = [RAWINPUTDEVICE::default(); 16];
         let mut count = registered.len() as u32;
@@ -1281,7 +1281,7 @@ mod windows {
         tracing::info!(
             ?usages,
             dropped,
-            "raw input let go, so the keybind hooks hear keys with Yapfast focused"
+            "raw input let go, so the keybind hooks hear keys with Circord focused"
         );
     }
 
@@ -1306,7 +1306,7 @@ mod windows {
         true
     }
 
-    /// Whether a window of Yapfast's has the focus.
+    /// Whether a window of Circord's has the focus.
     fn focused_here() -> bool {
         let mut process = 0;
         // SAFETY: these only read which window is in front and whose it is.
@@ -1317,19 +1317,19 @@ mod windows {
     }
 
     /// A hook heard a bound key, the keyboard's or the mouse's: with
-    /// Yapfast focused, that hook needs no help from the window's keys.
+    /// Circord focused, that hook needs no help from the window's keys.
     fn heard(mouse: bool) {
         let hears = &HEARS_FOCUSED[usize::from(mouse)];
         if !hears.load(Ordering::Relaxed) && focused_here() {
             hears.store(true, Ordering::Relaxed);
-            tracing::debug!(mouse, "the keybind hook hears keys with Yapfast focused");
+            tracing::debug!(mouse, "the keybind hook hears keys with Circord focused");
         }
     }
 
     /// The window's own key went down or came up, on the hook thread. It
-    /// counts only until the hook has heard a key with Yapfast focused,
+    /// counts only until the hook has heard a key with Circord focused,
     /// which Windows hands the hook first: so each key counts once, and
-    /// keybinds work in Yapfast's window even where its hook hears nothing
+    /// keybinds work in Circord's window even where its hook hears nothing
     /// there.
     fn window_event(code: u32, down: bool) {
         let mouse = matches!(code, MOUSE_4 | MOUSE_5);
@@ -1346,7 +1346,7 @@ mod windows {
             if !hooked.stood_in {
                 hooked.stood_in = true;
                 tracing::info!(
-                    "the keybind hook heard nothing with Yapfast focused; the window's keys stand in"
+                    "the keybind hook heard nothing with Circord focused; the window's keys stand in"
                 );
             }
             true
@@ -1670,7 +1670,7 @@ mod windows {
 
         fn wait_held(held: bool) {
             let until = Instant::now() + Duration::from_secs(2);
-            while yapfast_core::push_to_talk::held() != held {
+            while circord_core::push_to_talk::held() != held {
                 assert!(Instant::now() < until, "the key wasn't held: {held}");
                 std::thread::sleep(Duration::from_millis(10));
             }
@@ -1705,18 +1705,18 @@ mod windows {
                 Matcher::new(&[watched(Action::PushToTalk, &[0x2F])]),
                 sink().0,
             ); // V
-            yapfast_core::push_to_talk::hold(false);
+            circord_core::push_to_talk::hold(false);
             key(WM_KEYDOWN, 0, 0x56, LLKHF_INJECTED); // VK_V
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             key(WM_KEYUP, 0, 0x56, LLKHF_INJECTED);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             // The made-up Left Ctrl of AltGr holds nothing.
             hooked_here(
                 Matcher::new(&[watched(Action::PushToTalk, &[0x1D])]),
                 sink().0,
             );
             key(WM_KEYDOWN, 0x21D, 0xA2, 0);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             HOOKED.take();
         }
 
@@ -1729,14 +1729,14 @@ mod windows {
                 Matcher::new(&[watched(Action::PushToTalk, &[0xE01D])]),
                 sink().0,
             ); // Right Ctrl
-            yapfast_core::push_to_talk::hold(false);
+            circord_core::push_to_talk::hold(false);
             key(WM_KEYDOWN, 0x1D, 0xA2, 0);
-            assert!(!yapfast_core::push_to_talk::held(), "Left Ctrl");
+            assert!(!circord_core::push_to_talk::held(), "Left Ctrl");
             key(WM_KEYUP, 0x1D, 0xA2, 0);
             key(WM_KEYDOWN, 0x1D, 0xA3, LLKHF_EXTENDED);
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             key(WM_KEYUP, 0x1D, 0xA3, LLKHF_EXTENDED);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             HOOKED.take();
         }
 
@@ -1760,33 +1760,33 @@ mod windows {
                 }
             }
 
-            yapfast_core::push_to_talk::hold(false);
+            circord_core::push_to_talk::hold(false);
             hooked_here(
                 Matcher::new(&[watched(Action::PushToTalk, &[MOUSE_4])]),
                 sink().0,
             );
             event(WM_XBUTTONDOWN, XBUTTON2);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             event(WM_XBUTTONDOWN, XBUTTON1);
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             event(WM_XBUTTONUP, XBUTTON2);
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             event(WM_XBUTTONUP, XBUTTON1);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
 
             hooked_here(
                 Matcher::new(&[watched(Action::PushToTalk, &[MOUSE_5])]),
                 sink().0,
             );
             event(WM_XBUTTONDOWN, XBUTTON2);
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             event(WM_XBUTTONUP, XBUTTON2);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             HOOKED.take();
         }
 
         /// The window's own keys run keybinds on the hook's thread until
-        /// the hook has heard a key with Yapfast focused; issue #249.
+        /// the hook has heard a key with Circord focused; issue #249.
         #[test]
         fn the_windows_own_keys_stand_in_until_the_hook_hears_them_focused() {
             let _talk = TALK_STATE
@@ -1801,27 +1801,27 @@ mod windows {
                 ]),
                 sink,
             );
-            yapfast_core::push_to_talk::hold(false);
+            circord_core::push_to_talk::hold(false);
             window_event(0x30, true); // B, bound to nothing
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             window_event(0x2F, true);
-            assert!(yapfast_core::push_to_talk::held());
+            assert!(circord_core::push_to_talk::held());
             window_event(0x2F, false);
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             window_event(0x32, true);
             window_event(0x32, false);
             assert_eq!(*toggles.lock().unwrap(), [Action::ToggleMute]);
-            // The hook hears a key with no window of Yapfast's in front,
+            // The hook hears a key with no window of Circord's in front,
             // as in a test: the window's keys would still count.
             key(WM_KEYDOWN, 0x32, 0x4D, 0);
             key(WM_KEYUP, 0x32, 0x4D, 0);
             assert_eq!(toggles.lock().unwrap().len(), 2);
             let hears = |mouse: usize| HEARS_FOCUSED[mouse].load(Ordering::Relaxed);
             assert!(!hears(0) && !hears(1));
-            // Once it heard one with Yapfast in front, they don't.
+            // Once it heard one with Circord in front, they don't.
             HEARS_FOCUSED[0].store(true, Ordering::Relaxed);
             window_event(0x2F, true);
-            assert!(!yapfast_core::push_to_talk::held(), "the hook hears keys");
+            assert!(!circord_core::push_to_talk::held(), "the hook hears keys");
             window_event(0x32, true);
             window_event(0x32, false);
             assert_eq!(toggles.lock().unwrap().len(), 2);
@@ -1836,7 +1836,7 @@ mod windows {
             HOOKED.with_borrow(|hooked| {
                 assert!(!hooked.as_ref().unwrap().matcher.is_held(MOUSE_4));
             });
-            yapfast_core::push_to_talk::hold_mute(false);
+            circord_core::push_to_talk::hold_mute(false);
             for hears in &HEARS_FOCUSED {
                 hears.store(false, Ordering::Relaxed);
             }
@@ -1907,7 +1907,7 @@ mod windows {
             send_mouse(XBUTTON2, false);
             send_mouse(XBUTTON2, true);
             std::thread::sleep(Duration::from_millis(100));
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             drop(hook);
         }
 
@@ -1937,7 +1937,7 @@ mod windows {
             send(0x30, false); // B
             send(0x30, true);
             std::thread::sleep(Duration::from_millis(100));
-            assert!(!yapfast_core::push_to_talk::held());
+            assert!(!circord_core::push_to_talk::held());
             send(0x1D, false);
             send(0x32, false);
             send(0x32, false); // a repeat
@@ -1951,7 +1951,7 @@ mod windows {
             std::thread::sleep(Duration::from_millis(100));
             assert_eq!(*toggles.lock().unwrap(), [Action::ToggleMute]);
             // The window's own keys reach the same thread, as when Windows
-            // keeps a focused Yapfast's keys from its hook.
+            // keeps a focused Circord's keys from its hook.
             assert!(window_key(Some(0x2F), true));
             wait_held(true);
             assert!(window_key(None, false));

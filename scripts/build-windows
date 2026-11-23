@@ -17,6 +17,6 @@ mkdir -p "$PWD/.local/windows"
 source scripts/release-env x86_64-pc-windows-msvc
 # The release's own build: Settings and --version call it a stable release or
 # a nightly, by its version, and not a development build (src/build_info.rs).
-export YAPFAST_RELEASE=1
+export CIRCORD_RELEASE=1
 cargo build --locked --release --target x86_64-pc-windows-msvc "${features[@]}"
 python3 scripts/package-windows.py --flavour "$flavour" "$@"

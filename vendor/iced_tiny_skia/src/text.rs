@@ -15,7 +15,7 @@ use std::collections::hash_map;
 pub struct Pipeline {
     glyph_cache: GlyphCache,
     cache: RefCell<Cache>,
-    // Yapfast port (patch 16): one scaler context for every glyph drawn,
+    // Circord port (patch 16): one scaler context for every glyph drawn,
     // so its fonts and hinting instances stay between draws; see `draw`.
     swash: cosmic_text::SwashCache,
 }
@@ -201,7 +201,7 @@ fn draw(
 ) {
     let position = position * transformation;
 
-    // Yapfast port (patch 16): the pipeline's scaler context. Stock made a
+    // Circord port (patch 16): the pipeline's scaler context. Stock made a
     // new one for each text drawn, so each glyph not yet in the glyph cache
     // set up its font's hinting anew (running the font's programs), which
     // cost several times the glyph's own rasterizing.
@@ -225,7 +225,7 @@ fn draw(
                         .map(|c| c.a() as f32 / 255.0)
                         .unwrap_or(1.0);
 
-                // Yapfast port: copied in directly; see `crate::blit`.
+                // Circord port: copied in directly; see `crate::blit`.
                 crate::blit::blit(
                     buffer,
                     placement.width,

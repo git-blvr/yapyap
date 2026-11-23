@@ -42,7 +42,7 @@ copying them.
   when the channel can be written in.
 - Message opens the DM with them, or starts one with any member through `POST
   /users/@me/channels`. Call opens the DM and starts its call; with a friend
-  Yapfast has no DM with, it starts the DM first and calls once it opens.
+  Circord has no DM with, it starts the DM first and calls once it opens.
 - Add note works for any member, and the friend nickname for friends, without
   a DM.
 - Change nickname: another's needs Manage Nicknames and outranking them,
@@ -82,8 +82,8 @@ of the server, with what Discord's client adds there, in its order:
 - After Add note: Mute, a box that mutes them for this account alone and
   keeps their volume for when it's unticked, and Mute Soundboard, a box
   that silences the soundboard sounds they play, for this account alone;
-  Yapfast remembers both, as Discord's client keeps them locally. One's own
-  entry, in the call Yapfast is in there, has Mute and Deafen boxes for this
+  Circord remembers both, as Discord's client keeps them locally. One's own
+  entry, in the call Circord is in there, has Mute and Deafen boxes for this
   account's own instead, and no volume.
 - After Roles: Move to, a submenu of the server's other voice channels.
   Someone else's lists those this account may move them to: it needs Move
@@ -105,20 +105,20 @@ Matrix room's, the right click still sets only the volume.
 
 Discord answers each change with GUILD_MEMBER_UPDATE, or for a kick with
 GUILD_MEMBER_REMOVE, and for a ban with GUILD_BAN_ADD as well, and sends the
-member list's subscribers its operations. Yapfast learns the member's
+member list's subscribers its operations. Circord learns the member's
 nickname, roles, `communication_disabled_until` and `premium_since`, shows
 the open member list again when it lists them, and renders the open channel
 again, so names, colours and the list follow. As in Discord's client, the
 member list marks someone who boosts the server with a pink gem after their
 name, whose tooltip says since when ("Server boosting since 3 March 2024");
 Show boost gems in Settings > Messages turns the gem off (`boost_gems` in
-`layout.json`, on by default). Yapfast keeps the date only for those boosting,
+`layout.json`, on by default). Circord keeps the date only for those boosting,
 while it runs. A member who leaves is forgotten. A nickname,
 timeout, kick or ban that fails says why in its dialog; a role says so in a
 notice.
 
 Discord's menu also has Invite to listen (Spotify), Apps and Open in
-moderator view, which Yapfast leaves out for now.
+moderator view, which Circord leaves out for now.
 
 ### Dragging someone to another voice channel
 
@@ -151,7 +151,7 @@ server's lands them in the open channel when that's in the server, else
 in the first of its channels in Discord's order; each only where the
 account may see the channel and create invites (`CREATE_INSTANT_INVITE`),
 and the choice shows only then. docs.discord.food doesn't say which
-channel Discord's client picks for a server, so Yapfast takes the one it
+channel Discord's client picks for a server, so Circord takes the one it
 would open.
 
 ## Invite to server
@@ -163,8 +163,8 @@ the rail's order, the Discord servers where this account may create invites
 (`CREATE_INSTANT_INVITE` on the server) and has a channel to invite to,
 leaving out only the server they're shown as a member of. Discord's client
 lists the rest whether they're in them or not, as it doesn't ask which
-servers it shares with them, and Yapfast does the same. Nobody is offered it
-for themselves, a bot, or someone blocked or ignored. Yapfast knows bots from
+servers it shares with them, and Circord does the same. Nobody is offered it
+for themselves, a bot, or someone blocked or ignored. Circord knows bots from
 the `bot` field of user objects, kept with the service's names. The list is
 built when the menu opens, from the servers the snapshot shares.
 
@@ -182,9 +182,9 @@ failing those, such a voice channel. Then three requests:
 
 Discord's client shows nothing more: the DM's CHANNEL_CREATE and the
 message's MESSAGE_CREATE list the DM and show the link in it. Where
-Discord's says nothing on a failure, Yapfast says why in a notice. Discord's
+Discord's says nothing on a failure, Circord says why in a notice. Discord's
 client also offers a server without the permission when it has a vanity
-URL, and sends that instead; Yapfast doesn't keep servers' vanity codes, so it
+URL, and sends that instead; Circord doesn't keep servers' vanity codes, so it
 leaves those out.
 
 ## Joining by invite
@@ -199,7 +199,7 @@ of the browser. Either looks the invite up first and shows its server,
 icon, and how many members it has and how many are online, or the channel
 when it has fewer than five members and none online, as Discord's invite
 card does; nothing joins until the Join Server click. Discord's docs warn
-that accounts joining many servers in a short time get flagged, so Yapfast
+that accounts joining many servers in a short time get flagged, so Circord
 never joins by itself.
 
 - `GET /invites/{code}?with_counts=true&with_expiration=true&with_permissions=true`,
@@ -212,9 +212,9 @@ never joins by itself.
   `location_guild_id`, `location_channel_id` and `location_channel_type`
   naming the invite's server and channel, as Discord's client sends them.
 
-Discord often asks for a captcha before joining. Yapfast shows it as linking
+Discord often asks for a captcha before joining. Circord shows it as linking
 does (`application/join.rs`), and the dialog says so and can open it again. The
-server's GUILD_CREATE lists it, and Yapfast opens the invite's channel once
+server's GUILD_CREATE lists it, and Circord opens the invite's channel once
 it's listed. An invite to a server the account is in opens the server
 instead of joining, at once for a link; the dialog says so and its button
 opens it. Discord's refusals come back in the dialog's words: an invalid or
@@ -223,11 +223,11 @@ full server (30019) and paused invites (40069).
 
 When the answer has `show_verification_form`, the server asks new members
 to fill in its form, such as accepting its rules, before they may talk.
-Yapfast doesn't show forms or onboarding questions yet, so the dialog says
+Circord doesn't show forms or onboarding questions yet, so the dialog says
 so and opens the channel in Discord's web app, where the form waits. A voice
 channel's invite joins the server and opens the channel without joining the
 call. Discord's client also sends `invite_instance_id` from a message's
-invite card, which Yapfast doesn't show yet, so it leaves that out.
+invite card, which Circord doesn't show yet, so it leaves that out.
 
 ## Event links
 
@@ -250,7 +250,7 @@ the browser.
   `{"response": 1}`, as Discord's client sends it, or `DELETE` on the same
   path, from the click only. An ended or canceled event offers no button.
 
-Yapfast doesn't keep a server's events or follow their gateway events; the
+Circord doesn't keep a server's events or follow their gateway events; the
 dialog shows them as they were when it opened.
 
 ## Channels and categories
@@ -265,7 +265,7 @@ Duplicate channel reads the channel and makes another with its type, category,
 permission overwrites, topic, age restriction, slowmode and voice settings
 under the name given, as Discord's client does. Delete channel uses `DELETE
 /channels/{id}`; deleting a category leaves its channels outside any, each with
-a CHANNEL_UPDATE before the CHANNEL_DELETE. Yapfast changes its list only from
+a CHANNEL_UPDATE before the CHANNEL_DELETE. Circord changes its list only from
 CHANNEL_CREATE, UPDATE and DELETE, which the service already applies to the one
 server they name, so the sidebar rebuilds that server's rows and keeps the
 others. Names are 1 to 100 characters and topics up to 1024, checked before
@@ -295,7 +295,7 @@ icon; other community servers keep the community icon. Any other server at
 boost level 1 to 3 (`premium_tier`) shows the level as its number in a
 scallop before the name, as Discord's client does in place of those badges.
 Discord also shows the scallop at level 0 once a server has a boost ("No
-Level"); Yapfast doesn't.
+Level"); Circord doesn't.
 
 When the owner shows the boost progress bar (`premium_progress_bar_enabled`),
 a 26px pill under the header reads "Boost Goal" and "N/33 Boosts", with a pink
@@ -312,13 +312,13 @@ active). They come from `guild_scheduled_events` in GUILD_CREATE and are kept
 current by GUILD_SCHEDULED_EVENT_CREATE, UPDATE and DELETE. Clicking the row
 opens a menu (a single "No upcoming events" row when there are none) with one row per event: its name, and "Happening now" or the
 start time (12 or 24 hours as the clock is set) followed by its place.
-Yapfast doesn't fetch `/guilds/{id}/scheduled-events` and doesn't draw
+Circord doesn't fetch `/guilds/{id}/scheduled-events` and doesn't draw
 Discord's event cards, so interest counts aren't shown.
 
 ## A chat's first message
 
 At the start of a channel's history Discord writes a welcome block, which
-Yapfast now draws as well. In a server's first channel: "Welcome to" over the server's name
+Circord now draws as well. In a server's first channel: "Welcome to" over the server's name
 in 32px semibold, then "This is the beginning of this server." in 14px, all
 centred, measured against Discord to 12px between the text and the date
 divider. In any other channel: a 68px circle with a hash, "Welcome to
@@ -370,17 +370,17 @@ pins with `PATCH /users/@me/guilds/settings` and a body of
 `OPT_IN_ENABLED`, `1 << 12`, too if it wasn't. Unpinning sends the flags
 with `FAVORITED` cleared and the rest as they were. Discord answers with
 each server's settings, and USER_GUILD_SETTINGS_UPDATE tells every session.
-`yapfast_discord::notifications` reads the flags with each override and
-writes the body (`Override::pin_flags`, `flags_body`); Yapfast changes the
+`circord_discord::notifications` reads the flags with each override and
+writes the body (`Override::pin_flags`, `flags_body`); Circord changes the
 list when the update comes, as it does for a mute.
 
-Yapfast works out the pinned channels when it lists a server's rooms, which
+Circord works out the pinned channels when it lists a server's rooms, which
 happens only when the server's snapshot changes, and keeps them in the
 server's `ChatServer::pinned`; the sidebar rebuilds only when the servers
 it hashes change. Discord's "Move to…", which reorders the server's
 channels for everyone, and its Favorites server, kept in the settings
 protobuf, are different features; Discord's client only hides "Move to…"
-and dragging for a pinned channel, which Yapfast has neither of.
+and dragging for a pinned channel, which Circord has neither of.
 
 ### Following channels
 
@@ -404,7 +404,7 @@ all show. Discord's
 client differs in where it puts some of these: a channel left out that's
 open or mentions the account shows in a "Suggested" section at the top,
 which also suggests new channels, and the voice channels not followed show
-in a section of their own after the categories. Yapfast keeps each in its
+in a section of their own after the categories. Circord keeps each in its
 category.
 
 A channel's menu then offers Remove from channel list or Add to channel
@@ -420,7 +420,7 @@ as they were. Turned off with no channel or category followed, the same
 body follows every text and voice channel the account sees, in
 `channel_overrides`, so the list doesn't empty; Discord's client does that
 too unless the account finished the server's onboarding, and adds the
-onboarding's default channels, which Yapfast doesn't fetch.
+onboarding's default channels, which Circord doesn't fetch.
 
 `ChatRoom::unlisted` marks a channel left out, and each thread of it, worked
 out with the pinned channels when the server's snapshot changes, rather than a
@@ -447,7 +447,7 @@ turns Show All Channels off, as Discord's client does, in one `PATCH
 channel's. With Show All Channels on and nothing followed every box shows
 ticked, and clearing one follows every other channel the account sees.
 Discord's client lets a page of changes wait and sends them when it
-closes; Yapfast sends each at once and ticks the box when Discord confirms
+closes; Circord sends each at once and ticks the box when Discord confirms
 it. Its "Channels & Roles" tab of onboarding questions, the Create button
 and the channel's subtitle of active threads and when it was last active
 are left out, and View opens the channel rather than showing it beside the
@@ -505,7 +505,7 @@ resized, and its videos play in place as the timeline's do. Files dragged
 over it go with its message, and
 the card saying where moves over it; the rest of the window takes them for the
 channel. Wayland's data device says where the pointer is; winit doesn't on X11
-and Windows, so Yapfast asks the X server, or Windows, while files hover. Its
+and Windows, so Circord asks the X server, or Windows, while files hover. Its
 button shows it in place of the channel, and closing it, or opening another
 channel, brings the member list back. A thread the account isn't in is read
 with `GET /channels/{id}` and listed while it shows, so it reads and marks read
@@ -516,7 +516,7 @@ after Mark as read, as Discord's client does (its `thread-context` menu). So
 does the More button (…) in a thread's header, after its member list, and in
 the header of a thread beside its channel: the same menu less Mark as read, as
 Discord's "Toolbar Overflow" and "Sidebar Overflow" menus start with joining or
-leaving; their other items, such as closing or locking the thread, Yapfast
+leaving; their other items, such as closing or locking the thread, Circord
 doesn't have yet. Discord's client checks nothing else: not archiving, locking
 or permissions. It sends `POST /channels/{id}/thread-members/@me` to join,
 though docs.discord.food says PUT, and `DELETE` to leave, each with the menu's
@@ -547,7 +547,7 @@ thread is a card 72px tall with 8px under it, the first section's heading
 
 What fills it, as Discord's web client does it: the active threads come
 from the gateway, never a request. Subscribing to a server with `threads`
-(op 37), which Yapfast does for the server on screen, brings THREAD_LIST_SYNC
+(op 37), which Circord does for the server on screen, brings THREAD_LIST_SYNC
 with its active threads the account may see and each one's newest message
 (`most_recent_messages`). The service keeps each thread's newest message
 (its text cut to 200 bytes), its member count and preview ids in the
@@ -565,7 +565,7 @@ page answers. Search, which also needs Read Message
 History, runs on Enter with `name=` and no `archived`, so it finds active
 and archived threads, and its results replace the sections until it's
 cleared; the first search of a channel can answer 202 while Discord indexes
-it, and Yapfast asks again. A private thread shows only to its members and
+it, and Circord asks again. A private thread shows only to its members and
 those with Manage Threads. The pages, the search's results and the channel
 objects the list found, from which a thread opens without another `GET
 /channels/{id}`, are dropped when the list closes or another room opens.
@@ -577,7 +577,7 @@ a message's menu, the list of threads' Create button (and its empty
 list's Create Thread), and Create Thread in the composer's + menu, which
 then also holds Upload a File. Each opens Discord's "New Thread" form beside
 the channel, in place of its member list (`application/threads.rs`,
-`new_thread_view` in `crates/yapfast-iced/src/thread.rs`): Thread Name, up
+`new_thread_view` in `crates/circord-iced/src/thread.rs`): Thread Name, up
 to 100 characters;
 Private Thread, "Only people you invite and moderators can see"; and the
 first message, "Enter a message to start the conversation!", which takes
@@ -604,7 +604,7 @@ Browser Empty State", "Plus Button"). Discord then sends THREAD_CREATE
 with `newly_created` and THREAD_MEMBERS_UPDATE with the account in it,
 updates the message, which now carries the thread, and posts a
 THREAD_CREATED notice in the channel for a public thread started without a
-message or from an older one. As Discord's client does, Yapfast opens the
+message or from an older one. As Discord's client does, Circord opens the
 thread beside the channel and then sends the form's first message as an
 ordinary message in it.
 
@@ -647,7 +647,7 @@ First messages, as Discord's client gets them: an archived page or a
 search brings its posts' `first_messages`; the active posts' come from
 `POST /channels/{id}/post-data` with `{"thread_ids": [...]}`, at most ten at
 a time, which answers with each post's `first_message`, `most_recent_message`
-and `owner`. Yapfast asks for the first 25 cards' when the forum opens and
+and `owner`. Circord asks for the first 25 cards' when the forum opens and
 for 25 more each time the list scrolls near its end, one request at a time,
 as Discord's client asks for the cards it shows. The cards, pages and first
 messages are kept only while the forum shows. Opening the forum marks it
@@ -685,9 +685,9 @@ Leave server, in a server's menu or at the end of its header's dropdown, asks
 first, with Discord's words, then sends `DELETE /users/@me/guilds/{id}` with
 `{"lurking": false}`; Discord answers 204 and sends GUILD_DELETE, without
 `unavailable`, and GUILD_MEMBER_REMOVE. The tracker already drops a server on
-such a GUILD_DELETE, and Yapfast goes to the DMs if it was open. The owner
+such a GUILD_DELETE, and Circord goes to the DMs if it was open. The owner
 isn't offered it: Discord has them transfer or delete the server instead.
 
 A server's privacy settings, which Discord's menu also has, are left for
-later: they live in the settings protobuf's guild entries, which Yapfast
+later: they live in the settings protobuf's guild entries, which Circord
 would have to read and write back whole, beyond a menu's reach.

@@ -301,7 +301,7 @@ fn shape_run(
 
     let fonts = font_system.get_font_matches(&attrs);
 
-    // Yapfast port: the default family may stand for another (a theme's
+    // Circord port: the default family may stand for another (a theme's
     // body face standing in for the app's own, see `set_family_alias`).
     let aliased = aliased_family(&attrs.family);
     let default_families = [aliased.as_ref().unwrap_or(&attrs.family)];
@@ -327,7 +327,7 @@ fn shape_run(
     //TODO: improve performance!
     let mut reported = false;
     while !missing.is_empty() {
-        // Yapfast port: once the default, script and common fallbacks are
+        // Circord port: once the default, script and common fallbacks are
         // tried, what they lack goes to the application, which names the
         // fonts to try next.
         let font = match font_iter.next_before_chosen() {
@@ -1720,7 +1720,7 @@ impl ShapeLine {
     }
 }
 
-/// Yapfast port: one family name that stands for another while shaping,
+/// Circord port: one family name that stands for another while shaping,
 /// as Slint's `default-font-family` makes a theme's body face the face of
 /// every text that names none: text asking for `from` takes `to` (and its
 /// fallbacks as usual). Already shaped text keeps its glyphs until it's
@@ -1729,7 +1729,7 @@ impl ShapeLine {
 static FAMILY_ALIAS: std::sync::RwLock<Option<(&'static str, &'static str)>> =
     std::sync::RwLock::new(None);
 
-/// Yapfast port: makes `from` stand for `to` while shaping, or nothing
+/// Circord port: makes `from` stand for `to` while shaping, or nothing
 /// for `None`.
 #[cfg(feature = "std")]
 pub fn set_family_alias(alias: Option<(&'static str, &'static str)>) {

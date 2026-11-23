@@ -1,18 +1,18 @@
 [package]
-name = "yapfast-test-hosts"
+name = "circord-test-hosts"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.97"
 publish = false
 license = "GPL-3.0-or-later"
-description = "Stand-ins scripts/ui-session runs beside Yapfast: a tray and a recorder of the test display"
+description = "Stand-ins scripts/ui-session runs beside Circord: a tray and a recorder of the test display"
 
-# A package of their own, not examples of yapfast: an example builds with
-# yapfast's dev-dependencies, which turn on yapfast-core/test-fixtures, so
-# ui-session's build of the window would compile yapfast-core, the window
+# A package of their own, not examples of circord: an example builds with
+# circord's dev-dependencies, which turn on circord-core/test-fixtures, so
+# ui-session's build of the window would compile circord-core, the window
 # and the binary a second time, beside the ones cargo build makes. Their
-# dependencies use no features yapfast doesn't, so building them beside
-# yapfast changes none of its units.
+# dependencies use no features circord doesn't, so building them beside
+# circord changes none of its units.
 [[bin]]
 name = "tray_host"
 path = "../tray_host.rs"

@@ -956,6 +956,195 @@ dependencies = [
 ]
 
 [[package]]
+name = "circord"
+version = "0.4.1"
+dependencies = [
+ "anyhow",
+ "arboard",
+ "circord-core",
+ "circord-iced",
+ "futures-util",
+ "image",
+ "ksni",
+ "minisign-verify",
+ "raw-window-handle",
+ "reqwest 0.13.5",
+ "resvg",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tracing",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols",
+ "windows 0.62.2",
+ "windows-sys 0.61.2",
+ "winit",
+ "wl-clipboard-rs",
+ "x11rb",
+ "zbus",
+]
+
+[[package]]
+name = "circord-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "cc",
+ "chrono",
+ "circord-discord",
+ "cxx",
+ "deep_filter",
+ "directories",
+ "emojis",
+ "ffmpeg-src",
+ "flate2",
+ "futures-util",
+ "gif",
+ "image",
+ "keyring",
+ "libc",
+ "libpulse-binding",
+ "libpulse-simple-binding",
+ "livekit",
+ "matrix-rtc-core",
+ "matrix-rtc-livekit",
+ "matrix-rtc-media",
+ "matrix-sdk",
+ "matrix-sdk-crypto",
+ "matrix-sdk-ui",
+ "memmap2",
+ "mime",
+ "ndarray",
+ "nnnoiseless",
+ "png",
+ "pulldown-cmark",
+ "rand 0.9.5",
+ "realfft",
+ "resvg",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tar",
+ "tempfile",
+ "thorvg-sys",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "ttf-parser",
+ "url",
+ "uuid",
+ "webrtc-sys",
+ "webrtc-sys-build",
+ "windows 0.62.2",
+ "windows-core 0.62.2",
+ "x264-src",
+]
+
+[[package]]
+name = "circord-discord"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64 0.22.1",
+ "chacha20poly1305 0.10.1",
+ "chrono",
+ "cookie_store",
+ "davey",
+ "flate2",
+ "futures-util",
+ "iana-time-zone",
+ "keyring",
+ "libc",
+ "openmls",
+ "openmls_basic_credential",
+ "openmls_rust_crypto",
+ "rand 0.9.5",
+ "reqwest 0.13.5",
+ "rsa",
+ "rustls",
+ "rustls-platform-verifier",
+ "serde",
+ "serde_json",
+ "serenity-voice-model",
+ "sha2 0.10.9",
+ "sysinfo",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.26.2",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "webrtc-sys",
+]
+
+[[package]]
+name = "circord-iced"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "chrono",
+ "circord-core",
+ "circord-iced-kit",
+ "emojis",
+ "iced",
+ "iced_runtime",
+ "iced_test",
+ "iced_tiny_skia",
+ "image",
+ "png",
+ "pulldown-cmark",
+ "qrcode",
+ "reqwest 0.13.5",
+ "rfd",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "webbrowser",
+ "winit",
+ "xkeysym",
+]
+
+[[package]]
+name = "circord-iced-kit"
+version = "0.1.0"
+dependencies = [
+ "iced",
+ "iced_test",
+ "iced_tiny_skia",
+ "iced_wgpu",
+ "resvg",
+ "sys-locale",
+ "tokio",
+ "tracing",
+ "ttf-parser",
+ "unicode-script",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "circord-test-hosts"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "memmap2",
+ "tempfile",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-scanner",
+ "zbus",
+]
+
+[[package]]
 name = "clang-sys"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10690,195 +10879,6 @@ name = "xxhash-rust"
 version = "0.8.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aee1b19627c7c60102ab80d3a9cbe18de90bfe03bfa6c3715447681f0e8c8af6"
-
-[[package]]
-name = "yapfast"
-version = "0.4.1"
-dependencies = [
- "anyhow",
- "arboard",
- "futures-util",
- "image",
- "ksni",
- "minisign-verify",
- "raw-window-handle",
- "reqwest 0.13.5",
- "resvg",
- "rustls",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "tracing",
- "wayland-backend",
- "wayland-client",
- "wayland-protocols",
- "windows 0.62.2",
- "windows-sys 0.61.2",
- "winit",
- "wl-clipboard-rs",
- "x11rb",
- "yapfast-core",
- "yapfast-iced",
- "zbus",
-]
-
-[[package]]
-name = "yapfast-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "cc",
- "chrono",
- "cxx",
- "deep_filter",
- "directories",
- "emojis",
- "ffmpeg-src",
- "flate2",
- "futures-util",
- "gif",
- "image",
- "keyring",
- "libc",
- "libpulse-binding",
- "libpulse-simple-binding",
- "livekit",
- "matrix-rtc-core",
- "matrix-rtc-livekit",
- "matrix-rtc-media",
- "matrix-sdk",
- "matrix-sdk-crypto",
- "matrix-sdk-ui",
- "memmap2",
- "mime",
- "ndarray",
- "nnnoiseless",
- "png",
- "pulldown-cmark",
- "rand 0.9.5",
- "realfft",
- "resvg",
- "rustls",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tar",
- "tempfile",
- "thorvg-sys",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "ttf-parser",
- "url",
- "uuid",
- "webrtc-sys",
- "webrtc-sys-build",
- "windows 0.62.2",
- "windows-core 0.62.2",
- "x264-src",
- "yapfast-discord",
-]
-
-[[package]]
-name = "yapfast-discord"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "base64 0.22.1",
- "chacha20poly1305 0.10.1",
- "chrono",
- "cookie_store",
- "davey",
- "flate2",
- "futures-util",
- "iana-time-zone",
- "keyring",
- "libc",
- "openmls",
- "openmls_basic_credential",
- "openmls_rust_crypto",
- "rand 0.9.5",
- "reqwest 0.13.5",
- "rsa",
- "rustls",
- "rustls-platform-verifier",
- "serde",
- "serde_json",
- "serenity-voice-model",
- "sha2 0.10.9",
- "sysinfo",
- "tempfile",
- "tokio",
- "tokio-tungstenite 0.26.2",
- "tracing",
- "tracing-subscriber",
- "url",
- "webrtc-sys",
-]
-
-[[package]]
-name = "yapfast-iced"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytes",
- "chrono",
- "emojis",
- "iced",
- "iced_runtime",
- "iced_test",
- "iced_tiny_skia",
- "image",
- "png",
- "pulldown-cmark",
- "qrcode",
- "reqwest 0.13.5",
- "rfd",
- "rustls",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "webbrowser",
- "winit",
- "xkeysym",
- "yapfast-core",
- "yapfast-iced-kit",
-]
-
-[[package]]
-name = "yapfast-iced-kit"
-version = "0.1.0"
-dependencies = [
- "iced",
- "iced_test",
- "iced_tiny_skia",
- "iced_wgpu",
- "resvg",
- "sys-locale",
- "tokio",
- "tracing",
- "ttf-parser",
- "unicode-script",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "yapfast-test-hosts"
-version = "0.1.0"
-dependencies = [
- "libc",
- "memmap2",
- "tempfile",
- "wayland-backend",
- "wayland-client",
- "wayland-scanner",
- "zbus",
-]
 
 [[package]]
 name = "yazi"

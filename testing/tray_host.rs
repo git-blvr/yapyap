@@ -17,7 +17,7 @@
 
 #[cfg(target_os = "linux")]
 fn main() -> zbus::Result<()> {
-    if std::env::var("YAPFAST_FRAMEWORK_ISOLATED_DISPLAY").as_deref() != Ok("1") {
+    if std::env::var("CIRCORD_FRAMEWORK_ISOLATED_DISPLAY").as_deref() != Ok("1") {
         eprintln!("tray_host runs only inside scripts/run-framework-isolated");
         std::process::exit(2);
     }
