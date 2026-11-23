@@ -11,16 +11,16 @@
 use crate::widgets::scroll_view;
 use std::sync::Arc;
 
-use iced::{
-    Alignment, Border, Color, Element, Length, Padding, Task,
-    widget::{column, container, operation, row, text, text_input},
-};
 use circord_core::{
     application::{Action, AppState, SEARCH_PAGE, SEARCH_PAGES, Search},
     chat::SearchSort,
+    circord_discord::search,
     discord,
     search_words::Words,
-    circord_discord::search,
+};
+use iced::{
+    Alignment, Border, Color, Element, Length, Padding, Task,
+    widget::{column, container, operation, row, text, text_input},
 };
 
 use crate::{

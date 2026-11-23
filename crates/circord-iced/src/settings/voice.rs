@@ -9,16 +9,16 @@
 //! shows, or the mic test plays the microphone back through it) and the
 //! push-to-talk key's recording.
 
-use iced::{
-    Alignment, Color, Element, Length,
-    widget::{column, container, row, text},
-};
 use circord_core::{
     application::{Action, AppState},
     keybinds::Shortcut,
     noise::{Strength, Suppressor},
     picture::Feed,
     voice::Command,
+};
+use iced::{
+    Alignment, Color, Element, Length,
+    widget::{column, container, row, text},
 };
 
 use super::{Drop, Event as SettingsEvent, Page, Settings};

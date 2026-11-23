@@ -7,12 +7,12 @@
 
 use std::sync::Arc;
 
+use circord_core::chat::{self, Presence};
 use iced::{
     Alignment, Border, Color, Element, Length, Padding, Point, Rectangle, Size,
     advanced::graphics::text::font_system,
     widget::{Space, button, column, container, mouse_area, row, stack, text, text_input, tooltip},
 };
-use circord_core::chat::{self, Presence};
 
 use super::{
     Event, MESSAGE_FIELD, Mode, NOTE_FIELD, Shown, StyledName, WIDTH, frame_style,

@@ -1,13 +1,13 @@
 //! The banner's colour and the profile theme's two colours: their
 //! swatches, the handles that open a pad, and a typed code read.
 
-use iced::{
-    Alignment, Border, Color, Element, Length,
-    widget::{Space, button, column, container, row, text, text_input},
-};
 use circord_core::{
     application::{ProfileEditor, ProfileText},
     chat::ProfilePicture,
+};
+use iced::{
+    Alignment, Border, Color, Element, Length,
+    widget::{Space, button, column, container, row, text, text_input},
 };
 
 use crate::{

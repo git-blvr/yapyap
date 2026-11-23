@@ -1,11 +1,11 @@
 //! Sign-in: the screen without an account, linking Discord by code or
 //! token, two-factor prompts and a saved account restoring.
 
+use circord_core::chat::{Event, MfaMethod};
 use iced::{
     keyboard::{self, key},
     widget::Id,
 };
-use circord_core::chat::{Event, MfaMethod};
 
 use super::{a_picture_shown, change, interact, local, preview, shows, start};
 #[cfg(not(feature = "matrix"))]

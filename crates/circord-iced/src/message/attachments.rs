@@ -1,11 +1,11 @@
 //! What a message carries besides its text: pictures and videos in their
 //! gallery, stickers, and files as cards.
 
+use circord_core::chat::{self, Attachment, ChatMessage, Placement};
 use iced::{
     Alignment, Color, Element, Length, Padding, Size,
     widget::{Space, column, container, mouse_area, row, stack, text},
 };
-use circord_core::chat::{self, Attachment, ChatMessage, Placement};
 
 use crate::{
     app::Message,

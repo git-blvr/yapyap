@@ -4,10 +4,6 @@
 //! progress bar that boosting unlocks. Each edits the core's draft, which
 //! the bar saves.
 
-use iced::{
-    Alignment, Element, Length,
-    widget::{column, row, text},
-};
 use circord_core::{
     application::{
         AFK_TIMEOUTS, BOOSTED, BoostPage, DESCRIPTION_LIMIT, EngagementPage, ProfilePage,
@@ -15,6 +11,10 @@ use circord_core::{
         WELCOME_STICKER,
     },
     chat::ServerPicture,
+};
+use iced::{
+    Alignment, Element, Length,
+    widget::{column, row, text},
 };
 
 use super::View;

@@ -9,6 +9,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+use circord_discord::{
+    member_list::ListedMember,
+    message::{Message, Page, Reply as DiscordReply, Shown},
+    service::{Discord, Live, Snapshot, Status},
+};
 use tokio::{
     sync::{
         broadcast::{self, error::RecvError},
@@ -16,11 +21,6 @@ use tokio::{
         watch,
     },
     task::JoinSet,
-};
-use circord_discord::{
-    member_list::ListedMember,
-    message::{Message, Page, Reply as DiscordReply, Shown},
-    service::{Discord, Live, Snapshot, Status},
 };
 
 use crate::{

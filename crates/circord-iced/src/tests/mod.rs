@@ -10,9 +10,9 @@ use std::{
     sync::{Arc, Once},
 };
 
+use circord_core::{application::Action, runtime::BackgroundRuntime};
 use iced::{Point, Settings, mouse, widget::Id};
 use iced_test::{Simulator, selector::Candidate};
-use circord_core::{application::Action, runtime::BackgroundRuntime};
 
 use crate::{
     app::{App, Message},

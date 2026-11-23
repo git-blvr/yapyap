@@ -7,10 +7,6 @@
 use crate::widgets::scroll_view;
 use std::time::Duration;
 
-use iced::{
-    Alignment, Color, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, row, text, tooltip},
-};
 use circord_core::{
     application::{
         Action, InviteInput, InvitesPage, MEMBER_PAGE_SIZES, MEMBER_SORTS, MemberInput,
@@ -18,6 +14,10 @@ use circord_core::{
     },
     chat::{JoinMethod, ListedMember, Permission, ServerRole},
     clock,
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, row, text, tooltip},
 };
 
 use super::View;

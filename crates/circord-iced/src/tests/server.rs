@@ -7,12 +7,6 @@
 
 use std::sync::Arc;
 
-use iced::{
-    Point,
-    keyboard::{self, key},
-    mouse,
-    widget::Id,
-};
 use circord_core::{
     application::{PermissionLock, RoleLock, SettingsPage},
     chat::{Event, RoleDetail, ServerProfile, ServerRoles, ServerSettingsPage, SettingsSection},
@@ -22,6 +16,12 @@ use circord_core::{
         ready::{self, permission},
         service::{Snapshot, Status},
     },
+};
+use iced::{
+    Point,
+    keyboard::{self, key},
+    mouse,
+    widget::Id,
 };
 
 use super::{interact, local, present, shows, start};

@@ -8,14 +8,14 @@
 //! empties it. A message of one's own is edited in its row (`edit.rs`), in
 //! a field of its own beside the draft.
 
-use iced::{
-    Alignment, Element, Length, Padding, Task, keyboard,
-    widget::{Id, Space, button, column, container, operation, row, text, tooltip},
-};
 use circord_core::{
     application::{Action, Compose},
     network::Network,
     themes::package::art::{KeySlot, MAX_KEY_TRAVEL},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Task, keyboard,
+    widget::{Id, Space, button, column, container, operation, row, text, tooltip},
 };
 
 use crate::{

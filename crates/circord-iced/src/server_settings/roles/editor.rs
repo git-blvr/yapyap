@@ -2,16 +2,16 @@
 //! Permissions.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding,
-    widget::{Space, button, column, container, row, text, tooltip},
-};
 use circord_core::{
     application::{
         DEFAULT_ROLE_COLOR, PermissionLock, PictureEdit, ROLE_COLORS, ROLE_PERMISSIONS, RoleInput,
         RoleRules, RoleTab, RolesPage, ServerSettings,
     },
     chat::{RoleDetail, RoleManager, ServerPicture},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding,
+    widget::{Space, button, column, container, row, text, tooltip},
 };
 
 use super::{

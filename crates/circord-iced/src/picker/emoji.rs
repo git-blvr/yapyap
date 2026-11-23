@@ -22,16 +22,16 @@ use std::{
     sync::OnceLock,
 };
 
-use iced::{
-    Alignment, Element, Length, Rectangle, Size, Task,
-    advanced::{graphics::text::cosmic_text, image::Handle},
-    widget::{Space, button, column, container, mouse_area, row, stack},
-};
 use circord_core::{
     application::Action,
     application::Application,
     chat::{CustomEmoji, EmojiSet},
     emoji as names,
+};
+use iced::{
+    Alignment, Element, Length, Rectangle, Size, Task,
+    advanced::{graphics::text::cosmic_text, image::Handle},
+    widget::{Space, button, column, container, mouse_area, row, stack},
 };
 
 use super::{

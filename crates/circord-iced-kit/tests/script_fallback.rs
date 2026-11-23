@@ -5,8 +5,8 @@
 //! fonts draw.
 #![cfg(all(unix, not(target_os = "macos")))]
 
-use iced::advanced::graphics::text::{cosmic_text, font_system};
 use circord_iced_kit::fonts;
+use iced::advanced::graphics::text::{cosmic_text, font_system};
 
 /// A sample of each script, the language fontconfig knows it by, and
 /// whether it reads right to left.

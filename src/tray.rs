@@ -81,8 +81,8 @@ impl Tray {
     }
 }
 
-/// Circord's logo in Circord's marigold, `size` pixels square, with a red dot for
-/// unread messages cut into its corner.
+/// Circord's logo in its orange, `size` pixels square, with a red dot for
+/// unread messages at its corner.
 fn logo(size: u32, unread: bool) -> Option<crate::icon::Rgba> {
     let mut svg = include_str!("../crates/circord-iced-kit/icons/logo.svg")
         .replacen(
@@ -90,15 +90,13 @@ fn logo(size: u32, unread: bool) -> Option<crate::icon::Rgba> {
             &format!(r#"width="{size}" height="{size}""#),
             1,
         )
-        .replacen(r##"fill="#fff" mask"##, r##"fill="#ffbf47" mask"##, 1);
+        .replacen(r##"fill="#fff""##, r##"fill="#ff9046""##, 1);
     if unread {
-        svg = svg
-            .replacen("</mask>", r#"<circle cx="74" cy="74" r="21" /></mask>"#, 1)
-            .replacen(
-                "</svg>",
-                r##"<circle cx="74" cy="74" r="15" fill="#f0545e" /></svg>"##,
-                1,
-            );
+        svg = svg.replacen(
+            "</svg>",
+            r##"<circle cx="76" cy="76" r="16" fill="#f0545e" stroke="#fff" stroke-width="4" /></svg>"##,
+            1,
+        );
     }
     crate::icon::rasterize(svg.as_bytes(), size)
 }
@@ -579,15 +577,15 @@ mod none {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn the_logo_is_marigold_and_unread_adds_a_red_dot() {
+    fn the_logo_is_orange_and_unread_adds_a_red_dot() {
         let plain = super::logo(32, false).unwrap();
         let unread = super::logo(32, true).unwrap();
         assert_eq!((plain.width, plain.height), (32, 32));
-        let marigold = |pixel: &[u8]| pixel == [0xff, 0xbf, 0x47, 255];
+        let orange = |pixel: &[u8]| pixel == [0xff, 0x90, 0x46, 255];
         let red = |pixel: &[u8]| pixel == [0xf0, 0x54, 0x5e, 255];
-        assert!(plain.pixels.chunks_exact(4).any(marigold));
+        assert!(plain.pixels.chunks_exact(4).any(orange));
         assert!(!plain.pixels.chunks_exact(4).any(red));
-        assert!(unread.pixels.chunks_exact(4).any(marigold));
+        assert!(unread.pixels.chunks_exact(4).any(orange));
         // The dot is in the bottom-right corner.
         let corner = (24 * 32 + 24) * 4;
         assert!(red(&unread.pixels[corner..corner + 4]));

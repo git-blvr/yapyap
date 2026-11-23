@@ -2,11 +2,11 @@
 
 use std::sync::Arc;
 
+use circord_core::chat::ChatMessage;
 use iced::{
     keyboard::{self, key},
     widget::Id,
 };
-use circord_core::chat::ChatMessage;
 
 use super::{change, interact, preview, shows};
 use crate::thread::COMPOSER;
@@ -547,12 +547,12 @@ fn a_forums_row_counts_its_posts_mentions_and_the_server_counts_them_once() {
 
 #[test]
 fn sidebar_connectors_curve_into_text_threads_and_forum_posts() {
-    use iced::{Color, Settings, Size};
-    use iced_test::Simulator;
     use circord_core::{
         application::{Action, Navigation},
         circord_discord::ready,
     };
+    use iced::{Color, Settings, Size};
+    use iced_test::Simulator;
 
     let (mut app, folder) = super::server::discord_server(0, |server, _| {
         let extra = ready::server(&serde_json::json!({

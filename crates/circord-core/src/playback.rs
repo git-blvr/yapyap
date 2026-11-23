@@ -18,12 +18,12 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
+use circord_discord::api::FilePart;
 use futures_util::{Stream, StreamExt};
 use tokio::{
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
     time::{Duration, Instant},
 };
-use circord_discord::api::FilePart;
 
 use crate::{
     chat::{Video, VideoCommand},

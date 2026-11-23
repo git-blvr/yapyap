@@ -5,16 +5,16 @@
 //! this account may change ([`ExpressionRules`]), is the core's.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Border, Color, Element, Length, Padding, Size, Task,
-    widget::{Space, button, column, container, mouse_area, row, text, text_input},
-};
 use circord_core::{
     application::{
         EmojiInput, EmojiPage, ExpressionRules, LEVEL_BOOSTS, ServerSettings, StickerCard,
         StickerInput, StickersPage,
     },
     chat::{ServerEmoji, ServerPicture, ServerSticker},
+};
+use iced::{
+    Alignment, Border, Color, Element, Length, Padding, Size, Task,
+    widget::{Space, button, column, container, mouse_area, row, text, text_input},
 };
 
 use super::View;

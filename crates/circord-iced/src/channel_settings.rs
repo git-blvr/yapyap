@@ -14,16 +14,16 @@
 //! lets go of it when the settings close.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, operation, row, text},
-};
 use circord_core::{
     application::{
         Action, ChannelInput, ChannelSection, ChannelSettingsScreen, OverwriteConfirm,
         OverwriteState, Overwrites, SLOWMODES, channel_groups, channel_permission,
     },
     chat::{ChannelKind, ChannelOverwrite, RoleMember, ServerRole},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, operation, row, text},
 };
 
 use crate::{

@@ -3,12 +3,12 @@
 //! anything else runs. The login goes into the OS credential store; see
 //! `circord_discord::remote_auth`.
 
-use tokio::sync::mpsc::{self, UnboundedReceiver};
 use circord_discord::{
     api::{Api, Refused},
     remote_auth::{self, Step, Stopped},
     token,
 };
+use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use crate::runtime::{BackgroundRuntime, BackgroundTask};
 

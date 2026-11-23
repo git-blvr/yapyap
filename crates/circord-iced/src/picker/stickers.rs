@@ -8,11 +8,11 @@
 
 use std::hash::{Hash, Hasher};
 
+use circord_core::application::{Action, StickerPicture};
 use iced::{
     Alignment, Element, Length, Rectangle, Size, Task,
     widget::{Space, button, column, container, mouse_area, row, stack},
 };
-use circord_core::application::{Action, StickerPicture};
 
 use super::{
     Event, Picker, View,

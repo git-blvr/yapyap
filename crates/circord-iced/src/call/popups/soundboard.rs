@@ -2,11 +2,11 @@
 //! account may play, which also lists the entrance sounds to choose from.
 
 use crate::widgets::scroll_view;
+use circord_core::voice::{self};
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{Space, button, column, container, mouse_area, row, text},
 };
-use circord_core::voice::{self};
 
 use crate::call::Event;
 use crate::{

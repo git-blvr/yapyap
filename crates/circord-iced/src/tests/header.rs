@@ -1,10 +1,10 @@
 //! The header's popovers and the search beside the conversation.
 
-use iced::keyboard::{self, key};
 use circord_core::{
     application::{Pins, Search},
     chat::{ChatMessage, SearchHit},
 };
+use iced::keyboard::{self, key};
 
 use super::{change, interact, preview, shows};
 use crate::app::Message;
@@ -356,8 +356,8 @@ fn a_click_on_the_topic_shows_it_in_full_until_escape_or_another_room() {
 
 #[test]
 fn a_dms_call_buttons_do_nothing_while_a_call_cant_be_joined() {
-    use std::sync::Arc;
     use circord_core::application::{Action, Navigation};
+    use std::sync::Arc;
     // Whether a click anywhere along the rows the name "Riley" shows on
     // right of the sidebar, the header's among them, starts a call.
     let starts = |app: &mut crate::app::App| {

@@ -2,12 +2,12 @@
 //! `:name` suggestions, the emoji picker, the message's menu leading to
 //! Forward, and the keyboard's steps through messages.
 
+use circord_core::application::Compose;
 use iced::{
     keyboard::{self, key},
     widget::Id,
 };
 use iced_test::Simulator;
-use circord_core::application::Compose;
 
 use super::{interact, preview, right_click, shows};
 use crate::{
@@ -492,12 +492,12 @@ fn the_composer_sends_on_enter() {
 /// `ping` (no options), `echo` (a text option) and `extra` more commands
 /// named `cmd0`, `cmd1`…, with `/` typed in the composer.
 fn with_commands(extra: usize) -> (crate::app::App, tempfile::TempDir) {
-    use std::sync::Arc;
     use circord_core::{
         application::{Action, Navigation},
         chat::{CommandIndex, Event},
         circord_discord::commands::USE_APPLICATION_COMMANDS,
     };
+    use std::sync::Arc;
     let (mut app, folder) = super::server::discord_server(USE_APPLICATION_COMMANDS, |_, _| {});
     app.client
         .dispatch(Action::Navigate(Navigation::Server("discord:10".into())));
@@ -643,8 +643,8 @@ fn the_timed_out_line_follows_the_twelve_hour_clock() {
 #[cfg(feature = "matrix")]
 #[test]
 fn a_matrix_rooms_composer_says_whether_it_is_encrypted() {
-    use std::sync::Arc;
     use circord_core::network::Network;
+    use std::sync::Arc;
     let (mut app, _folder) = preview();
     let matrix = |app: &mut crate::app::App, encrypted: bool| {
         super::change(app, |state| {

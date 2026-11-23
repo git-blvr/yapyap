@@ -5,13 +5,13 @@
 
 use std::{sync::Arc, time::Duration};
 
-use tokio::time::timeout;
 use circord_discord::{
     client,
     commands::{self, CommandIndex, Place},
     service::{Discord, Live, Snapshot, Status},
     token,
 };
+use tokio::time::timeout;
 
 const WAIT: Duration = Duration::from_secs(10);
 

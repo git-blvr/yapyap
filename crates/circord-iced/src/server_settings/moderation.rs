@@ -6,10 +6,6 @@
 //! a ban's dialog lifting it.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding,
-    widget::{Space, button, column, container, rich_text, row, span, text, text::Span},
-};
 use circord_core::{
     application::{
         AUDIT_ACTIONS, AuditInput, AuditKind, AuditLogPage, AuditSpan, AuditWords, BanInput,
@@ -17,6 +13,10 @@ use circord_core::{
     },
     chat::{Permission, RoleMember},
     clock,
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding,
+    widget::{Space, button, column, container, rich_text, row, span, text, text::Span},
 };
 
 use super::View;

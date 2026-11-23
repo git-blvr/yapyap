@@ -7,7 +7,6 @@
 
 use std::{sync::Arc, time::Duration};
 
-use tokio::time::timeout;
 use circord_discord::{
     api::Span,
     client,
@@ -25,6 +24,7 @@ use circord_discord::{
     token,
     voice::{Call, Listener},
 };
+use tokio::time::timeout;
 
 mod account;
 mod calls;

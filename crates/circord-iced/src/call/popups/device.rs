@@ -3,14 +3,14 @@
 //! suppression.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding,
-    widget::{column, container, row, text},
-};
 use circord_core::{
     meter::InputMeter,
     noise::Suppressor,
     voice::{self},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding,
+    widget::{column, container, row, text},
 };
 
 use crate::call::Event;

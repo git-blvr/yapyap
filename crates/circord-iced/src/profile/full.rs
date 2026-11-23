@@ -4,11 +4,11 @@
 //! hasn't said.
 
 use crate::widgets::scroll_view;
+use circord_core::chat::{Presence, Wishlist};
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{Column, Space, button, column, container, mouse_area, row, stack, text},
 };
-use circord_core::chat::{Presence, Wishlist};
 
 use super::{
     Event, Mode, Shown,

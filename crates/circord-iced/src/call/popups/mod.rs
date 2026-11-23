@@ -4,11 +4,11 @@
 
 use std::borrow::Cow;
 
+use circord_core::{meter::InputMeter, voice::Command};
 use iced::{
     Element, Point, Task,
     widget::{container, opaque, operation},
 };
-use circord_core::{meter::InputMeter, voice::Command};
 
 use super::Popup;
 use crate::{

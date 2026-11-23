@@ -3,13 +3,13 @@
 //! and Nitro's offer under it.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding, Point, Rectangle, Size,
-    widget::{Id, Space, button, column, container, row, stack, text},
-};
 use circord_core::{
     application::{BIO_LIMIT, NAME_LIMIT, PRONOUNS_LIMIT, ProfileEditor, ProfileText},
     chat::{self, ProfilePicture},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Point, Rectangle, Size,
+    widget::{Id, Space, button, column, container, row, stack, text},
 };
 
 use crate::profile::Mode;

@@ -13,14 +13,14 @@ use std::{
     sync::Arc,
 };
 
-use iced::{
-    Alignment, Element, Length, Padding, Size, Task,
-    widget::{Space, button, column, container, row, stack, text},
-};
 use circord_core::{
     application::{Action, ForumInfo, ForumPost, MenuChoice, POST_TAGS},
     chat::{ForumTag, Permission, ShownEmoji, Topic},
     network::Network,
+};
+use iced::{
+    Alignment, Element, Length, Padding, Size, Task,
+    widget::{Space, button, column, container, row, stack, text},
 };
 
 use crate::{

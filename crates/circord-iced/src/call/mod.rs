@@ -25,7 +25,6 @@ pub mod stage;
 
 use std::{cell::Cell, collections::HashSet, sync::Arc};
 
-use iced::{Point, Rectangle, Task, Vector};
 use circord_core::{
     application::Action,
     chat::VoicePerson,
@@ -33,6 +32,7 @@ use circord_core::{
     sounds::Sound,
     voice::{self, Command, Phase},
 };
+use iced::{Point, Rectangle, Task, Vector};
 
 #[cfg(test)]
 pub use details::LinkEvent;

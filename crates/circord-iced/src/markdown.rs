@@ -12,13 +12,6 @@
 
 use std::ops::Range;
 
-use iced::{
-    Color, Element, Font, Length, Padding,
-    border::Radius,
-    font::Style as FontStyle,
-    widget::{Space, column, container, row, span, text::Span},
-};
-use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use circord_core::{
     blocks::{self, Block, Kind},
     chat::{ChatMessage, Notice, NoticeKind},
@@ -26,6 +19,13 @@ use circord_core::{
     mention::{self, Mentioned},
     spoiler,
 };
+use iced::{
+    Color, Element, Font, Length, Padding,
+    border::Radius,
+    font::Style as FontStyle,
+    widget::{Space, column, container, row, span, text::Span},
+};
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
 use crate::{
     app::Message,

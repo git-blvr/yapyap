@@ -1,11 +1,11 @@
 //! The dialogs a clicked event, gift or authorization link opens: what
 //! each says is the core's prompt, and its buttons go to the core.
 
-use iced::{Point, keyboard::key};
 use circord_core::{
     application::{EventDialog, GiftDialog, OAuthDialog},
     chat::{EventPreview, GiftPreview, OAuthGuild, OAuthPreview},
 };
+use iced::{Point, keyboard::key};
 
 use super::{change, interact, server::discord_server, shows};
 use crate::app::{App, Message};

@@ -6,9 +6,9 @@
 use std::path::Path;
 
 use base64::Engine;
+use circord_discord::profile::PICTURE_LIMIT;
 use image::{DynamicImage, GenericImageView, ImageFormat, imageops::FilterType};
 use serde_json::{Map, Value};
-use circord_discord::profile::PICTURE_LIMIT;
 
 use super::{commands::NOT_DISCORD, *};
 use crate::chat::{

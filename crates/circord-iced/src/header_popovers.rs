@@ -9,13 +9,13 @@
 use crate::widgets::scroll_view;
 use std::hash::{Hash, Hasher};
 
-use iced::{
-    Alignment, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, operation, row, stack, text},
-};
 use circord_core::{
     application::{Action, AppState},
     chat::{ListedThread, Permission, Presence},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, operation, row, stack, text},
 };
 
 use crate::{

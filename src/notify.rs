@@ -302,8 +302,8 @@ mod windows {
         core::HSTRING,
     };
     use anyhow::Context;
-    use image::ImageEncoder;
     use circord_core::chat::{Alert, Picture};
+    use image::ImageEncoder;
 
     use super::{KEPT, Style};
 

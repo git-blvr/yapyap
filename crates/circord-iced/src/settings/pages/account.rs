@@ -2,11 +2,11 @@
 //! and sign out; and what the account's buttons do, the blocked list's
 //! Show more among them.
 
+use circord_core::{application::Action, chat::RelationshipChange};
 use iced::{
     Alignment, Element, Length,
     widget::{column, row, text},
 };
-use circord_core::{application::Action, chat::RelationshipChange};
 
 use super::{AccountEvent, account_message};
 use crate::settings::{Event, Page, Settings};

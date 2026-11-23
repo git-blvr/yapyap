@@ -9,18 +9,18 @@ use std::{
     time::{Duration, Instant},
 };
 
-use iced::{
-    Color, Element, Font, Length, Point, Rectangle, Size, Transformation, Vector,
-    advanced::{
-        Layout, Renderer as _, Shell, Widget, layout, mouse, renderer,
-        widget::{self, Tree},
-    },
-};
 use circord_core::themes::{
     Performance, motion,
     package::{
         Animation, Curve, Property, Repeat, Slot,
         art::{Event, EventSlot, Foil, FoilSurface, TextRole},
+    },
+};
+use iced::{
+    Color, Element, Font, Length, Point, Rectangle, Size, Transformation, Vector,
+    advanced::{
+        Layout, Renderer as _, Shell, Widget, layout, mouse, renderer,
+        widget::{self, Tree},
     },
 };
 

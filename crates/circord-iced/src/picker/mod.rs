@@ -17,12 +17,12 @@ mod gifs;
 pub mod kit;
 mod stickers;
 
+use circord_core::application::Action;
 pub use emoji::drawn;
 use iced::{
     Color, Element, Length, Padding, Point, Size, Task,
     widget::{column, container, operation, scrollable::AbsoluteOffset, scrollable::Viewport},
 };
-use circord_core::application::Action;
 
 use crate::{
     app::{App, Message},

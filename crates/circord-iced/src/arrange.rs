@@ -18,12 +18,12 @@
 
 use std::{collections::HashSet, time::Duration};
 
+use circord_core::application::Action;
+use circord_core::chat::VoicePerson;
 use iced::{
     Alignment, Element, Length, Point, Subscription, Task,
     widget::{container, operation, row, scrollable::AbsoluteOffset},
 };
-use circord_core::application::Action;
-use circord_core::chat::VoicePerson;
 
 use crate::{
     app::{App, Message},

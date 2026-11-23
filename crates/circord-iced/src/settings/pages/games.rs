@@ -1,10 +1,10 @@
 //! Game Activity: the games Circord knows and the ones added by hand.
 
+use circord_core::application::Action;
 use iced::{
     Alignment, Element, Length,
     widget::{column, row, text},
 };
-use circord_core::application::Action;
 
 use super::{GameDraft, GameEvent};
 use crate::settings::{Event, Page, Settings};

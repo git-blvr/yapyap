@@ -8,10 +8,10 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use livekit::PlatformAudio;
-use tokio::sync::{mpsc, watch};
 #[cfg(feature = "discord")]
 use circord_discord::service::Discord;
+use livekit::PlatformAudio;
+use tokio::sync::{mpsc, watch};
 
 #[cfg(feature = "matrix")]
 use crate::session::SessionLease;

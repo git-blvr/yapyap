@@ -7,11 +7,11 @@
 //! is verified. Everything goes to the core.
 
 use crate::widgets::scroll_view;
+use circord_core::application::{Action, AppState, DiscordLink};
 use iced::{
     Alignment, Color, Element, Length, Padding, Task,
     widget::{Space, column, container, operation, row, stack, text},
 };
-use circord_core::application::{Action, AppState, DiscordLink};
 
 use crate::{
     app::{App, Message},

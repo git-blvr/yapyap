@@ -4,6 +4,11 @@
 
 use std::sync::Arc;
 
+use circord_core::{
+    application::{Action, GifView},
+    chat::{Command, CustomStatus, DiscordCommand, Gif, Picture},
+    circord_discord::ready,
+};
 use iced::{
     Point, Rectangle, Size,
     keyboard::{self, key},
@@ -11,11 +16,6 @@ use iced::{
     widget::Id,
 };
 use iced_test::Simulator;
-use circord_core::{
-    application::{Action, GifView},
-    chat::{Command, CustomStatus, DiscordCommand, Gif, Picture},
-    circord_discord::ready,
-};
 
 use super::{change, hover_draws, interact, preview, shows};
 use crate::{

@@ -16,9 +16,9 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow};
+use circord_discord::voice::{CHANNELS, FRAME, Listener, Microphone, SAMPLE_RATE, Surplus, Track};
 use livekit::webrtc::native::apm::AudioProcessingModule;
 use tokio::sync::mpsc::UnboundedSender;
-use circord_discord::voice::{CHANNELS, FRAME, Listener, Microphone, SAMPLE_RATE, Surplus, Track};
 
 use crate::{
     audio_io::{LastingInput, LastingOutput},

@@ -12,14 +12,14 @@
 
 use std::path::Path;
 
-use iced::{
-    Alignment, Color, Element, Length, Padding, Size, Task,
-    widget::{Space, button, container, row, text},
-};
 use circord_core::{
     application::{Action, AppState},
     chat::Attachment,
     links,
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Size, Task,
+    widget::{Space, button, container, row, text},
 };
 
 use crate::{

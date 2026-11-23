@@ -4,11 +4,11 @@
 //! can be taken off. A poll's voters show in it too, by answer.
 
 use crate::widgets::scroll_view;
+use circord_core::application::{Action, AppState};
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{Space, button, column, container, mouse_area, row, text},
 };
-use circord_core::application::{Action, AppState};
 
 use crate::{
     app::Message,

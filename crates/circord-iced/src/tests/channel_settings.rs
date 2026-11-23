@@ -3,15 +3,15 @@
 //! three ways each, locked where this account can't, and Delete Channel
 //! closing them to ask.
 
-use iced::{
-    Point,
-    keyboard::{self, key},
-    widget::Id,
-};
 use circord_core::{
     application::{ChannelInput, ChannelSection, OverwriteState},
     chat::{ChannelSettings, Event},
     circord_discord::ready::permission,
+};
+use iced::{
+    Point,
+    keyboard::{self, key},
+    widget::Id,
 };
 
 use super::{interact, server::discord_server, shows};

@@ -2,14 +2,14 @@
 //! with its presence, the name and what the account is up to (its username
 //! under the pointer), then the mic, the headphones and Settings.
 
-use iced::{
-    Alignment, Element, Length, Padding, Point,
-    widget::{Space, column, container, mouse_area, row, stack, text},
-};
 use circord_core::{
     application::AppState,
     chat::{CustomStatus, Presence},
     voice,
+};
+use iced::{
+    Alignment, Element, Length, Padding, Point,
+    widget::{Space, column, container, mouse_area, row, stack, text},
 };
 
 use crate::{

@@ -19,13 +19,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+use circord_core::chat::{Picture, Presence};
+use circord_core::themes::content::{self, Media};
 use iced::{
     Color, Element, Point, Rectangle, Size,
     advanced::{graphics::text::font_system, image::Handle},
     widget::{container, stack, text},
 };
-use circord_core::chat::{Picture, Presence};
-use circord_core::themes::content::{self, Media};
 
 use crate::{
     animated::{Animated, Players},

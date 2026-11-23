@@ -4,11 +4,6 @@
 
 use std::sync::Arc;
 
-use iced::{
-    Point,
-    keyboard::{Key, key},
-    widget::Id,
-};
 use circord_core::{
     application::{ChannelAsk, ChannelDialog, InviteDialog, JoinDialog},
     chat::{ChannelKind, ChannelSettings, Event, InvitePreview},
@@ -16,6 +11,11 @@ use circord_core::{
         ready::permission,
         service::{Conversation, Snapshot, Status},
     },
+};
+use iced::{
+    Point,
+    keyboard::{Key, key},
+    widget::Id,
 };
 
 use iced_test::simulator::click;

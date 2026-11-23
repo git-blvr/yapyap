@@ -6,13 +6,13 @@
 
 use std::time::Duration;
 
-use iced::{
-    Alignment, Element, Length, Task,
-    widget::{Space, column, operation, row, text},
-};
 use circord_core::{
     application::{Action, Application},
     chat::MfaMethod,
+};
+use iced::{
+    Alignment, Element, Length, Task,
+    widget::{Space, column, operation, row, text},
 };
 
 use crate::{

@@ -13,13 +13,13 @@
 
 use std::{collections::VecDeque, path::PathBuf, time::Duration};
 
-use iced::{
-    Task,
-    futures::{Stream, stream},
-};
 use circord_core::{
     application::Action,
     chat::{ProfilePicture, ServerPicture},
+};
+use iced::{
+    Task,
+    futures::{Stream, stream},
 };
 
 use crate::app::{App, Message};

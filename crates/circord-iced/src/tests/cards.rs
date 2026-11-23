@@ -2,11 +2,11 @@
 //! people open their own card over it, a mutual server's from a profile,
 //! which goes there, and an emoji's or a sticker's, which name their server.
 
-use iced::{Point, keyboard, keyboard::key};
 use circord_core::{
     application::{Action, Navigation},
     chat::ProfileServer,
 };
+use iced::{Point, keyboard, keyboard::key};
 
 use super::{interact, last, preview, shows};
 use crate::{app::Message, info_cards::Event};
@@ -206,8 +206,8 @@ fn an_activitys_menu_shows_all_activity_or_its_privacy() {
 
 #[test]
 fn a_profile_without_a_banner_takes_its_avatars_colour() {
-    use std::sync::Arc;
     use circord_core::chat::{Picture, Pixels};
+    use std::sync::Arc;
     let (mut app, _folder) = preview();
     let user = app
         .client

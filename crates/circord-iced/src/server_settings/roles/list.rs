@@ -1,13 +1,13 @@
 //! The roles in their order: @everyone's card, each role's row with its
 //! handle, mark and member count, and its More menu.
 
-use iced::{
-    Alignment, Color, Element, Length, Padding,
-    widget::{Space, button, column, container, row, text, tooltip},
-};
 use circord_core::{
     application::{RoleInput, RoleLock, RoleRules, RolesPage, ServerSettings},
     chat::{RoleDetail, RoleManager},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding,
+    widget::{Space, button, column, container, row, text, tooltip},
 };
 
 use super::{

@@ -6,11 +6,11 @@
 //! list is virtualized: only rows near its viewport are built.
 
 use crate::widgets::scroll_view;
+use circord_core::application::{Action, DmScreen, MenuChoice, Navigation};
 use iced::{
     Alignment, Color, Element, Length, Padding, Point, Task,
     widget::{Space, column, container, row, scrollable::Viewport, stack},
 };
-use circord_core::application::{Action, DmScreen, MenuChoice, Navigation};
 
 use crate::{
     app::{App, Message, key},

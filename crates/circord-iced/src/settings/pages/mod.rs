@@ -2,11 +2,11 @@
 //! Notifications, Sounds, Advanced, About, Discord and Game Activity; and
 //! what their preferences do when changed.
 
-use iced::Element;
 use circord_core::{
     application::Action,
     sounds::{Sound, SoundSet},
 };
+use iced::Element;
 
 use super::{Event, Page, Settings};
 use crate::{

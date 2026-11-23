@@ -6,11 +6,11 @@
 //! it.
 
 use crate::widgets::scroll_view;
+use circord_core::application::{Action, BrowsedChannel, BrowsedKind};
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{button, column, container, row, text, tooltip},
 };
-use circord_core::application::{Action, BrowsedChannel, BrowsedKind};
 
 use crate::{
     app::{App, Message},

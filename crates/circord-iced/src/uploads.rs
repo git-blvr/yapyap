@@ -13,13 +13,13 @@
 use crate::widgets::scroll_view;
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
-use iced::{
-    Alignment, Border, Color, Element, Length, Padding, Size, Task,
-    widget::{button, column, container, row, stack, text},
-};
 use circord_core::{
     application::Action,
     chat::{self, Picture},
+};
+use iced::{
+    Alignment, Border, Color, Element, Length, Padding, Size, Task,
+    widget::{button, column, container, row, stack, text},
 };
 
 use crate::{

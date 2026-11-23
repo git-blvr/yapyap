@@ -2,13 +2,13 @@
 //! effect, nameplate and banner tiles, the theme, and the name's styles.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding, Point, Size,
-    widget::{Space, button, column, container, row, stack, text},
-};
 use circord_core::{
     application::{ProfileEditor, ProfileText},
     chat::ProfilePicture,
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Point, Size,
+    widget::{Space, button, column, container, row, stack, text},
 };
 
 use crate::profile::Mode;

@@ -5,13 +5,13 @@
 
 use std::time::Duration;
 
+use circord_core::chat::ChatRoom;
 use iced::{
     Alignment, Border, Color, Element, Length, Padding,
     advanced::{Shell, renderer},
     widget::{Space, column, container, opaque, row, text},
     window,
 };
-use circord_core::chat::ChatRoom;
 
 use super::{Event, ringing, who_is_here};
 use crate::{

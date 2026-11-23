@@ -2,8 +2,8 @@
 //! in what order, where each goes at a size, which the corner shows, the
 //! pixels a tile's frames are made at, and the words under a tile.
 
-use iced::{Point, Rectangle, Size};
 use circord_core::voice::{self, Participant, SharePhase};
+use iced::{Point, Rectangle, Size};
 
 /// Between tiles, and round the stage's edge; none full screen.
 pub(super) const GAP: f32 = 12.0;

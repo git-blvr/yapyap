@@ -1,11 +1,11 @@
 //! Someone's voice menu over their row, and their volumes
 //! (`VolumeMenu`).
 
+use circord_core::{application::MenuChoice, chat::MemberChange, voice::Command};
 use iced::{
     Element, Point, Task,
     widget::{column, operation, text},
 };
-use circord_core::{application::MenuChoice, chat::MemberChange, voice::Command};
 
 use crate::call::Event;
 use crate::{

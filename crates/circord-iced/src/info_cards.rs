@@ -7,13 +7,13 @@
 //! click outside; what they show is the core's.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Element, Length, Padding, Point, Rectangle, Size, Task,
-    widget::{button, column, container, opaque, row, stack, text},
-};
 use circord_core::{
     application::{Action, Application, Navigation},
     emoji::card::{self as expression, Target},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Point, Rectangle, Size, Task,
+    widget::{button, column, container, opaque, row, stack, text},
 };
 
 use crate::{
@@ -212,17 +212,17 @@ impl Cards {
             );
         }
         if let Some(server) = card_server(self, profiles) {
-            urls.extend(server.icon.clone().map(String::from));
-            urls.extend(server.banner.clone().map(String::from));
+            urls.extend(server.icon.clone());
+            urls.extend(server.banner.clone());
         }
         if let Some((expression, _)) = &self.expression
             && let Some(card) = expression_card(app, expression)
         {
             // A sticker's picture is its message's, which the timeline has.
             if matches!(expression, Expression::Emoji(_)) {
-                urls.extend(card.picture.map(String::from));
+                urls.extend(card.picture);
             }
-            urls.extend(card.server.and_then(|server| server.icon).map(String::from));
+            urls.extend(card.server.and_then(|server| server.icon));
         }
         urls
     }

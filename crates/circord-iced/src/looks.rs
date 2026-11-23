@@ -11,13 +11,13 @@ use crate::{
     style::{BLURPLE, faded, hex, rounded},
     widgets::Pic,
 };
-use iced::{
-    Alignment, Color, Element, Font,
-    widget::{Space, container, row, text},
-};
 use circord_core::{
     application::AppState,
     chat::{ChatMember, NameStyle, Presence, Role},
+};
+use iced::{
+    Alignment, Color, Element, Font,
+    widget::{Space, container, row, text},
 };
 
 /// How long a member list stays as built while its people change: the first
@@ -317,7 +317,7 @@ pub fn post_author(state: &AppState) -> Option<&str> {
     state
         .messages
         .iter()
-        .find(|message| &*message.item == item)
+        .find(|message| *message.item == item)
         .map(|message| message.sender.as_ref())
 }
 

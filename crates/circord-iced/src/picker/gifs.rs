@@ -8,11 +8,11 @@
 
 use std::hash::{Hash, Hasher};
 
+use circord_core::application::{Action, GifPicture, GifView};
 use iced::{
     Alignment, Color, Element, Length, Padding, Rectangle, Size, Task,
     widget::{Space, button, column, container, mouse_area, row, stack, text, tooltip},
 };
-use circord_core::application::{Action, GifPicture, GifView};
 
 use super::{
     Event, Picker, View,

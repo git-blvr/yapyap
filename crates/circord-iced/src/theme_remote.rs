@@ -5,7 +5,6 @@
 
 use std::sync::Arc;
 
-use iced::advanced::image::Handle;
 use circord_core::{
     runtime::BackgroundRuntime,
     themes::{
@@ -14,6 +13,7 @@ use circord_core::{
         remote::{self, Catalog, Listing, Repository},
     },
 };
+use iced::advanced::image::Handle;
 
 const STOPPED: &str = "Fetching the theme stopped partway; try again.";
 const NO_REPOSITORY: &str =

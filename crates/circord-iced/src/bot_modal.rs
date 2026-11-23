@@ -10,11 +10,11 @@
 use crate::widgets::scroll_view;
 use std::path::PathBuf;
 
+use circord_core::application::{Action, AppState, ModalField};
 use iced::{
     Alignment, Border, Color, Element, Length, Padding, Task,
     widget::{Space, button, column, container, row, text, text_editor},
 };
-use circord_core::application::{Action, AppState, ModalField};
 
 use crate::{
     app::Message,

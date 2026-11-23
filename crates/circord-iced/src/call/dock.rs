@@ -5,11 +5,11 @@
 
 use std::time::{Duration, Instant};
 
+use circord_core::voice::{self, Phase};
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{button, column, container, mouse_area, row, text},
 };
-use circord_core::voice::{self, Phase};
 
 use super::{Event, Popup, voice_ready};
 use crate::{

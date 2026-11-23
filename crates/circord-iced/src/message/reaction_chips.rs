@@ -2,11 +2,11 @@
 
 use std::time::Duration;
 
+use circord_core::chat::{ChatMessage, Reacts};
 use iced::{
     Alignment, Color, Element, Length,
     widget::{Row, Space, container, mouse_area, row, text, tooltip},
 };
-use circord_core::chat::{ChatMessage, Reacts};
 
 use crate::{
     app::Message,

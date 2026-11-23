@@ -5,11 +5,11 @@
 use crate::widgets::scroll_view;
 use std::sync::Arc;
 
+use circord_core::chat::ChatMessage;
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{Space, button, column, container, mouse_area, row, stack, text},
 };
-use circord_core::chat::ChatMessage;
 
 use crate::{
     app::{Message, key},

@@ -559,8 +559,8 @@ fn server_icons_are_fetched_ahead_once_for_the_pickers_rails() {
 #[cfg(feature = "discord")]
 fn the_sticker_picker_opens_sends_and_lists_the_servers_stickers() {
     use crate::chat::{Sticker, StickerCollection};
-    use std::sync::Arc;
     use circord_discord::ready::{Channel, Server};
+    use std::sync::Arc;
     let mut app = connected();
     let at_start = app.apply(discord_event(circord_discord::service::Snapshot {
         status: circord_discord::service::Status::Online,

@@ -3,8 +3,8 @@
 
 use std::time::Duration;
 
-use iced::Task;
 use circord_core::chat::ChatMessage;
+use iced::Task;
 
 use crate::app::{App, Message};
 

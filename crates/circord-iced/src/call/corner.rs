@@ -4,11 +4,11 @@
 //! nearest corner); and the call's large tile over the whole window, full
 //! screen.
 
+use circord_core::voice::SharePhase;
 use iced::{
     Alignment, Background, Color, Element, Length, Padding, Point, Size, gradient,
     widget::{Space, column, container, mouse_area, pin, stack, text},
 };
-use circord_core::voice::SharePhase;
 
 use super::{
     Event,

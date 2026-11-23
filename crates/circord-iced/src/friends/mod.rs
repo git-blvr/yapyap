@@ -6,13 +6,13 @@
 //! friend by username.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Element, Length, Padding, Point, Task,
-    widget::{Space, button, column, container, mouse_area, operation, row, stack, text},
-};
 use circord_core::{
     application::{Action, AddFriend, DmScreen, Navigation},
     chat::{Friend, Presence},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Point, Task,
+    widget::{Space, button, column, container, mouse_area, operation, row, stack, text},
 };
 
 use crate::{

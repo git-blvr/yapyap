@@ -830,8 +830,8 @@ fn a_busy_servers_tooltip_lists_its_voice_channels_under_the_pointer() {
 
 #[test]
 fn a_closed_folder_shows_up_to_four_server_icons_in_a_two_by_two_grid() {
-    use iced_test::{Simulator, selector::Candidate};
     use circord_core::chat::{ChatServer, Picture, Pixels, ServerFolder};
+    use iced_test::{Simulator, selector::Candidate};
 
     let (mut app, _folder) = preview();
     let in_folder = ServerFolder {

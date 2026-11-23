@@ -9,14 +9,14 @@
 //! is drawn in `dialog::dialog`'s frame; Escape or a click outside closes
 //! it.
 
+use circord_core::{
+    application::{Action, AppState, ChannelAsk, INVITE_AGES, INVITE_USES},
+    chat::{ChannelKind, ChannelSettings},
+};
 use iced::{
     Alignment, Element, Length, Task,
     keyboard::key,
     widget::{Id, button, container, operation, row, text},
-};
-use circord_core::{
-    application::{Action, AppState, ChannelAsk, INVITE_AGES, INVITE_USES},
-    chat::{ChannelKind, ChannelSettings},
 };
 
 use crate::{

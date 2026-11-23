@@ -6,13 +6,13 @@
 //! "Show results" was clicked) is kept among `revealed`, as
 //! `{item}/pick{id}` and `{item}/results`.
 
-use iced::{
-    Alignment, Border, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, row, text},
-};
 use circord_core::{
     application::Action,
     chat::{ChatMessage, Poll},
+};
+use iced::{
+    Alignment, Border, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, row, text},
 };
 
 use crate::{

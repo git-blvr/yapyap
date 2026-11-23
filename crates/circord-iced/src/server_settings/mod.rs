@@ -21,10 +21,6 @@ pub(crate) mod roles;
 
 use std::path::PathBuf;
 
-use iced::{
-    Element, Length, Task,
-    widget::{column, operation},
-};
 use circord_core::{
     application::{
         Action, AppState, AuditInput, BanInput, EmojiInput, InviteInput, MemberInput,
@@ -32,6 +28,10 @@ use circord_core::{
         SettingsToggle, StickerInput,
     },
     chat::{ServerPicture, SettingsSection},
+};
+use iced::{
+    Element, Length, Task,
+    widget::{column, operation},
 };
 
 use crate::{

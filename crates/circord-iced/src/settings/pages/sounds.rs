@@ -1,10 +1,10 @@
 //! Sounds: the sound set and each sound on or off.
 
+use circord_core::sounds::{Sound, SoundSet};
 use iced::{
     Alignment, Element, Length,
     widget::{column, container, row},
 };
-use circord_core::sounds::{Sound, SoundSet};
 
 use super::{Pref, pref};
 use crate::settings::Page;

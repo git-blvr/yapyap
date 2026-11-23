@@ -5,11 +5,11 @@
 
 use std::sync::Arc;
 
-use iced::Color;
 use circord_core::{
     application::{AppState, MenuChoice, ProfileView, Relation},
     chat::{Activities, Activity, Presence, Profile, Wishlist},
 };
+use iced::Color;
 
 use super::Event;
 use crate::{app::Message, looks::Status, markdown::Body, pictures::Icon, style::hex, theme::mix};

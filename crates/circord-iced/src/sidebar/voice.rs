@@ -1,10 +1,10 @@
 //! Who is in a voice channel, under its row and on its card.
 
+use circord_core::chat::VoicePerson;
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{Space, column, container, mouse_area, row, text, tooltip},
 };
-use circord_core::chat::VoicePerson;
 
 use crate::{
     app::Message,

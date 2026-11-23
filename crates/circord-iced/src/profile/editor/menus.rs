@@ -2,11 +2,11 @@
 //! picker and its list, and the pencil that opens them.
 
 use crate::widgets::scroll_view;
+use circord_core::{application::ProfileEditor, chat::ProfilePicture};
 use iced::{
     Alignment, Color, Element, Length, Padding,
     widget::{button, column, container, opaque, row, text},
 };
-use circord_core::{application::ProfileEditor, chat::ProfilePicture};
 
 use crate::{
     app::Message,

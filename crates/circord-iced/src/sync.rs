@@ -10,6 +10,7 @@
 
 use std::{sync::Arc, time::Instant};
 
+use circord_core::application::Navigation;
 use iced::{
     Task,
     widget::{
@@ -17,7 +18,6 @@ use iced::{
         scrollable::{AbsoluteOffset, Viewport},
     },
 };
-use circord_core::application::Navigation;
 
 use crate::{
     after,

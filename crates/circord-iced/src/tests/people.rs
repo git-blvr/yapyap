@@ -5,16 +5,16 @@
 
 use std::sync::Arc;
 
-use iced::{
-    Point,
-    keyboard::{self, key},
-};
-use iced_test::{Simulator, simulator::click};
 use circord_core::{
     application::{Action, DmScreen, Navigation, PersonAsk},
     chat::{ChatMessage, ChatRoom, Friend, FriendRequest, Presence, Reaction, RequestPreview},
     discord,
 };
+use iced::{
+    Point,
+    keyboard::{self, key},
+};
+use iced_test::{Simulator, simulator::click};
 
 use super::{change, interact, last, preview, right_click, shows};
 use crate::{

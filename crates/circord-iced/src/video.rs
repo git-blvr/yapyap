@@ -33,6 +33,10 @@ use std::{
     },
 };
 
+use circord_core::{
+    frames::Frames,
+    picture::{self, Feed, FrameBuffer},
+};
 use iced::futures::{Stream, future, stream};
 use iced::{
     Color, Element, Length, Rectangle, Size, Theme,
@@ -44,10 +48,6 @@ use iced::{
     },
 };
 use tokio::sync::Notify;
-use circord_core::{
-    frames::Frames,
-    picture::{self, Feed, FrameBuffer},
-};
 
 use crate::paint;
 

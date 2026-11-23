@@ -2,8 +2,8 @@
 //! switcher: the custom status starts from the one set and saves what's
 //! written; the quick switcher finds a place and goes there with the keys.
 
-use iced::keyboard::{Key, key};
 use circord_core::chat::CustomStatus;
+use iced::keyboard::{Key, key};
 
 use super::{change, interact, preview, shows};
 use crate::{
@@ -165,8 +165,8 @@ fn the_quick_switcher_finds_a_place_and_goes_there() {
 
 #[test]
 fn the_account_popover_shows_the_accounts_own_card_while_open() {
-    use std::sync::Arc;
     use circord_core::chat::{Playing, Profile, ServerTag};
+    use std::sync::Arc;
     let (mut app, _folder) = preview();
     change(&mut app, |state| {
         state.discord_user = Some("42".into());
@@ -203,8 +203,8 @@ fn the_account_popover_shows_the_accounts_own_card_while_open() {
 
 #[test]
 fn the_account_popover_shows_rich_presence_and_follows_live_changes() {
-    use std::sync::Arc;
     use circord_core::chat::{Activity, ActivityKind, Picture, Pixels, Playing};
+    use std::sync::Arc;
 
     let (mut app, _folder) = preview();
     let activity = Activity {

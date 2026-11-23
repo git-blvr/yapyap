@@ -5,12 +5,12 @@
 //! keys are recorded is the core's (`circord_core::keybinds`); the root
 //! watches them (`crate::keybinds`).
 
+use circord_core::keybinds::{Action, Binding, Key, Recorder, Shortcut};
 use iced::{
     Alignment, Element, Length,
     keyboard::{self, Key as Pressed, Location, key},
     widget::{column, container, row},
 };
-use circord_core::keybinds::{Action, Binding, Key, Recorder, Shortcut};
 
 use super::{Drop, Event as SettingsEvent, Page, Settings};
 use crate::{

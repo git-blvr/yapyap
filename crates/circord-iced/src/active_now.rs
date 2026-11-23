@@ -7,13 +7,13 @@
 use crate::widgets::scroll_view;
 use std::collections::HashMap;
 
-use iced::{
-    Alignment, Element, Length, Padding, Point,
-    widget::{Space, button, column, container, row, stack, text},
-};
 use circord_core::{
     application::{AppState, DmScreen},
     chat::{Activity, ActivityKind, ChatRoom, Friend, Presence},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Point,
+    widget::{Space, button, column, container, row, stack, text},
 };
 
 use crate::{

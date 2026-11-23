@@ -6,11 +6,11 @@
 //! account isn't in shows its Join instead.
 
 use crate::widgets::scroll_view;
+use circord_core::voice::{self, SharePhase};
 use iced::{
     Alignment, Color, Element, Length, Padding, Rectangle, Size,
     widget::{Space, button, column, container, mouse_area, pin, row, stack, text},
 };
-use circord_core::voice::{self, SharePhase};
 
 use super::{Event, Popup, voice_ready};
 use crate::{

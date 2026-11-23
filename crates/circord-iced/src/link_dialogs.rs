@@ -7,12 +7,12 @@
 //! and the address last copied ([`LinkDialogs`]). Escape or a click outside
 //! closes each.
 
+use circord_core::application::{Action, AppState};
 use iced::{
     Element, Length, Task,
     keyboard::key,
     widget::{container, row, text},
 };
-use circord_core::application::{Action, AppState};
 
 use crate::{
     app::Message,

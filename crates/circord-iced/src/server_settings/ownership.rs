@@ -3,11 +3,11 @@
 //! acknowledgement, then the code Discord emailed. What each asks and when
 //! it may go is the core's ([`Ownership`]).
 
+use circord_core::application::{AppState, DeleteAsk, Ownership, OwnershipInput, TransferAsk};
 use iced::{
     Alignment, Element, Length,
     widget::{button, column, container, rich_text, row, span, text},
 };
-use circord_core::application::{AppState, DeleteAsk, Ownership, OwnershipInput, TransferAsk};
 
 use super::View;
 use super::{expressions::answers, message, moderation::face};

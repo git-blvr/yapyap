@@ -20,13 +20,13 @@
 //! keys back to the composer. The row the keys are on is outlined once a
 //! key moves it.
 
+use circord_core::application::{Action, Navigation};
 use iced::{
     Alignment, Color, Element, Length, Padding, Point, Rectangle, Size, Task,
     advanced::{Layout, Widget, layout, mouse as advanced_mouse, renderer, widget::Tree},
     keyboard::{self, Key, key::Named},
     widget::{Space, column, container, mouse_area, operation, row, scrollable::AbsoluteOffset},
 };
-use circord_core::application::{Action, Navigation};
 
 use crate::{
     app::{App, Message, key},

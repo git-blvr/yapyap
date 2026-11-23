@@ -10,10 +10,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use iced::advanced::{Layout, Shell, Widget, layout, mouse, renderer, widget::Tree};
-use iced::{Color, Element, Length, Rectangle, Size};
 use circord_core::themes::Performance;
 use circord_core::themes::package::art::{Transition, TransitionKind};
+use iced::advanced::{Layout, Shell, Widget, layout, mouse, renderer, widget::Tree};
+use iced::{Color, Element, Length, Rectangle, Size};
 
 use crate::{
     app::{App, Message},

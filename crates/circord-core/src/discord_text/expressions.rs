@@ -5,11 +5,11 @@
 
 use std::path::Path;
 
-use image::{ImageFormat, imageops::FilterType};
 use circord_discord::{
     api,
     server_settings::{BannedUser, GuildEmoji, GuildSticker},
 };
+use image::{ImageFormat, imageops::FilterType};
 
 use super::{
     commands::NOT_DISCORD,

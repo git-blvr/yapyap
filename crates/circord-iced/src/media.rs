@@ -8,11 +8,11 @@
 
 use std::sync::Arc;
 
+use circord_core::chat::{self, Attachment, Picture, Placement};
 use iced::{
     Alignment, Color, Element, Length, Rectangle, Size,
     widget::{Space, container, stack, text},
 };
-use circord_core::chat::{self, Attachment, Picture, Placement};
 
 use crate::{app::Message, fonts::BOLD, style::rounded, widgets::Pic};
 

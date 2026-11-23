@@ -7,11 +7,11 @@
 //! `ToggleSelect`, `SearchSelect`, `CloseSelect`).
 
 use crate::widgets::scroll_view;
+use circord_core::application::Action;
 use iced::{
     Alignment, Border, Element, Length, Task,
     widget::{Space, button, column, container, row, text},
 };
-use circord_core::application::Action;
 
 use crate::{
     app::Message,

@@ -7,12 +7,12 @@
 //! when clicked itself.
 
 use crate::widgets::scroll_view;
+use circord_core::application::{Action, ThreadFrom};
 use iced::{
     Element, Length, Padding, Point, Task,
     keyboard::key,
     widget::{Space, column, container, mouse_area, opaque, operation, row},
 };
-use circord_core::application::{Action, ThreadFrom};
 
 use crate::{
     app::{App, Message, NOBODY},

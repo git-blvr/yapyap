@@ -4,13 +4,13 @@
 //! Enter goes to, and Escape or a click outside closes each.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Border, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, operation, row, scrollable, stack, text},
-};
 use circord_core::{
     application::{Action, AppState, POLL_HOURS, Place, PollEdit, QUESTION_LIMIT},
     chat::Contact,
+};
+use iced::{
+    Alignment, Border, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, operation, row, scrollable, stack, text},
 };
 
 use crate::{

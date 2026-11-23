@@ -5,9 +5,9 @@
 //!
 //! Nothing here takes input or changes a surface's behaviour.
 
+use circord_core::themes::chrome::{self, Chrome, Pane, TreeInk, TreeList};
 use iced::advanced::{Layout, Widget, layout, mouse, renderer, widget::Tree};
 use iced::{Color, Element, Font, Length, Point, Rectangle, Size, Theme};
-use circord_core::themes::chrome::{self, Chrome, Pane, TreeInk, TreeList};
 
 use crate::app::Message;
 

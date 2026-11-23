@@ -4,14 +4,14 @@
 //! the core's (`AppState::forward_places`, `Action::Forward`).
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Border, Element, Length, Task,
-    widget::{Space, button, column, container, row, text},
-};
 use circord_core::{
     application::{Action, AppState, FORWARD_LIMIT},
     chat::ChatRoom,
     network::Network,
+};
+use iced::{
+    Alignment, Border, Element, Length, Task,
+    widget::{Space, button, column, container, row, text},
 };
 
 use crate::{

@@ -497,8 +497,8 @@ async fn changes_server_settings_as_discords_client_does() {
     let discord = &fixture.discord;
     let server = fixture.server;
     let guild = fixture.guild.as_str();
-    use serde_json::json;
     use circord_discord::mfa::Method;
+    use serde_json::json;
     let profile = discord.guild_profile(guild).await.unwrap();
     assert_eq!(
         (profile.name.as_str(), profile.description.as_str()),
@@ -885,8 +885,8 @@ async fn moderates_as_discords_client_does() {
     let discord = &fixture.discord;
     let server = fixture.server;
     let guild = fixture.guild.as_str();
-    use serde_json::json;
     use circord_discord::mfa::Method;
+    use serde_json::json;
     // Safety Setup's levels, saved with the guild's PATCH.
     let settings = discord
         .save_guild_settings(
@@ -1065,8 +1065,8 @@ async fn lists_members_and_invites_as_discords_client_does() {
     let discord = &fixture.discord;
     let server = fixture.server;
     let guild = fixture.guild.as_str();
-    use serde_json::json;
     use circord_discord::api::MembersSearch;
+    use serde_json::json;
     let search = |body: serde_json::Value| async move {
         match discord.members_search(guild, &body).await.unwrap() {
             MembersSearch::Found(found) => {

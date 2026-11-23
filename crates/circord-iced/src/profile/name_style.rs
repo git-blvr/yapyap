@@ -11,13 +11,13 @@
 
 use std::{cell::RefCell, collections::HashMap};
 
+use circord_core::{application::Action, chat::NameStyle};
 use iced::{
     Alignment, Background, Border, Color, Element, Length, Shadow, Task, Vector,
     advanced::graphics::text::{Version, font_system},
     gradient::Linear,
     widget::{Space, button, column, container, mouse_area, opaque, row, stack, text, tooltip},
 };
-use circord_core::{application::Action, chat::NameStyle};
 
 use super::{Event as ProfileEvent, Shown, editor::Event as EditorEvent};
 use crate::{

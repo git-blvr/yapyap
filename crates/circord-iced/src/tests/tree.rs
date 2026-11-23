@@ -2,8 +2,8 @@
 //! categories fold, the keys walk it as a file tree's, what's open is kept,
 //! and a closed line still shows what's unread under it.
 
-use iced::keyboard::{Key, key::Named};
 use circord_core::application::{Action, Navigation};
+use iced::keyboard::{Key, key::Named};
 
 use super::{change, unread};
 use crate::{

@@ -6,11 +6,11 @@
 
 use std::sync::Arc;
 
-use iced::{Point, mouse};
 use circord_core::{
     application::{Action, Navigation},
     circord_discord::ready::{Overwrite, permission},
 };
+use iced::{Point, mouse};
 
 use super::{interact, server::discord_server, shows};
 use crate::{

@@ -3,13 +3,13 @@
 use std::{future::Future, path::Path, pin::Pin, sync::Arc, time::Duration};
 
 use anyhow::{Result, bail, ensure};
-use tokio::sync::{mpsc, watch};
 use circord_discord::{
     ready::PRIVATE,
     service::{Discord, Live, Snapshot, Status, VoiceServer},
     stream::{self, StreamServer},
     voice::{Call as DiscordCall, MOVE_GRACE, live_microphone},
 };
+use tokio::sync::{mpsc, watch};
 
 use crate::{
     camera::{self, Opening},

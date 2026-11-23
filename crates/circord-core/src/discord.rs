@@ -14,17 +14,17 @@ use std::{
 };
 
 #[cfg(feature = "discord")]
+use circord_discord::{
+    marked::{ChannelMarks, MarkedChannel, MarkedServer},
+    ready::{Access, PRIVATE},
+    service::{Conversation, Discord, Snapshot, VoiceMember},
+};
+#[cfg(feature = "discord")]
 use futures_util::future::{AbortHandle, AbortRegistration, Abortable};
 #[cfg(feature = "discord")]
 use tokio::{
     sync::{Notify, mpsc::UnboundedSender},
     task::JoinSet,
-};
-#[cfg(feature = "discord")]
-use circord_discord::{
-    marked::{ChannelMarks, MarkedChannel, MarkedServer},
-    ready::{Access, PRIVATE},
-    service::{Conversation, Discord, Snapshot, VoiceMember},
 };
 
 #[cfg(feature = "discord")]

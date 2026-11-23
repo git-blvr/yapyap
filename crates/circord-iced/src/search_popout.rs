@@ -13,14 +13,14 @@
 use std::ops::Range;
 
 use chrono::{Datelike, NaiveDate};
+use circord_core::{
+    application::AppState,
+    circord_discord::search::{self, Filter},
+    discord, mention,
+};
 use iced::{
     Alignment, Color, Element, Length, Padding, Task,
     widget::{Space, button, column, container, mouse_area, rich_text, row, text},
-};
-use circord_core::{
-    application::AppState,
-    discord, mention,
-    circord_discord::search::{self, Filter},
 };
 
 use crate::{

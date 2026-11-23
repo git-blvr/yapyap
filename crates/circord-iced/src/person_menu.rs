@@ -10,15 +10,15 @@
 
 use std::borrow::Cow;
 
-use iced::{
-    Element, Length, Point, Task,
-    widget::{Space, column, operation, row, text},
-};
 use circord_core::application::{
     Action, AppState, BAN_HISTORY, CommandTarget, MenuChoice, OwnershipInput, PersonAsk,
     TIMEOUT_TIMES, network_id, network_link,
 };
 use circord_core::chat::RelationshipChange;
+use iced::{
+    Element, Length, Point, Task,
+    widget::{Space, column, operation, row, text},
+};
 
 use crate::{
     app::{App, Message, NOBODY},

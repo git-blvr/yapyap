@@ -10,12 +10,12 @@
 //! only while the popout shows or the pointer is on the signal, again each
 //! second of the call's clock.
 
+use circord_core::voice::LinkStats;
 use iced::{
     Alignment, Color, Element, Length, Point, Rectangle, Size, Task, Theme,
     advanced::{Layout, Widget, layout, mouse, renderer, widget::Tree},
     widget::{Space, column, container, mouse_area, row, stack, text, tooltip},
 };
-use circord_core::voice::LinkStats;
 
 use circord_core::call_details as words;
 

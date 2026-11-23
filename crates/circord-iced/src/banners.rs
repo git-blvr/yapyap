@@ -2,11 +2,11 @@
 //! its data is sample data, and what the core says needs saying
 //! (`AppState::notice`), until dismissed.
 
+use circord_core::application::Action;
 use iced::{
     Alignment, Element, Length,
     widget::{container, row, text},
 };
-use circord_core::application::Action;
 
 use crate::{
     app::{App, Message},

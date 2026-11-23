@@ -6,11 +6,11 @@
 //! back until the app answers; why one failed shows under them. A menu
 //! opens its dropdown (`bot_select.rs`).
 
+use circord_core::chat::{Beside, ButtonStyle, Card, CardButton, CardRow, ChatMessage, Placement};
 use iced::{
     Alignment, Element, Length, Padding, Point, Size,
     widget::{Space, column, container, row, text},
 };
-use circord_core::chat::{Beside, ButtonStyle, Card, CardButton, CardRow, ChatMessage, Placement};
 
 use crate::{
     app::Message,

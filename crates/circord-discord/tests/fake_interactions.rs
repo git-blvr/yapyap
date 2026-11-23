@@ -4,8 +4,6 @@
 
 use std::{sync::Arc, time::Duration};
 
-use serde_json::{Value, json};
-use tokio::time::timeout;
 use circord_discord::{
     client,
     interactions::{self, Interaction},
@@ -13,6 +11,8 @@ use circord_discord::{
     service::{Discord, Live, Snapshot, Status},
     token,
 };
+use serde_json::{Value, json};
+use tokio::time::timeout;
 
 const WAIT: Duration = Duration::from_secs(10);
 

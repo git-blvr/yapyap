@@ -8,13 +8,13 @@
 //! paused, and full screen with keys of its own. The core plays both and
 //! says where they are; nothing here keeps time.
 
-use iced::{
-    Alignment, Background, Color, Element, Length, Padding, Size, Task, gradient,
-    widget::{Space, button, container, mouse_area, row, stack, text},
-};
 use circord_core::{
     application::Action,
     chat::{ChatMessage, VideoCommand, VoiceMessage},
+};
+use iced::{
+    Alignment, Background, Color, Element, Length, Padding, Size, Task, gradient,
+    widget::{Space, button, container, mouse_area, row, stack, text},
 };
 
 use crate::{

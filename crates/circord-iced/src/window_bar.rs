@@ -10,13 +10,13 @@
 //! the frame or without; changing it makes the window again.
 
 use crate::widgets::scroll_view;
+use circord_core::application::DmScreen;
 use iced::{
     Alignment, Element, Length, Point, Size, Task,
     mouse::Interaction,
     widget::{Space, button, column, container, mouse_area, row, stack, text, tooltip},
     window,
 };
-use circord_core::application::DmScreen;
 
 use crate::{
     app::{App, Message},

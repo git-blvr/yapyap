@@ -5,16 +5,16 @@
 //! invite someone to, the choices that ask first, and a server's events
 //! menu.
 
-use iced::{
-    Point, Rectangle, Settings,
-    keyboard::{self, key},
-};
-use iced_test::{Simulator, selector::Candidate};
 use circord_core::{
     application::{Action, MUTE_TIMES, Navigation, member_server, with_clubs},
     chat::{Command, DiscordCommand, Muting, NotificationChange, NotifyLevel},
     circord_discord::ready,
 };
+use iced::{
+    Point, Rectangle, Settings,
+    keyboard::{self, key},
+};
+use iced_test::{Simulator, selector::Candidate};
 
 use super::{interact, preview, server::discord_server, shows};
 use crate::{
@@ -508,8 +508,8 @@ fn the_window_size_follows_a_resize() {
 
 #[test]
 fn a_messages_menu_takes_its_apps_in_place_once_they_come() {
-    use std::sync::Arc;
     use circord_core::chat::{ChatMessage, CommandIndex, Event};
+    use std::sync::Arc;
     let (mut app, _folder) = discord_server(0, |_, _| {});
     app.client
         .dispatch(Action::Navigate(Navigation::Server(SERVER.into())));

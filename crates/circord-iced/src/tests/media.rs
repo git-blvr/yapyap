@@ -3,11 +3,11 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use iced::keyboard::{self, key};
 use circord_core::{
     application::Viewer,
     chat::{Attachment, ChatMessage, Picture, Pixels, Placement},
 };
+use iced::keyboard::{self, key};
 
 use super::{change, preview, shows};
 

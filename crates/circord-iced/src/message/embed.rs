@@ -1,11 +1,11 @@
 //! A link's or a bot's embed, as Discord's client draws one: its colour
 //! bar, author, title, text, fields, pictures and footer.
 
+use circord_core::chat::{self, ChatMessage, Placement};
 use iced::{
     Color, Element, Length, Padding, Point, Size,
     widget::{button, column, container, row, text},
 };
-use circord_core::chat::{self, ChatMessage, Placement};
 
 use crate::{
     app::Message,

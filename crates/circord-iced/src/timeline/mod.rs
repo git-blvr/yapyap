@@ -17,8 +17,8 @@
 
 use std::{sync::Arc, time::Duration};
 
-use iced::{Color, Point, Task, widget::scrollable::Viewport};
 use circord_core::{application::Action, chat::ChatMessage};
+use iced::{Color, Point, Task, widget::scrollable::Viewport};
 
 use crate::{
     app::{App, Message},

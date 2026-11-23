@@ -8,13 +8,13 @@
 
 use std::sync::Arc;
 
-use iced::{
-    Alignment, Element, Length,
-    widget::{Space, button, container, row, text, tooltip},
-};
 use circord_core::{
     application::{AppState, Relation},
     chat::{Presence, Topic},
+};
+use iced::{
+    Alignment, Element, Length,
+    widget::{Space, button, container, row, text, tooltip},
 };
 
 use crate::{

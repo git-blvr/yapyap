@@ -6,11 +6,11 @@
 
 use std::sync::Arc;
 
+use circord_core::chat::{ChatMessage, FOUND_PICTURES, Placement};
 use iced::{
     Alignment, Element, Length, Padding,
     widget::{Space, button, column, container, row, stack},
 };
-use circord_core::chat::{ChatMessage, FOUND_PICTURES, Placement};
 
 use crate::{
     app::{App, Message},

@@ -11,13 +11,13 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use iced::{
-    Alignment, Color, Element, Length, Padding, Task,
-    widget::{Id, Space, button, column, container, opaque, operation, row, stack, text},
-};
 use circord_core::{
     application::{Action, AppState, ProfileEditor, ProfileText, ProfileView},
     chat::{self, ProfilePicture},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Task,
+    widget::{Id, Space, button, column, container, opaque, operation, row, stack, text},
 };
 
 use crate::profile::{Event as ProfileEvent, Mode, Shown, look::Tab};

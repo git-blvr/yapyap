@@ -7,11 +7,11 @@
 
 use std::sync::Mutex;
 
+use circord_core::keybinds::{Action, Status, TALK_SHORTCUT, Watched};
 use iced::{
     Task,
     keyboard::{self, key},
 };
-use circord_core::keybinds::{Action, Status, TALK_SHORTCUT, Watched};
 
 use crate::{
     app::{App, Message},

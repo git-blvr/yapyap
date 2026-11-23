@@ -4,12 +4,12 @@
 use crate::widgets::scroll_view;
 use std::sync::Arc;
 
+use circord_core::voice::{Command, Resolution, StreamQuality};
 use iced::{
     Alignment, Border, Element, Length, Padding, Task,
     advanced::image::Handle,
     widget::{button, column, container, operation, row, text},
 };
-use circord_core::voice::{Command, Resolution, StreamQuality};
 
 use crate::call::{Event, Popup};
 use crate::{

@@ -9,6 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use circord_core::chat::Picture as CorePicture;
 use iced::{
     Element, Length, Point, Rectangle, Size, Theme, Vector,
     advanced::{
@@ -16,7 +17,6 @@ use iced::{
     },
     window,
 };
-use circord_core::chat::Picture as CorePicture;
 
 use crate::{
     paint,

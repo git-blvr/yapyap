@@ -1,13 +1,13 @@
 //! A role's Manage Members tab and Add members over the settings.
 
 use crate::widgets::scroll_view;
-use iced::{
-    Alignment, Color, Element, Length, Padding, Task,
-    widget::{Space, button, column, container, operation, row, text},
-};
 use circord_core::{
     application::{ADD_MEMBERS_LIMIT, RoleInput, RoleLock, RolesPage},
     chat::{RoleDetail, RoleMember},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Task,
+    widget::{Space, button, column, container, operation, row, text},
 };
 
 use super::{

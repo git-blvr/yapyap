@@ -10,14 +10,14 @@
 //! isn't added: "Unable to add filter".
 
 use chrono::{Datelike, NaiveDate, TimeZone};
+use circord_core::{
+    application::AppState,
+    circord_discord::search::{self, Filter},
+    discord,
+};
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{Space, button, column, container, operation, row, stack, text},
-};
-use circord_core::{
-    application::AppState,
-    discord,
-    circord_discord::search::{self, Filter},
 };
 
 use crate::{

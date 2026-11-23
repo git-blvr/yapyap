@@ -2,12 +2,12 @@
 //! ([`crate::dialog`]): Delete's confirmation and the question before
 //! following a masked link.
 
+use circord_core::application::Action;
 use iced::{
     Element, Length, Task,
     keyboard::key,
     widget::{Space, column, container, row, text},
 };
-use circord_core::application::Action;
 
 use crate::{
     app::{App, Message},

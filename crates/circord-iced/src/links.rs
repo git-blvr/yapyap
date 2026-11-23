@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
-use iced::{Task, widget::operation};
 use circord_core::application::Action;
+use iced::{Task, widget::operation};
 
 use crate::app::{App, Message, Messages};
 

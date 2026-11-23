@@ -10,8 +10,8 @@
 //! premultiplied BGRA either way and turned into the format once, by
 //! [`finish`].
 
-use iced::advanced::graphics::text::cosmic_text;
 use circord_core::chat::Presence;
+use iced::advanced::graphics::text::cosmic_text;
 
 pub use crate::canvas::{Canvas, Ink, finish, to_native};
 use crate::{fonts::TWEMOJI, looks::NameLook};

@@ -7,11 +7,11 @@
 //! and a server's switches tick in place. The header's bell opens the open
 //! channel's notification choices.
 
-use iced::{Point, Task, widget::operation};
 use circord_core::{
     application::{Action, ChannelAsk, MUTE_TIMES, MenuChoice, network_id, network_link},
     chat::{ChannelKind, MemberChange, Muting, NotificationChange, Notifications, NotifyLevel},
 };
+use iced::{Point, Task, widget::operation};
 
 use crate::{
     app::{App, Message, NOBODY},

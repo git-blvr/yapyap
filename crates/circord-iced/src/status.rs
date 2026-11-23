@@ -7,13 +7,13 @@
 
 use std::sync::Arc;
 
-use iced::{
-    Alignment, Element, Length, Padding, Point, Task,
-    widget::{Space, button, column, container, opaque, operation, row, stack, text},
-};
 use circord_core::{
     application::{Action, AppState, ClearAfter},
     chat::{Activities, Presence},
+};
+use iced::{
+    Alignment, Element, Length, Padding, Point, Task,
+    widget::{Space, button, column, container, opaque, operation, row, stack, text},
 };
 
 use crate::{

@@ -3,11 +3,11 @@
 //! Reset puts it all back, and Escape ends the editing before it closes
 //! the editor.
 
-use iced::keyboard::{Key, key};
 use circord_core::{
     application::{ProfileEditor, ProfileText},
     chat::{OwnProfile, Profile},
 };
+use iced::keyboard::{Key, key};
 
 use super::{change, interact, preview, shows};
 use crate::{

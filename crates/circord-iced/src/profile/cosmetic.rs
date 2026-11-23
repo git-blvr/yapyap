@@ -10,13 +10,13 @@
 
 use std::time::{Duration, Instant};
 
-use iced::{
-    Element, Length, Rectangle, Size, Task,
-    widget::{Space, container, stack},
-};
 use circord_core::{
     application::AppState,
     chat::{EffectLayer, ProfileEffect},
+};
+use iced::{
+    Element, Length, Rectangle, Size, Task,
+    widget::{Space, container, stack},
 };
 
 use super::{Event, Mode, Profiles, Shown};

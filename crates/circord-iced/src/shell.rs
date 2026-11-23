@@ -6,12 +6,12 @@
 
 use std::time::Duration;
 
+use circord_core::{application::Action, chat::Alert, sounds::Sound, voice, zoom};
 use iced::{
     Size, Subscription, Task,
     keyboard::{self, key},
     window,
 };
-use circord_core::{application::Action, chat::Alert, sounds::Sound, voice, zoom};
 
 use crate::{
     after,

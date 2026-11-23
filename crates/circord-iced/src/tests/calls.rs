@@ -5,13 +5,13 @@
 //! tile before its first frame, and the call's own order under its
 //! channel.
 
-use iced::{Point, Rectangle, Size};
 use circord_core::{
     application::{Action, Navigation},
     noise::Suppressor,
     stream_worker::{Shareable, Source},
     voice,
 };
+use iced::{Point, Rectangle, Size};
 
 use super::{interact, last, preview, shows};
 use crate::{

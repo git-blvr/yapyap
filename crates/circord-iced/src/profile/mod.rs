@@ -20,14 +20,14 @@ pub mod name_style;
 use crate::widgets::scroll_view;
 use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
+use circord_core::{
+    application::{Action, ProfileTab, ProfileView},
+    chat,
+};
 use iced::{
     Element, Length, Point, Task,
     advanced::{graphics::text::Version, image::Handle},
     widget::{column, container, mouse_area, opaque, stack},
-};
-use circord_core::{
-    application::{Action, ProfileTab, ProfileView},
-    chat,
 };
 
 use crate::{

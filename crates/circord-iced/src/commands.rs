@@ -9,11 +9,11 @@
 //! the draft carries the `/` query and each option's text, `Action::Send`
 //! runs the command.
 
+use circord_core::application::{Action, CommandRow};
 use iced::{
     Alignment, Element, Length, Padding, Task,
     widget::{button, column, container, operation, row, scrollable::AbsoluteOffset, text},
 };
-use circord_core::application::{Action, CommandRow};
 
 use crate::{
     app::{App, Message},

@@ -4,12 +4,12 @@
 
 use std::sync::Arc;
 
+use circord_core::application::Compose;
 use iced::{
     keyboard::{self, key},
     widget::Id,
 };
 use iced_test::simulator::click;
-use circord_core::application::Compose;
 
 use super::{
     at_top, change, drawn, interact, long_history, numbered, present, preview, right_click,
@@ -1581,9 +1581,9 @@ fn an_animated_custom_emoji_plays_in_text_and_its_reaction_with_one_player_for_i
 
 #[test]
 fn reply_quotes_render_static_and_animated_custom_emoji_and_fall_back_until_loaded() {
+    use circord_core::chat::{ChatMessage, CustomEmoji, Picture, Pixels, Reply};
     use iced::Settings;
     use iced_test::{Simulator, selector::Candidate};
-    use circord_core::chat::{ChatMessage, CustomEmoji, Picture, Pixels, Reply};
 
     let (mut app, _folder) = preview();
     let party = super::animated_emoji();

@@ -9,13 +9,13 @@
 //! this account is in. A click outside or Escape closes it; the member
 //! list's tags don't open it, as in Discord's client.
 
-use iced::{
-    Alignment, Element, Length, Point, Size, Task, mouse,
-    widget::{button, column, container, mouse_area, opaque, row, text},
-};
 use circord_core::{
     application::{Action, AppState, Navigation},
     chat::ServerTag,
+};
+use iced::{
+    Alignment, Element, Length, Point, Size, Task, mouse,
+    widget::{button, column, container, mouse_area, opaque, row, text},
 };
 
 use crate::{
@@ -384,11 +384,11 @@ fn view<'a>(shown: &'a Shown, cx: Ctx<'a>) -> Element<'a, Message> {
 mod tests {
     use std::sync::Arc;
 
-    use iced::Point;
     use circord_core::{
         application::AppState,
         chat::{ChatServer, TagServer},
     };
+    use iced::Point;
 
     use super::{Shown, card};
 

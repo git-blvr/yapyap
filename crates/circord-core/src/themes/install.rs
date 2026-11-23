@@ -720,7 +720,8 @@ mod tests {
             "art": { "surfaces": { "window": { "image": "art/sky.png" } } },
             "variants": { "dark": { "base": "nord", "colours": { "chat": "#000000", "link": "#7fb4ff" } } } }"##;
         let text =
-            package::export_with("Plum Night", "Ada", "circord", true, &colours, Some(layers)).unwrap();
+            package::export_with("Plum Night", "Ada", "circord", true, &colours, Some(layers))
+                .unwrap();
         let folder = directory.path().join(package::folder_name("Plum Night"));
         let written = package::write_export(&folder, &text, Some(&own)).unwrap();
         for path in [

@@ -15,8 +15,8 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use iced::{Subscription, Task};
 use circord_core::application::Action;
+use iced::{Subscription, Task};
 
 use crate::app::{App, Message};
 

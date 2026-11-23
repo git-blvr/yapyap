@@ -12,17 +12,17 @@ use std::borrow::Cow;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::Arc;
 
-use iced::{
-    Alignment, Color, Element, Length, Padding, Size, Task,
-    widget::{
-        Space, column, container, mouse_area, row, scrollable::Viewport, stack, text, tooltip,
-    },
-};
 use circord_core::{
     application::{Action, AppState, Navigation},
     chat::{ChatRoom, ChatServer, MarkKind, VoicePerson},
     discord,
     themes::lists::{LabelPlace, PillMode, RailShape, RailTiles},
+};
+use iced::{
+    Alignment, Color, Element, Length, Padding, Size, Task,
+    widget::{
+        Space, column, container, mouse_area, row, scrollable::Viewport, stack, text, tooltip,
+    },
 };
 
 use crate::{
