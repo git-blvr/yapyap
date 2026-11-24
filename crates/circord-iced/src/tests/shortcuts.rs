@@ -101,7 +101,7 @@ fn a_built_in_chord_does_not_also_act_on_the_focused_message() {
             .find(|message| message.own && message.can_edit)
             .expect("own message")
             .item
-            .clone(),
+            .to_string(),
     );
     let keyed = app.keyed.clone();
     let _ = app.update(Message::Pressed(

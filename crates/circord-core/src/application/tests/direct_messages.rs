@@ -699,13 +699,13 @@ fn peeking_at_a_dm_neither_opens_nor_reads_it() {
         "nothing opens or reads"
     );
     let shown = app.state.peek.as_ref().unwrap().messages.clone();
-    assert_eq!(shown.unwrap().unwrap()[1].item, "d:9");
+    assert_eq!(shown.unwrap().unwrap()[1].item.as_ref(), "d:9");
     assert_eq!(app.state.selected.as_deref(), Some(open.as_str()));
     assert!(
         app.state
             .messages
             .iter()
-            .all(|message| message.item != "d:9")
+            .all(|message| message.item.as_ref() != "d:9")
     );
     // Reading the open DM meanwhile reads only it.
     let effects = app.dispatch(Action::Reading(true));

@@ -12,7 +12,6 @@ use std::{
     time::Duration,
 };
 
-use circord_core::voice::{Command, Resolution, StreamQuality};
 use iced::{
     Alignment, Border, Element, Length, Padding, Task,
     advanced::image::Handle,

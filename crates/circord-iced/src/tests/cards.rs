@@ -221,10 +221,10 @@ fn an_open_card_follows_the_persons_activity_as_it_changes() {
         .iter()
         .flatten()
         .flat_map(|members| members.iter())
-        .find(|member| member.name == "Riley")
+        .find(|member| member.name.as_ref() == "Riley")
         .map(|member| member.id.clone())
         .expect("Riley in the preview");
-    let _ = app.open_card(user.clone(), Point::new(500.0, 200.0));
+    let _ = app.open_card(user.to_string(), Point::new(500.0, 200.0));
     let song = |line: &str| Activity {
         details: Some(line.into()),
         state: Some("Artist".into()),

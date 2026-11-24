@@ -1904,7 +1904,7 @@ mod tests {
             ),
             ..Server::default()
         };
-        let roles: Vec<String> = ["900", "12", "5"].iter().map(|id| id.to_string()).collect();
+        let roles: Vec<Box<str>> = ["900", "12", "5"].iter().map(|id| (*id).into()).collect();
         let named: Vec<String> = server
             .named_roles(&roles)
             .into_iter()

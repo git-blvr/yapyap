@@ -301,11 +301,6 @@ impl Settings {
             Event::Search(query) => self.query = query,
             Event::Drop(drop) => {
                 self.open = (self.open != Some(drop)).then_some(drop);
-                if self.open.is_some()
-                    && let Some(editor) = self.editor.as_mut()
-                {
-                    editor.picker = None;
-                }
                 // What opened may show pictures, such as the entrance
                 // sounds' soundboard.
                 cx.touch();
@@ -341,11 +336,6 @@ impl Settings {
     /// key, then closes Settings.
     pub fn escape(&mut self, cx: &mut Cx<'_>) {
         if self.open.take().is_some() {
-            return;
-        }
-        if let Some(editor) = self.editor.as_mut()
-            && editor.picker.take().is_some()
-        {
             return;
         }
         if self.record.take().is_some() {

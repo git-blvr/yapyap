@@ -771,6 +771,7 @@ async fn peeks_at_a_channel_without_reading_it() {
             "Great",
             "See you at nine"
         ]
+        .map(Into::into)
     );
     let general_said = discord.peek(&guild, &general, 2).await.unwrap();
     assert_eq!(general_said.len(), 2);

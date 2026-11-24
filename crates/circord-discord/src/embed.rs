@@ -196,7 +196,7 @@ pub fn parse(embeds: &Value) -> Parsed {
         if video && playable.is_some() && !thumbnail && !image && bare {
             if let Some(mut file) = picture(&embed["video"], Shown::Poster(index), false) {
                 file.shown = Shown::Message;
-                file.video_url = playable.map(str::to_owned);
+                file.video_url = playable.map(Into::into);
                 parsed.pictures.push(file);
             }
             continue;
@@ -405,7 +405,7 @@ mod tests {
         assert!(parsed.hides.is_empty(), "the link stays, as in Discord");
         let video = &parsed.pictures[0];
         assert_eq!(
-            (video.name.as_str(), video.shown, video.image),
+            (video.name.as_ref(), video.shown, video.image),
             ("clip.mp4", Shown::Message, false)
         );
         let proxy = "https://images-ext-1.discordapp.net/external/x/https/example.com/raw/clip.mp4";

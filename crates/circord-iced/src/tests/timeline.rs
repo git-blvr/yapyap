@@ -524,7 +524,7 @@ fn the_unread_bar_stays_while_the_new_divider_is_above_whats_loaded() {
         // older ones: the first unread is older than all of them.
         for (index, message) in Arc::make_mut(&mut state.messages).iter_mut().enumerate() {
             let message = Arc::make_mut(message);
-            message.item = format!("d:{}", 1000 + index);
+            message.item = format!("d:{}", 1000 + index).into();
         }
         state.first_unread = Some("d:5".into());
         state.caught_up = false;

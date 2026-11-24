@@ -524,11 +524,12 @@ pub(crate) fn live_of(state: &circord_core::application::AppState, id: &str) -> 
         .members
         .as_ref()
         .and_then(|members| members.as_ref().ok());
-    if let Some(member) = members.and_then(|members| members.iter().find(|member| member.id == id))
-    {
+    if let Some(member) = members.and_then(|members| {
+        members.iter().find(|member| member.id.as_ref() == id)
+    }) {
         return Some(look::Live {
             presence: member.presence,
-            activity: member.activity.clone(),
+            activity: member.activity.clone().map(Into::into),
             activities: member.activities.clone(),
         });
     }
