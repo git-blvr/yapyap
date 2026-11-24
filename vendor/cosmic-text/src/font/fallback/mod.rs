@@ -75,7 +75,7 @@ pub trait Fallback: Send + Sync {
     /// Fallbacks to use per script
     fn script_fallback(&self, script: Script, locale: &str) -> &[&'static str];
 
-    /// Yapfast port: called with each cluster of a shaped run that the
+    /// Circord port: called with each cluster of a shaped run that the
     /// default, script and common fallback fonts have no glyph for. The
     /// application adds the families it chose for the cluster's characters
     /// to `families`, which are tried next, before every other font in the
@@ -201,11 +201,11 @@ pub struct FontFallbackIter<'a> {
     other_i: usize,
     end: bool,
     ideal_weight: fontdb::Weight,
-    /// Yapfast port: the families [`Fallback::missing`] chose, tried after
+    /// Circord port: the families [`Fallback::missing`] chose, tried after
     /// the common ones, and how far through them the iterator is.
     chosen: Vec<&'static str>,
     chosen_i: usize,
-    /// Yapfast port: stop before the chosen families, for
+    /// Circord port: stop before the chosen families, for
     /// [`Self::next_before_chosen`].
     stop_at_chosen: bool,
 }
@@ -269,7 +269,7 @@ impl<'a> FontFallbackIter<'a> {
         }
     }
 
-    /// Yapfast port: the next font from the default, script and common
+    /// Circord port: the next font from the default, script and common
     /// fallbacks, or `None` once they're all tried.
     pub fn next_before_chosen(&mut self) -> Option<Arc<Font>> {
         self.stop_at_chosen = true;
@@ -278,7 +278,7 @@ impl<'a> FontFallbackIter<'a> {
         font
     }
 
-    /// Yapfast port: hands each cluster still drawn with a missing glyph
+    /// Circord port: hands each cluster still drawn with a missing glyph
     /// (glyph 0) to [`Fallback::missing`], for the families to try next.
     pub fn report_missing(&mut self, line: &str, glyphs: &[crate::ShapeGlyph]) {
         let mut last = usize::MAX;
@@ -320,7 +320,7 @@ impl<'a> FontFallbackIter<'a> {
         let default_family = self.default_families[self.default_i - 1];
         let default_family_name = self.font_system.db().family_name(default_family);
 
-        // Yapfast port: the family's face nearest the text's weight (the
+        // Circord port: the family's face nearest the text's weight (the
         // keys are sorted by how far their weight is), not only one of
         // exactly that weight, so a variable font with one face is the
         // first font at every weight.
@@ -467,7 +467,7 @@ impl<'a> FontFallbackIter<'a> {
             while self.script_i.1 < script_families.len() {
                 let script_family = script_families[self.script_i.1];
                 self.script_i.1 += 1;
-                // Yapfast port: at the nearest weight, as the default family.
+                // Circord port: at the nearest weight, as the default family.
                 for m_key in self.font_match_keys {
                     if self.face_contains_family(m_key.id, script_family) {
                         if let Some(font) = self.font_system.get_font(m_key.id, self.ideal_weight) {
@@ -491,7 +491,7 @@ impl<'a> FontFallbackIter<'a> {
         while self.common_i < common_families.len() {
             let common_family = common_families[self.common_i];
             self.common_i += 1;
-            // Yapfast port: at the nearest weight, as the default family.
+            // Circord port: at the nearest weight, as the default family.
             for m_key in self.font_match_keys {
                 if self.face_contains_family(m_key.id, common_family) {
                     if let Some(font) = self.font_system.get_font(m_key.id, self.ideal_weight) {
@@ -502,7 +502,7 @@ impl<'a> FontFallbackIter<'a> {
             log::debug!("failed to find family '{common_family}'");
         }
 
-        // Yapfast port: the families chosen for the missing characters.
+        // Circord port: the families chosen for the missing characters.
         if self.stop_at_chosen {
             return None;
         }

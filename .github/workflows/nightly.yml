@@ -56,8 +56,8 @@ jobs:
         with:
           name: linux
           path: |
-            target/dist/linux/Yapfast-*
-            target/dist/linux/yapfast-*.pkg.tar.zst
+            target/dist/linux/Circord-*
+            target/dist/linux/circord-*.pkg.tar.zst
           if-no-files-found: error
           compression-level: 0
 
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: windows
-          path: target/dist/discord/Yapfast-*
+          path: target/dist/discord/Circord-*
           if-no-files-found: error
           compression-level: 0
 
@@ -124,18 +124,18 @@ jobs:
           set -o pipefail
           # Both jobs zip the commit's source; SOURCE.txt and each BUILD.json
           # name the one file the release carries.
-          cmp "dist/linux/Yapfast-$VERSION-source.zip" "dist/windows/Yapfast-$VERSION-source.zip"
+          cmp "dist/linux/Circord-$VERSION-source.zip" "dist/windows/Circord-$VERSION-source.zip"
           mkdir release
-          mv dist/linux/Yapfast-* dist/linux/yapfast-*.pkg.tar.zst release/
-          mv dist/windows/Yapfast-*-windows-x64* release/
-          (cd release && sha256sum Yapfast-* yapfast-*.pkg.tar.zst > SHA256SUMS.txt)
+          mv dist/linux/Circord-* dist/linux/circord-*.pkg.tar.zst release/
+          mv dist/windows/Circord-*-windows-x64* release/
+          (cd release && sha256sum Circord-* circord-*.pkg.tar.zst > SHA256SUMS.txt)
           # The updater installs a nightly only with the nightly key's
           # signature, naming its tag. The key has no password: the secret
           # is what guards it.
           key="$RUNNER_TEMP/nightly.key"
           (umask 077 && printf '%s\n' "${NIGHTLY_SIGNING_KEY:?the nightly environment has no NIGHTLY_SIGNING_KEY}" > "$key")
-          comment="yapfast v$VERSION SHA256SUMS.txt"
-          minisign -S -W -s "$key" -m release/SHA256SUMS.txt -t "$comment" -c "Yapfast v$VERSION"
+          comment="circord v$VERSION SHA256SUMS.txt"
+          minisign -S -W -s "$key" -m release/SHA256SUMS.txt -t "$comment" -c "Circord v$VERSION"
           rm "$key"
           test "$(minisign -V -p packaging/keys/nightly.pub -m release/SHA256SUMS.txt -Q)" = "$comment"
           # The newest nightly, or before the first one the latest release.
@@ -162,4 +162,4 @@ jobs:
           # Titled as the stable releases are, with the commit: the version
           # already says it's a nightly.
           gh release create "v$VERSION" release/* --prerelease --target "$COMMIT" \
-            --title "Yapfast $VERSION (${COMMIT:0:7})" --notes-file notes.md
+            --title "Circord $VERSION (${COMMIT:0:7})" --notes-file notes.md

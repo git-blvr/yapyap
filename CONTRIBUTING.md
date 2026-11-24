@@ -2,7 +2,7 @@
 
 Bug fixes and features are both welcome. Before a large change, say what you're
 building in an issue or on the
-[Yapfast Discord server](https://yapfast.com/discord-invite), so two people
+[Circord Discord server](https://circord.com/discord-invite), so two people
 don't build the same thing. A small fix can go straight to a pull request.
 
 ## Build and test
@@ -68,7 +68,7 @@ Matrix shares.
 
 `scripts/test-fake-discord` runs the Discord service tests against
 `testing/fake_discord.ts`, and needs Bun, Python and curl. Run it when you change
-`crates/yapfast-discord`, `discord_text` or the fake; while you work, name the
+`crates/circord-discord`, `discord_text` or the fake; while you work, name the
 area you changed, as `scripts/test-fake-discord forum`.
 
 On Windows, run the checks directly through Cargo. Say which additional
@@ -87,7 +87,7 @@ For a Discord feature, follow
 it layer by layer. Look up the endpoint, payload or gateway event on
 https://docs.discord.food, and give the fake the same shape.
 
-The window (`crates/yapfast-iced`) is laid out in
+The window (`crates/circord-iced`) is laid out in
 [How the client is built](docs/client/structure.md): one module per area with
 its own state, events, `update` and `view`, and the kit they build from. A
 new screen or dialog follows
@@ -95,25 +95,25 @@ new screen or dialog follows
 behaviour is written down in its doc under [docs/client](docs/client/README.md).
 
 To see a Discord change, run your build against the fake, with the fake in one
-terminal and Yapfast in another:
+terminal and Circord in another:
 
 ```sh
 bun testing/fake_discord.ts --port 18400
-YAPFAST_DISCORD_TEST_SERVER=http://127.0.0.1:18400 cargo run --locked --profile fast -- --data-dir .local/fake-discord
+CIRCORD_DISCORD_TEST_SERVER=http://127.0.0.1:18400 cargo run --locked --profile fast -- --data-dir .local/fake-discord
 ```
 
-`YAPFAST_DISCORD_TEST_SERVER` makes Yapfast use a test token kept in memory and
+`CIRCORD_DISCORD_TEST_SERVER` makes Circord use a test token kept in memory and
 leave the system's credential store alone. Keep it on every run: without it,
-Yapfast signs in to any Discord account linked on your machine. `--data-dir`
+Circord signs in to any Discord account linked on your machine. `--data-dir`
 keeps the run's settings and cache apart from your own, and lets it run beside a
-Yapfast you already have open. Add `YAPFAST_DISCORD_TEST_UNLINKED=1` to go through
+Circord you already have open. Add `CIRCORD_DISCORD_TEST_UNLINKED=1` to go through
 linking an account against the fake. The comment at the top of
 `testing/fake_discord.ts` lists its options, such as `--servers 3` and `--dms 50`.
 
 In PowerShell, set the fake server before the Cargo command:
 
 ```powershell
-$env:YAPFAST_DISCORD_TEST_SERVER = 'http://127.0.0.1:18400'
+$env:CIRCORD_DISCORD_TEST_SERVER = 'http://127.0.0.1:18400'
 cargo run --locked --profile fast -- --data-dir .local/fake-discord
 ```
 
@@ -171,10 +171,10 @@ menu`. The body says what it does and why.
   or another contributor.
 
 Your contribution is licensed under the [GPL, version 3 or later](LICENSE), as
-the rest of Yapfast is.
+the rest of Circord is.
 
 ## Reporting a bug
 
-Give the Yapfast version, your system and the steps that show the bug, and add a
+Give the Circord version, your system and the steps that show the bug, and add a
 screenshot or video if it's visual. For voice and streaming problems, include
 your graphics card and the settings you used.

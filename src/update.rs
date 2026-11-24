@@ -1,4 +1,4 @@
-//! Whether a newer Yapfast has been released, and how this one was installed.
+//! Whether a newer Circord has been released, and how this one was installed.
 //!
 //! Settings' About page can look the releases up on GitHub, say what it found
 //! and, when a person presses Update and restart, install it ([`install`]).
@@ -6,7 +6,7 @@
 //! its program sits, so tests cover them without a network. [`check`] is the
 //! one small request when a person turns the check on or presses Check now.
 //!
-//! The check is off until it's turned on: Yapfast makes no request of its own
+//! The check is off until it's turned on: Circord makes no request of its own
 //! to GitHub otherwise, and it installs only what a person asked for. See
 //! docs/packaging.md.
 
@@ -17,12 +17,12 @@ use crate::build_info::Channel;
 pub mod install;
 pub mod signature;
 
-/// Where Yapfast's releases are listed. Thirty reach the newest stable release
+/// Where Circord's releases are listed. Thirty reach the newest stable release
 /// behind a run of nightlies.
-const RELEASES: &str = "https://api.github.com/repos/yapfast/yapfast/releases?per_page=30";
+const RELEASES: &str = "https://api.github.com/repos/circord/circord/releases?per_page=30";
 
 /// Where a release's page is, for the browser to open: only this project's.
-const PAGES: &str = "https://github.com/yapfast/yapfast/releases/";
+const PAGES: &str = "https://github.com/circord/circord/releases/";
 
 /// A SemVer version, as `scripts/set-version` allows them: a core of three
 /// numbers and a dotted prerelease part. Build metadata is dropped, as it
@@ -59,7 +59,7 @@ impl PartialOrd for Identifier {
 
 impl Version {
     /// Reads `0.4.0`, `v0.4.0` and `0.5.0-nightly.20261107.12`; anything else
-    /// is not a version of Yapfast's.
+    /// is not a version of Circord's.
     pub fn parse(text: &str) -> Option<Self> {
         let text = text.trim();
         let text = text.strip_prefix('v').unwrap_or(text);
@@ -123,7 +123,7 @@ pub struct Asset {
     pub size: u64,
 }
 
-/// A published release of Yapfast.
+/// A published release of Circord.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Release {
     pub version: Version,
@@ -369,7 +369,7 @@ pub fn decide(
     }
 }
 
-/// How this copy of Yapfast was put on the computer, which decides who
+/// How this copy of Circord was put on the computer, which decides who
 /// updates it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Source {
@@ -447,7 +447,7 @@ pub fn source() -> Source {
 pub(crate) fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
     reqwest::Client::builder()
-        .user_agent(concat!("Yapfast/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("Circord/", env!("CARGO_PKG_VERSION")))
         .https_only(true)
         .connect_timeout(std::time::Duration::from_secs(20))
         .read_timeout(std::time::Duration::from_secs(60))
@@ -482,7 +482,7 @@ mod tests {
         Release {
             version: version(tag),
             tag: tag.into(),
-            page: format!("https://github.com/yapfast/yapfast/releases/tag/{tag}"),
+            page: format!("https://github.com/circord/circord/releases/tag/{tag}"),
             assets: Vec::new(),
             notes: String::new(),
         }
@@ -497,7 +497,7 @@ mod tests {
             ### Fixes\n\n- fix(voice)!: keep the call: all of it by @a in 1234567\n\
             - Add navigation, calls and extras by @Fayberr in 1eb921958c4e5b3b2e87d9f2d4330dbaedc9fb0b\n\n\
             <details><summary>Other changes (1)</summary>\n\n- docs: hidden by @a in 1234567\n\n</details>\n\n\
-            All changes: https://github.com/yapfast/yapfast/compare/a...b\n\nOn Arch Linux, install it.";
+            All changes: https://github.com/circord/circord/compare/a...b\n\nOn Arch Linux, install it.";
         assert_eq!(
             notes_of(body),
             "Features\n\u{2022} Fold long messages with Show more\n\u{2022} Add Developer Mode\n\n\
@@ -569,7 +569,7 @@ mod tests {
     fn a_listing_leaves_out_drafts_and_odd_tags() {
         let json = br#"[
             {"tag_name": "v0.4.0", "draft": false, "prerelease": false,
-             "html_url": "https://github.com/yapfast/yapfast/releases/tag/v0.4.0",
+             "html_url": "https://github.com/circord/circord/releases/tag/v0.4.0",
              "assets": [{"name": "SHA256SUMS.txt", "browser_download_url": "https://example.test/sums", "size": 12}]},
             {"tag_name": "v0.5.0", "draft": true, "html_url": ""},
             {"tag_name": "preview", "draft": false, "html_url": ""},
@@ -581,12 +581,12 @@ mod tests {
         assert_eq!(releases[0].assets[0].size, 12);
         assert_eq!(
             releases[0].page,
-            "https://github.com/yapfast/yapfast/releases/tag/v0.4.0"
+            "https://github.com/circord/circord/releases/tag/v0.4.0"
         );
         // A page elsewhere isn't opened.
         assert_eq!(
             releases[1].page,
-            "https://github.com/yapfast/yapfast/releases/tag/v0.5.0-nightly.20261107.12"
+            "https://github.com/circord/circord/releases/tag/v0.5.0-nightly.20261107.12"
         );
         assert!(parse_releases(b"{\"message\": \"rate limited\"}").is_err());
     }
@@ -676,42 +676,42 @@ mod tests {
     fn the_install_decides_who_updates() {
         let manager = |exe| classify(exe, false, false).manager();
         assert_eq!(
-            classify("/tmp/.mount_Yap/usr/bin/yapfast", true, false),
+            classify("/tmp/.mount_Yap/usr/bin/circord", true, false),
             Source::AppImage
         );
         assert_eq!(
-            classify("/app/bin/yapfast", false, true).manager(),
+            classify("/app/bin/circord", false, true).manager(),
             Some("Flatpak")
         );
         assert_eq!(
-            manager(r"C:\Users\Ann\scoop\apps\yapfast\current\yapfast.exe"),
+            manager(r"C:\Users\Ann\scoop\apps\circord\current\circord.exe"),
             Some("Scoop")
         );
         assert_eq!(
-            manager(r"C:\ProgramData\chocolatey\lib\yapfast\yapfast.exe"),
+            manager(r"C:\ProgramData\chocolatey\lib\circord\circord.exe"),
             Some("Chocolatey")
         );
-        assert_eq!(manager("/nix/store/abc-yapfast/bin/yapfast"), Some("Nix"));
+        assert_eq!(manager("/nix/store/abc-circord/bin/circord"), Some("Nix"));
         assert_eq!(
-            manager("/home/linuxbrew/.linuxbrew/Cellar/yapfast/1/bin/yapfast"),
+            manager("/home/linuxbrew/.linuxbrew/Cellar/circord/1/bin/circord"),
             Some("Homebrew")
         );
-        assert_eq!(manager("/usr/bin/yapfast"), Some("your package manager"));
-        assert_eq!(manager("/usr/local/bin/yapfast"), None);
+        assert_eq!(manager("/usr/bin/circord"), Some("your package manager"));
+        assert_eq!(manager("/usr/local/bin/circord"), None);
         assert_eq!(
             classify(
-                r"C:\Users\Ann\AppData\Local\Programs\Yapfast\yapfast.exe",
+                r"C:\Users\Ann\AppData\Local\Programs\Circord\circord.exe",
                 false,
                 false
             ),
             Source::Installer
         );
         assert_eq!(
-            classify("/home/ann/src/yapfast/target/release/yapfast", false, false),
+            classify("/home/ann/src/circord/target/release/circord", false, false),
             Source::Other
         );
         assert_eq!(
-            classify(r"X:\Dev\yapfast\target\release\yapfast.exe", false, false),
+            classify(r"X:\Dev\circord\target\release\circord.exe", false, false),
             Source::Other
         );
     }

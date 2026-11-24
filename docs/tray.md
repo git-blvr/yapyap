@@ -1,38 +1,38 @@
 # The tray
 
-Closing the window leaves Yapfast running in the system tray: the session, a call, notifications, ringing and sounds go on. The
-tray icon is Yapfast's logo in Yap's marigold, with a red dot cut into its
+Closing the window leaves Circord running in the system tray: the session, a call, notifications, ringing and sounds go on. The
+tray icon is Circord's logo in Circord's marigold, with a red dot cut into its
 corner while a mention or a DM waits unread, as Discord counts them. Clicking
-it opens the window. Its menu has Open Yapfast, Disconnect during a call, and
+it opens the window. Its menu has Open Circord, Disconnect during a call, and
 Quit.
 
 Settings → Advanced has "Close to tray", on unless turned off
 (`close_to_tray` in `layout.json`). Off, or with no tray to show the icon,
-closing the window quits Yapfast; the setting's description
-says when there's no tray. A tray that starts after Yapfast, or comes back,
+closing the window quits Circord; the setting's description
+says when there's no tray. A tray that starts after Circord, or comes back,
 still gets the icon.
 
 ## Starting again
 
-Starting Yapfast while it runs on the same data folder brings the running
+Starting Circord while it runs on the same data folder brings the running
 one's window forward, making it again if it was closed to the tray, and the
 new start ends (`src/instance.rs`). A start can carry one link (see
-[Links from other apps](#links-from-other-apps)), which the running Yapfast
+[Links from other apps](#links-from-other-apps)), which the running Circord
 opens. A start with `--background`, as at sign-in, just ends. Settings → Advanced → "Allow multiple windows"
 (`multiple_windows` in `layout.json`, off unless turned on) starts another
-Yapfast instead, with its own window and tray icon. Each folder is its own:
+Circord instead, with its own window and tray icon. Each folder is its own:
 another `--data-dir` always starts. The preview never asks.
 
 The first start holds a lock on `instance.lock` in the folder, which the
 system lets go of when the process ends, so a crash leaves nothing to clean
 up. It listens on `instance.socket` beside it on Linux; on Windows on a
-named event, `Local\yapfast-` and a hash of the folder's path. A later start
+named event, `Local\circord-` and a hash of the folder's path. A later start
 that finds the lock taken asks for the window there, trying for 5 seconds
 while the first may still be starting or restarting with another renderer,
 and starts anyway if nothing answers. On Linux it passes on the activation
 token and link the desktop launched it with (`XDG_ACTIVATION_TOKEN` on Wayland,
 `DESKTOP_STARTUP_ID` on X11), so the window can take the focus: a window made
-again takes it through winit, and a shown one through Yapfast's own
+again takes it through winit, and a shown one through Circord's own
 `xdg_activation_v1` on winit's Wayland connection. On Windows the later start
 lets any process take the foreground, which the first then does. Its link
 waits as a small file in `instance-links` for the first to take and remove;
@@ -40,64 +40,64 @@ a new first start clears any left there by one that has gone.
 
 ## Links from other apps
 
-The desktop hands Yapfast a link after `--open-link`: Windows runs
-`"…\yapfast.exe" --open-link "%1"`, and the desktop entry
-`yapfast --open-link %u`. Windows puts the link into that command line as it
+The desktop hands Circord a link after `--open-link`: Windows runs
+`"…\circord.exe" --open-link "%1"`, and the desktop entry
+`circord --open-link %u`. Windows puts the link into that command line as it
 comes, quotes included, so one link can split into several arguments. Nothing
 after `--open-link` is read as an option, and when more than one argument
-follows it, Yapfast starts, or shows the running one's window, without the
+follows it, Circord starts, or shows the running one's window, without the
 link (`src/main.rs`). A link given on its own, as in
-`yapfast https://discord.com/channels/…`, opens too. Every argument under
-`discord:` or `yapfast:` counts as a link; one naming no place Yapfast has,
-such as Discord's library or settings, only starts Yapfast or shows its
+`circord https://discord.com/channels/…`, opens too. Every argument under
+`discord:` or `circord:` counts as a link; one naming no place Circord has,
+such as Discord's library or settings, only starts Circord or shows its
 window, as every link does in a Matrix-only build. The link passes on as the
 URL standard writes it, a space percent-encoded, so it stays one word on the
-socket. Yapfast opens the place once Discord is online, and a first start
+socket. Circord opens the place once Discord is online, and a first start
 waits for its snapshot in the same way. A link that comes while a dialog is
 open waits until it closes, so a link from another app or a web page never
 swaps what an Authorize, Redeem or Join click is for. The restart a changed renderer setting
 makes doesn't open it again; the one after a failed GPU start does, as nothing
 opened it yet.
 
-Settings → Advanced → "Open Discord links in Yapfast" claims `discord://`
-for this Yapfast, and its own `yapfast://` with it; turning it off gives each
+Settings → Advanced → "Open Discord links in Circord" claims `discord://`
+for this Circord, and its own `circord://` with it; turning it off gives each
 back as it was (`src/protocol.rs`). Showing the switch reads a file or the
 registry and starts no process.
 
 - **Windows**: the switch is the current user's
   `Software\Classes\discord` command. The one there before is kept, in its
-  own registry type, under `Software\Yapfast\DiscordProtocol`. The installer
-  registers only `yapfast://`; uninstalling runs `yapfast.exe
+  own registry type, under `Software\Circord\DiscordProtocol`. The installer
+  registers only `circord://`; uninstalling runs `circord.exe
   --release-discord-links`, which gives `discord://` back, and removes the key.
 - **Linux**: the switch is the person's own `mimeapps.list`, in
   `$XDG_CONFIG_HOME` or `~/.config`, and it's on while its
-  `[Default Applications]` name Yapfast's entry first for
+  `[Default Applications]` name Circord's entry first for
   `x-scheme-handler/discord`. Claiming keeps each scheme's line as it was, or
   that there was none, in `discord-protocol-previous` in the data folder;
-  turning the switch off puts that line back or takes Yapfast's out, and
+  turning the switch off puts that line back or takes Circord's out, and
   leaves a default someone chose since. The list is written where a link to
   it points, as home-manager or a dotfiles folder links it, keeping its
   permissions; one that can't be written, as in a read-only store, fails the
-  switch and stays as it was. Yapfast's desktop entry declares only
-  `x-scheme-handler/yapfast`. gio and xdg-open follow a default to an entry
+  switch and stays as it was. Circord's desktop entry declares only
+  `x-scheme-handler/circord`. gio and xdg-open follow a default to an entry
   that doesn't declare the scheme, so the claim works, and without a Discord
-  app installed the desktop doesn't fall back to Yapfast for Discord's links.
+  app installed the desktop doesn't fall back to Circord for Discord's links.
 
 ## Starting at sign-in
 
-Settings → Advanced → "Start when you sign in" starts Yapfast with
+Settings → Advanced → "Start when you sign in" starts Circord with
 `--background` when the person signs in to their computer (`src/autostart.rs`).
 The entry is the setting, not `layout.json`: on Windows a value named
-`Yapfast` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, on Linux
-`io.github.yapfast.Yapfast.desktop` in `$XDG_CONFIG_HOME/autostart`. Each
-window reads it, so turning Yapfast off in Task Manager's Startup apps (an odd
+`Circord` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, on Linux
+`io.github.circord.Circord.desktop` in `$XDG_CONFIG_HOME/autostart`. Each
+window reads it, so turning Circord off in Task Manager's Startup apps (an odd
 first byte in `Explorer\StartupApproved\Run`), or a desktop setting
 `Hidden=true` or deleting the file, shows as off. Turning it on here clears
 Task Manager's record too. Each start, outside the preview, rewrites an entry
-that's on with this Yapfast's path, so moving its folder or an update keeps it
-working. The entry keeps `--data-dir` if Yapfast had one; an AppImage's entry
+that's on with this Circord's path, so moving its folder or an update keeps it
+working. The entry keeps `--data-dir` if Circord had one; an AppImage's entry
 names the AppImage, not its temporary mount. The preview, and platforms
-without either, don't show the switch. The Windows installer's "Start Yapfast
+without either, don't show the switch. The Windows installer's "Start Circord
 automatically when Windows starts" writes the same value, and uninstalling removes it.
 
 `--background` restores the saved session and goes to the tray without
@@ -106,13 +106,13 @@ signing in needs it, and when the start brings a link to open. Windows knows at 
 notification area; without it the window shows. On Linux the bus says a
 moment later, and a tray that's missing, or goes while the window is closed,
 opens the window. The renderer starts with the first window, so one made
-late, from the tray, with a GPU that fails ends Yapfast as a first window's
-does, and Yapfast starts again on the CPU with its window showing
+late, from the tray, with a GPU that fails ends Circord as a first window's
+does, and Circord starts again on the CPU with its window showing
 ([renderers](client/window.md#building-and-running)).
 
 ## The window
 
-`crates/yapfast-iced/src/shell.rs` holds the window. Yapfast runs as an iced
+`crates/circord-iced/src/shell.rs` holds the window. Circord runs as an iced
 daemon, which lives without one. Closing the window drops it, its renderer,
 its widgets and every picture and icon made to draw, rather than hiding it.
 What only the window used stops with it (`App::forget_window`): Settings
@@ -120,7 +120,7 @@ close as their own button closes them, with the microphone meters and the
 camera test that Voice settings run; an open menu, the picker and a card go;
 the call's popup goes with the microphone its level reads, and the call's
 cameras make no frames until the window is back. Half a second later
-Yapfast gives freed memory back (`release_memory` in `src/desktop.rs`):
+Circord gives freed memory back (`release_memory` in `src/desktop.rs`):
 `malloc_trim` on Linux; on Windows `HeapCompact` on the process heap, which
 Rust allocates from, and `SetProcessWorkingSetSize(-1, -1)`, which empties
 the working set. Task Manager's Memory column is the private working set,
@@ -133,22 +133,22 @@ core again.
 
 Opening makes the window again at the size of the last one, maximized if
 that was, on the same conversation, and everything else from the
-application's state. Yapfast's event loop runs until quit, so Quit, the
+application's state. Circord's event loop runs until quit, so Quit, the
 renderer restart and closing without a tray end it.
 
-Without a window, backend events still apply. After each burst Yapfast rings for
+Without a window, backend events still apply. After each burst Circord rings for
 an incoming DM call, or stops, and updates the tray icon. A notification
 clicked while the window is closed opens it on that conversation.
 
 ## Linux
 
 The icon is a StatusNotifierItem through [`ksni`](https://crates.io/crates/ksni),
-pure Rust over the zbus Yapfast already has for notifications, with ksni's
+pure Rust over the zbus Circord already has for notifications, with ksni's
 async-io and blocking features, so it adds only `ksni`, `task-local`,
-`arc-swap` and `crossbeam-queue` to `Cargo.lock`. It connects to the session bus Yapfast is given. A thread
-(`yapfast-tray`) registers it and sends it the unread dot and the call as they
+`arc-swap` and `crossbeam-queue` to `Cargo.lock`. It connects to the session bus Circord is given. A thread
+(`circord-tray`) registers it and sends it the unread dot and the call as they
 change, since each update waits on the bus; ksni's own thread answers the
-tray. ksni follows the StatusNotifierWatcher: Yapfast counts the tray as there
+tray. ksni follows the StatusNotifierWatcher: Circord counts the tray as there
 while the watcher is.
 
 KDE Plasma, and most bars such as Waybar, run a watcher. GNOME needs the
@@ -156,8 +156,8 @@ AppIndicator extension; without it closing quits.
 
 On Wayland a window comes to the front only with an xdg-activation token
 from input the compositor saw. KDE Plasma sends one just before a click on the
-icon or Open Yapfast, and Yapfast raises the window with it, as it does with
-a later start's token. Without one, as with Waybar, Yapfast asks the compositor
+icon or Open Circord, and Circord raises the window with it, as it does with
+a later start's token. Without one, as with Waybar, Circord asks the compositor
 through winit's `request_user_attention`, and the compositor decides:
 Hyprland marks the window urgent, or focuses it with
 `misc:focus_on_activate`.
@@ -166,9 +166,9 @@ Hyprland marks the window urgent, or focuses it with
 
 The icon is `Shell_NotifyIconW` through `windows-sys`, already in the tree for
 winit, on a hidden window of the UI thread, whose messages winit's loop
-dispatches. A left click opens Yapfast; a right click shows the menu at the
+dispatches. A left click opens Circord; a right click shows the menu at the
 pointer with `TrackPopupMenu`. When Explorer starts again it sends
-`TaskbarCreated`, and Yapfast adds the icon again. If the notification area
+`TaskbarCreated`, and Circord adds the icon again. If the notification area
 won't take the icon, closing quits.
 
 The bar is a cross-build and Wine (`scripts/build-windows`, see
@@ -177,18 +177,18 @@ The bar is a cross-build and Wine (`scripts/build-windows`, see
 - the icon is crisp at 100%, 125%, 150% and 200% scaling, and its dot shows
   for an unread DM or a mention;
 - a left click opens the window, at its size and place, on the same
-  conversation; a right click shows Open Yapfast, Disconnect in a call, and
+  conversation; a right click shows Open Circord, Disconnect in a call, and
   Quit, which closes when clicking elsewhere;
 - a call keeps going with the window closed, and Disconnect ends it;
 - Task Manager's Memory column drops when the window closes, and stays down
   for a minute;
 - after restarting Explorer, the icon comes back;
-- the icon goes when Yapfast quits, and doesn't linger until hovered;
-- with "Start when you sign in" on, signing out and in starts Yapfast in the
+- the icon goes when Circord quits, and doesn't linger until hovered;
+- with "Start when you sign in" on, signing out and in starts Circord in the
   tray with no window, and Task Manager's Startup apps lists it; turning it
   off there shows as off in Settings;
-- the installer's "Start Yapfast automatically when Windows starts" does the same, an update
-  installs over a running Yapfast, and uninstalling leaves nothing in Startup
+- the installer's "Start Circord automatically when Windows starts" does the same, an update
+  installs over a running Circord, and uninstalling leaves nothing in Startup
   apps.
 
 The registry side is checked under Wine: `autostart::windows::tests`, ignored

@@ -2,28 +2,28 @@
 
 ## Building and running
 
-A plain build makes the `yapfast` executable: the window with Discord and
+A plain build makes the `circord` executable: the window with Discord and
 both its renderers, tiny-skia on the CPU and wgpu on the GPU.
 
 ```sh
 nix develop path:./nix --command cargo build --profile fast
-target/fast/yapfast --preview
+target/fast/circord --preview
 ```
 
 With `--features matrix` it carries Matrix too, and signs in with Matrix
 instead of linking Discord. `--data-dir`, `--preview`, `--stream-worker`,
 `--background`, `--release-discord-links` and a `LINK` work in both.
 
-The renderer is chosen once as Yapfast starts (`graphics::plan`):
+The renderer is chosen once as Circord starts (`graphics::plan`):
 Settings → Advanced → Render with the GPU, off by default, unless
 `--renderer gpu|software` says otherwise for that start.
 The window system allows one renderer per process, so a changed setting
-applies from the next start, which Advanced's Restart Yapfast makes.
+applies from the next start, which Advanced's Restart Circord makes.
 `renderer::choose` lets only the chosen renderer start (each vendored one
 has a switch, as iced's own choice between them reads only
 `ICED_BACKEND`), before any picture is made, as each takes pictures in its
 own format: tiny-skia premultiplied BGRA, wgpu straight RGBA. A GPU that
-can't start ends the window (`Exit::UseSoftware`); `main` starts Yapfast
+can't start ends the window (`Exit::UseSoftware`); `main` starts Circord
 again on the CPU with the reason, and that start says so in a banner
 (over the conversation, the call, and the sign-in screen's card) and
 turns the setting off. wgpu opens the Vulkan loader, `libvulkan.so.1`, as
@@ -35,8 +35,8 @@ differs from the frame before (a scrolled list's part of the window, say),
 so a compositor that copies the window's buffer into a texture on each
 commit copies no more than that.
 
-`YAPFAST_LOG=debug` also turns on the frame trace (`frames.rs`, log
-target `yapfast::frames`): for each frame the CPU renderer presents, how
+`CIRCORD_LOG=debug` also turns on the frame trace (`frames.rs`, log
+target `circord::frames`): for each frame the CPU renderer presents, how
 long it waited for a buffer, told what changed, drew and presented, the
 area drawn and the area the compositor was told changed; and for each
 frame a list's motion takes a step on, when that frame was asked for, how
@@ -45,13 +45,13 @@ are microseconds since the window began, so a frame's lines line up. Off,
 it reads no clock.
 
 Under the private test display, `scripts/ui-session start --bin
-target/fast/yapfast` runs a built binary on the preview, and with
+target/fast/circord` runs a built binary on the preview, and with
 `--discord` against the fake Discord. It reads the
-window-control file (`YAPFAST_UI_TEST_CONTROL`, `control_file.rs`):
+window-control file (`CIRCORD_UI_TEST_CONTROL`, `control_file.rs`):
 `stats` logs the allocator's figures, `trim` gives back
 free heap, `hide` and `show` hide and show the window, `close` and `quit`
 end it, `destroy` drops the window without giving its memory back,
-`open` and `create` open it as the tray's Open Yapfast does, `theme ID`
+`open` and `create` open it as the tray's Open Circord does, `theme ID`
 chooses a theme and keeps it, and `stage`, `stage-aside` and `pick` go to
 the core.
 
@@ -60,12 +60,12 @@ the core.
 The client runs as an iced daemon (`lib.rs`, `shell.rs`): it lives without
 a window, so closing to the tray drops the window, its renderer, its
 widgets and every picture made to draw (`pictures::Pictures`), and the
-tray's Open Yapfast makes a new one at the size it had.
+tray's Open Circord makes a new one at the size it had.
 The window's size while it isn't maximized, and whether it was, are kept
 in `layout.json` (`placement`, in the desktop's own units, so the zoom
 doesn't change them) as either changes, and the next start opens with
 them (`App::keep_placement`, `App::place_as_kept`); with none kept it
-opens 1120 by 760. The test display's size (`YAPFAST_UI_TEST_SIZE`)
+opens 1120 by 760. The test display's size (`CIRCORD_UI_TEST_SIZE`)
 stands over what was kept, and nothing is kept of it.
 Where the window was is kept with them on Windows alone
 (`placement.position`, the frame's top left corner in the desktop's
@@ -89,7 +89,7 @@ tell the window what they hear through a `Tell`, from threads of their
 own, which a stream hands to the event loop as messages; nothing polls.
 
 - The tray (`shell.rs`): its icon, with the unread dot for a mention or an
-  unread DM, and Disconnect in its menu during a call; Open Yapfast, and a
+  unread DM, and Disconnect in its menu during a call; Open Circord, and a
   click on it, brings the window back with the click's activation token.
   Closing to it closes Settings as their own button does, and the call's
   popup with the microphone its level reads; the call's cameras make no
@@ -104,19 +104,19 @@ own, which a stream hands to the event loop as messages; nothing polls.
   starting at sign-in does, unless there's no tray to start in or the
   start brings a link to open.
 - The window's focus: the core hears each time it's gained or lost, and
-  that there's none while Yapfast is in the tray. The open conversation
+  that there's none while Circord is in the tray. The open conversation
   counts as read only with its newest message in view and the window in
   front (`App::reads`), said with each of the timeline's reports and as
-  the focus changes, so what comes while Yapfast is behind stays unread.
+  the focus changes, so what comes while Circord is behind stays unread.
 - New messages: a sound unless it's
-  the conversation in front; while Yapfast isn't in front the taskbar
+  the conversation in front; while Circord isn't in front the taskbar
   flashes and a notification shows, as the settings allow. A click on the
   notification opens its conversation, closing Settings, and brings the
   window back.
   On Windows the taskbar icon counts the mentions and unread DMs that
   trigger the tray dot. It shows 1–9, or 9+ for ten or more. An unread
   unmuted DM with no message count contributes one.
-- A later start of Yapfast on the same data folder hands over to the
+- A later start of Circord on the same data folder hands over to the
   running one and ends: the window comes forward with that start's token,
   and a Discord link it brought (a `LINK` on its command line, or a
   `discord://` link the desktop opened) opens once Discord is online and
@@ -125,7 +125,7 @@ own, which a stream hands to the event loop as messages; nothing polls.
   autostart entry pointing at this executable, outside the preview.
 - The title bar (`window_bar.rs`): where the desktop doesn't frame windows
   (Windows, and desktops such as GNOME and KDE that `frame.rs` names),
-  Yapfast draws its own; elsewhere it takes the system's.
+  Circord draws its own; elsewhere it takes the system's.
   Appearance's "Use the system title bar" switches, and the window is made
   again to take the change. The bar holds Back and Forward through the
   conversations visited (16 px arrows in 24 px boxes), the place's name
@@ -212,7 +212,7 @@ own, which a stream hands to the event loop as messages; nothing polls.
 
 `theme.rs` holds the theme every widget paints with: one struct of the
 theme's colours, which `themes.rs` fills from the
-core's palettes (`yapfast_core::theme`, see [themes](../themes.md)), turned
+core's palettes (`circord_core::theme`, see [themes](../themes.md)), turned
 into iced's colour type once (`themes::theme`), plus the colours
 `Theme::worked_out` works out from them
 (the menu's ground and outline, the composer's ground and placeholder, a

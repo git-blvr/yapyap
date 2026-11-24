@@ -1,6 +1,6 @@
 # Development
 
-How to build Yapfast, try it, and test it locally. [Building](building.md)
+How to build Circord, try it, and test it locally. [Building](building.md)
 covers the toolchain, Cargo features and packaging in depth; the
 [architecture](architecture.md) shows how the code fits together.
 
@@ -48,15 +48,15 @@ sign-in. Normal launch restores your saved session. Use `--data-dir PATH` for
 a separate test session. Passwords and recovery keys are entered in masked
 native fields.
 
-When testing links from a Linux desktop, use `--data-dir` to isolate Yapfast's
-files and keep the desktop's normal XDG environment. Yapfast uses `xdg-open`,
+When testing links from a Linux desktop, use `--data-dir` to isolate Circord's
+files and keep the desktop's normal XDG environment. Circord uses `xdg-open`,
 or `gio open` when `xdg-open` is unavailable, to open web links and CAPTCHA
 pages in the configured default browser. Without either it falls back to the
 `webbrowser` crate, which reads `$BROWSER` first.
 
-Closing the window leaves Yapfast running in the system tray, with any call,
-where its icon opens it again or quits; without a tray it quits Yapfast
-([the tray](tray.md)). For Yapfast's icon on its window and in the launcher,
+Closing the window leaves Circord running in the system tray, with any call,
+where its icon opens it again or quits; without a tray it quits Circord
+([the tray](tray.md)). For Circord's icon on its window and in the launcher,
 run `scripts/install-desktop-entry` once after a release build
 ([the app icon](packaging.md#the-app-icon)).
 
@@ -68,7 +68,7 @@ start the fake with Bun and run Cargo with the PowerShell environment setup in
 
 ## Renderer
 
-Yapfast draws on the CPU, with tiny-skia, unless Settings → Advanced → "Render
+Circord draws on the CPU, with tiny-skia, unless Settings → Advanced → "Render
 with the GPU" is on. To draw on the GPU, with wgpu, for one start:
 
 ```sh
@@ -76,14 +76,14 @@ nix develop path:./nix --command cargo run --locked -- --preview --renderer gpu
 ```
 
 Omit `--preview` to sign in or restore your real account. If the GPU cannot
-start, Yapfast restarts itself on the CPU and explains why
+start, Circord restarts itself on the CPU and explains why
 ([renderers](client/window.md#building-and-running)). Renderer
 selection does not change session storage, encryption or the native audio
 backend.
 
 ## Matrix
 
-Real sending requires a verified device and an encrypted room. Verify Yapfast
+Real sending requires a verified device and an encrypted room. Verify Circord
 in another client and press "Check again", or enter your existing recovery
 key. Join rooms using another Matrix client for now. Messages support Markdown,
 replies, reactions, editing, deletion and encrypted attachments. Messages
@@ -101,7 +101,7 @@ standalone rooms outside Spaces are not shown in this navigation yet.
 With the local services running, check the desktop messaging backend with:
 
 ```sh
-cargo test --locked -p yapfast-core matrix_chat::tests::encrypted_chat_restore_send_retry_and_security_gates -- --ignored
+cargo test --locked -p circord-core matrix_chat::tests::encrypted_chat_restore_send_retry_and_security_gates -- --ignored
 ```
 
 This creates disposable accounts and checks session restoration, encrypted
@@ -169,7 +169,7 @@ cargo run --locked --features matrix -- --voice-demo
 ```
 
 The demo prints commands for two saved test accounts. Open them in separate
-processes, select **Yapfast voice test → Lounge**, and press **Join voice**.
+processes, select **Circord voice test → Lounge**, and press **Join voice**.
 Each joins with the microphone on, so mute one, or use headphones. The gear
 button selects microphone and speakers. The
 [voice guide](voice.md) covers requirements, checks and the Windows test.

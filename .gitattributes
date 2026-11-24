@@ -1,4 +1,7 @@
-# Themes are built in and compared byte for byte (`yapfast theme new` writes
+# Themes are built in and compared byte for byte (`circord theme new` writes
 # the template's theme.json as it is), so their text keeps `\n` line ends in
 # every checkout, Windows' `core.autocrlf` too. Pictures and sounds stay binary.
 themes/** text=auto eol=lf
+# The update tests' signatures hold only for the bytes signed, so their files
+# keep `\n` line ends the same way.
+src/update/testdata/** text=auto eol=lf

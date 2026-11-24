@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in Yapfast.
+description: Report a reproducible problem in Circord.
 title: "[Bug]: "
 labels: ["bug", "triage"]
 body:
@@ -12,8 +12,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Yapfast version
-      description: Copy the version from About or `yapfast --version`. For a local build, include the commit.
+      label: Circord version
+      description: Copy the version from About or `circord --version`. For a local build, include the commit.
     validations:
       required: true
   - type: textarea
@@ -38,7 +38,7 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
-      description: Give the steps starting from opening Yapfast, and say how often the problem occurs.
+      description: Give the steps starting from opening Circord, and say how often the problem occurs.
       placeholder: |
         1. Open ...
         2. Select ...

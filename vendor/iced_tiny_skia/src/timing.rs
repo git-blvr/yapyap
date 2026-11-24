@@ -1,4 +1,4 @@
-//! Yapfast port (patch 22): how long each frame took to draw and present,
+//! Circord port (patch 22): how long each frame took to draw and present,
 //! for the app's frame trace.
 //!
 //! The app sets a hook once (`set_hook`), and only while its trace is on;

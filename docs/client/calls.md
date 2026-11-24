@@ -15,7 +15,7 @@ The call's views and what they do are in `call/`.
   edge (Hide Members) hides the strip under it, so its cameras stop
   decoding and the large tile fills the stage's height; the pill then sits
   just over the controls (Show Members) to bring it back. Each voice
-  channel keeps its choice while Yapfast runs, through leaving and joining
+  channel keeps its choice while Circord runs, through leaving and joining
   again, as Discord's client keeps it. The stage takes the height left
   between the line over it and the controls, laid out where it is drawn
   (`responsive`), so a banner over the call (the preview's line, a notice)
@@ -26,7 +26,9 @@ The call's views and what they do are in `call/`.
   do, and Watch stream goes on the chip's line opposite it, or as its eye
   icon alone where both don't fit. Each tile is a
   `tile::Tile`: a camera, a stream or the avatar (a camera shows the
-  avatar until its first frame, and keeps its last if frames stop), a green ring while the
+  avatar until its first frame, and keeps its last if frames stop) on a
+  ground of its picture's dominant colour muted toward the theme's, as a
+  profile's banner takes it (the name's tint until the picture comes), a green ring while the
   person speaks, their name and marks, LIVE and how many watch. A stream
   not watched offers Watch stream; a watched one shows large with Stop
   watching and the full-screen button under the pointer, and a double click

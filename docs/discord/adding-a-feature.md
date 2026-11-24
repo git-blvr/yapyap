@@ -10,8 +10,8 @@ whole path.
    on https://docs.discord.food. What its client shows and sends around
    them (which menu lists it, defaults, dialogs, query flags such as
    `silent`) is only in Discord's web bundle; see the area doc for what
-   Yapfast already matches.
-2. **The call and the state, in `crates/yapfast-discord`.** The request
+   Circord already matches.
+2. **The call and the state, in `crates/circord-discord`.** The request
    goes in `src/api.rs`, wrapped by a method on `Discord` in
    `src/service.rs`. Anything the UI shows from the gateway is a field of
    `Snapshot` (`src/service.rs`), filled by the tracker
@@ -20,17 +20,17 @@ whole path.
    shape, and the gateway event it dispatches. Record what the client sent
    in a list that a `GET /_control/...` route returns, and describe both in
    the header comment at the top of the file. Then test it in
-   `crates/yapfast-discord/tests/fake_server/`, in its area's file and the
+   `crates/circord-discord/tests/fake_server/`, in its area's file and the
    test of its area there,
    and run that test alone, as
    `scripts/test-fake-discord makes_group_dms`.
-4. **The command and its answer, in `crates/yapfast-core/src/chat.rs`.**
+4. **The command and its answer, in `crates/circord-core/src/chat.rs`.**
    Add a `DiscordCommand` variant, and an `Event` that says whether it
    worked. `discord_text/commands.rs` passes a command through each module's
    `command` in turn; handle it in the module of its area
    (`discord_text/account.rs`, `people.rs`, `server_settings.rs`...), which
    spawns the call and sends the event.
-5. **The app, in `crates/yapfast-core/src/application`.** An `Action` (in
+5. **The app, in `crates/circord-core/src/application`.** An `Action` (in
    `application.rs`) for what the person does, state in `AppState` for a
    dialog or list, and the handling of the event, in the module of its area.
    A snapshot field reaches `AppState` in `discord_account.rs`. Test it in
@@ -39,13 +39,13 @@ whole path.
 6. **A menu item, if it's one.** The variant and which menus offer it are
    in the core's `application/rooms.rs`, tested by
    `menus_offer_what_fits_their_conversation_or_server` in
-   `application/tests/menus.rs`. In `crates/yapfast-iced/src`, a new `MenuChoice`
+   `application/tests/menus.rs`. In `crates/circord-iced/src`, a new `MenuChoice`
    needs its group for the lines between groups (`group_of`) and its label
    (`label`), both in `place_menus.rs`, red if it destroys (`danger` in
    `person_menu.rs`), and what it does: `place_menus::choose_place` for a
    place's menu, `person_menu::choose_person` for a person's. A person's
    choice also joins `person_menu::acts`, or its row shows greyed.
-7. **The window, in `crates/yapfast-iced`.** A view reads the core's state
+7. **The window, in `crates/circord-iced`.** A view reads the core's state
    from its `Ctx` (`ctx.state`) each time it's built, so a field of
    `AppState` needs no copy on the way. What the person does is an `Event`
    of the area's module, and the module's `update` dispatches the action
@@ -56,7 +56,7 @@ whole path.
    step. The rail, the sidebar and the header are made again only when
    `sync::lists_key` changes, and a member list row only when its member or
    `looks::LooksMadeWith` does: what a new row shows joins those, or its
-   rows never refresh. Test it in `crates/yapfast-iced/src/tests/`, which
+   rows never refresh. Test it in `crates/circord-iced/src/tests/`, which
    drives the window on the core's preview ([tests](../client/tests.md)).
    `docs/architecture.md` has the path in full; `scripts/ui-session` shows
    it running against the fake.

@@ -75,5 +75,5 @@ it couldn't, and Close, or Cancel beside its main button.
 - An application's authorization: the application with its picture, in
   red what of it can take over the account or a server, what it asks
   for, the server it's added to (a list to choose from, or the one its
-  link names), the address Discord sends on to with Copy where Yapfast
+  link names), the address Discord sends on to with Copy where Circord
   won't open it, and Authorize.

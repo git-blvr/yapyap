@@ -9,10 +9,10 @@ installing one replaces the other, and both keep one data folder.
 ## Run the package
 
 `target/dist/discord` holds the release's portable ZIP and installer,
-`Yapfast-VERSION-windows-x64-setup.exe`; `target/dist/full` the preview's,
-`Yapfast-VERSION-full-preview-windows-x64-setup.exe`. The installer needs no administrator
-rights: it installs for the current user into `%LOCALAPPDATA%\Programs\Yapfast`,
-adds Yapfast to the Start menu, optionally to the desktop, and starts it when
+`Circord-VERSION-windows-x64-setup.exe`; `target/dist/full` the preview's,
+`Circord-VERSION-full-preview-windows-x64-setup.exe`. The installer needs no administrator
+rights: it installs for the current user into `%LOCALAPPDATA%\Programs\Circord`,
+adds Circord to the Start menu, optionally to the desktop, and starts it when
 the person signs in unless they untick that. Settings → Advanced turns that
 on and off later ([the tray](tray.md#starting-at-sign-in)). Uninstalling,
 from Settings → Apps, removes the program and the sign-in entry and keeps the
@@ -20,21 +20,21 @@ data folder. Neither is signed, so SmartScreen warns before either runs.
 
 For the ZIP:
 
-1. Copy `target/dist/discord/Yapfast-VERSION-windows-x64.zip`, or the full
+1. Copy `target/dist/discord/Circord-VERSION-windows-x64.zip`, or the full
    preview's ZIP, to the tester's PC.
-2. Extract the whole ZIP, then double-click `yapfast.exe` in the extracted folder.
+2. Extract the whole ZIP, then double-click `circord.exe` in the extracted folder.
 3. Link Discord by its QR code, or, in the full preview, sign in with a Matrix
    account. Matrix voice needs a homeserver that offers MatrixRTC (see
    [voice](voice.md)).
 4. Open an encrypted room for text, or a voice channel for voice.
 
 The package needs no Rust or Visual Studio installation. It includes the native
-media code and both renderers. Opened from Explorer, Yapfast shows only its
-window and writes its diagnostics to `yapfast.log` in its data folder,
-`%LOCALAPPDATA%\Yapfast\Yapfast\data`, or the `--data-dir` folder. The log
+media code and both renderers. Opened from Explorer, Circord shows only its
+window and writes its diagnostics to `circord.log` in its data folder,
+`%LOCALAPPDATA%\Circord\Circord\data`, or the `--data-dir` folder. The log
 grows across starts and starts over past 4 MiB. Started from a console, as
-`run-yapfast.cmd` does, Yapfast writes there instead. If it closes immediately,
-run `run-yapfast.cmd` to keep the error visible. `run-yapfast.cmd --renderer
+`run-circord.cmd` does, Circord writes there instead. If it closes immediately,
+run `run-circord.cmd` to keep the error visible. `run-circord.cmd --renderer
 gpu` or `--renderer software` picks the renderer for one start; see [Rendering
 on Windows](#rendering-on-windows).
 
@@ -45,25 +45,25 @@ device verification and recovery are being tested.
 
 ## Rendering on Windows
 
-Yapfast draws on the CPU, with tiny-skia, unless "Render with the GPU" in
+Circord draws on the CPU, with tiny-skia, unless "Render with the GPU" in
 Settings → Advanced is on. With it on, wgpu draws on the GPU: on Windows it
 has Direct3D 12, Vulkan and OpenGL to choose from, and `WGPU_BACKEND` names
-one for a start. If the GPU can't start, Yapfast restarts itself on the CPU,
+one for a start. If the GPU can't start, Circord restarts itself on the CPU,
 says so in the window and turns the setting off
-(`crates/yapfast-iced/src/graphics.rs`, `relaunch` in `src/main.rs`); see
+(`crates/circord-iced/src/graphics.rs`, `relaunch` in `src/main.rs`); see
 [the window](client/window.md#building-and-running).
 
 ## First two-machine check
 
 With Alice signed in on Linux and Bob on Windows:
 
-1. Exchange messages in general and confirm they survive restarting Yapfast.
+1. Exchange messages in general and confirm they survive restarting Circord.
 2. Alice joins Lounge, stays muted and waits. Bob joins later and should see Alice.
 3. Choose microphone and speakers in the voice settings. Use headphones.
 4. Unmute both people and confirm each can hear the other.
 5. Check mute, deafen, leaving, and rejoining. Browse general while voice stays connected.
 6. Choose a camera in the voice settings, try "Test video", then turn the camera
-   on in Lounge. Each should see the other's camera. Restart Yapfast and check the
+   on in Lounge. Each should see the other's camera. Restart Circord and check the
    camera is still chosen.
 7. Record Windows version, GPU/driver, audio devices, cameras, input/copy/paste behavior,
    window resizing, and any error text. Never include passwords or recovery keys.
@@ -71,12 +71,12 @@ With Alice signed in on Linux and Bob on Windows:
 ## Discord voice on Windows
 
 Discord voice, the input meter and the Discord input sensitivity meter,
-ringing, Yapfast's sounds, and a watched stream's or a video's sound use WASAPI
-on Windows, in `crates/yapfast-core/src/audio_io/wasapi.rs`. Each stream is
-shared-mode and event-driven: the audio engine converts between Yapfast's 48 kHz
+ringing, Circord's sounds, and a watched stream's or a video's sound use WASAPI
+on Windows, in `crates/circord-core/src/audio_io/wasapi.rs`. Each stream is
+shared-mode and event-driven: the audio engine converts between Circord's 48 kHz
 and the device's format, and reading or writing waits for its event on the
 thread that already did the reading or writing on Linux, copying straight
-between Yapfast's buffers and the engine's. WebRTC's Windows device module names
+between Circord's buffers and the engine's. WebRTC's Windows device module names
 each device by its endpoint id (`{0.0.0.00000000}.{…}` for speakers,
 `{0.0.1.00000000}.{…}` for microphones), so the chosen device opens directly
 by that id; none is the console default. Go Live's sound is in
@@ -86,7 +86,7 @@ Microphones open in raw mode (`AUDCLNT_STREAMOPTIONS_RAW`, through
 `IAudioClient2::SetClientProperties`), which skips the effects Windows and the
 sound driver run on them: what Sound settings calls "device default effects"
 or "audio enhancements", often the driver's own noise suppression or
-beamforming. Under Yapfast's suppressor they muffled a voice that Discord's
+beamforming. Under Circord's suppressor they muffled a voice that Discord's
 client left clear. A device without raw mode opens with its effects. Settings ›
 Voice's "Let Windows process your microphone in Discord calls"
 (`windows_microphone_effects`, off unless turned on, shown on Windows only)
@@ -99,7 +99,7 @@ call's and speakers' "Pro Audio", and while the call goes on the process opts
 out of power throttling and asks for a 1 ms timer; see
 [Voice](discord/voice.md#playing-what-others-say). Whether that keeps the
 microphone whole on a weak processor sharing its screen through x264, with
-Yapfast's window minimized, needs checking on real Windows.
+Circord's window minimized, needs checking on real Windows.
 
 Wine's capture starts 0.3–1 s after it's opened, so the first moments a
 microphone hears are lost there. Real Windows needs checking for that, along
@@ -112,40 +112,40 @@ Windows too.
 ## Go Live on Windows
 
 Sharing, watching and playing a video run in the stream worker, as on Linux:
-Yapfast starts its own executable with `--stream-worker`, which writes its logs
-where Yapfast does: Yapfast's console, or Yapfast's log file. The video frames reach
+Circord starts its own executable with `--stream-worker`, which writes its logs
+where Circord does: Circord's console, or Circord's log file. The video frames reach
 the window through a temporary file both processes map. Windows won't delete
-a mapped file, so there Yapfast creates it with `FILE_FLAG_DELETE_ON_CLOSE` and
+a mapped file, so there Circord creates it with `FILE_FLAG_DELETE_ON_CLOSE` and
 `FILE_ATTRIBUTE_TEMPORARY`, which keeps it in memory while it fits, and
 Windows removes it once both processes close it. On Linux it's still unlinked once the worker has it open.
 
-Windows has no screen sharing dialog for Yapfast to use, so the share menu
+Windows has no screen sharing dialog for Circord to use, so the share menu
 lists what there is to share above the resolution: the screens as pictures, two
 to a row, named "Entire screen" (or "Screen 1", "Screen 2", … with several),
-then each window with a title. Yapfast's own windows aren't listed. libwebrtc's
+then each window with a title. Circord's own windows aren't listed. libwebrtc's
 capturers make the list, on a short-lived thread as the menu opens, and the
 worker finds the picked one by its id. The menu opens with the screens' names;
 their pictures come from a worker job (`Job::Glance`) that takes one frame of
 each screen, scaled down to its card, and exits, so capturing them takes memory
 only until they're in. A window closed after it was listed ends sharing with
-"That screen or window is gone." Without a pick, Yapfast shares the first
+"That screen or window is gone." Without a pick, Circord shares the first
 screen.
 
 When sharing an entire screen, libwebrtc draws the Windows pointer into the
-captured frames before Yapfast previews or encodes them. The worker works in
+captured frames before Circord previews or encodes them. The worker works in
 the displays' own pixels (per-monitor DPI aware), so on a scaled display the
 pointer is drawn where it is.
 
 Go Live's sound comes from WASAPI process loopback: one stream of everything
-Windows plays except Yapfast's own process tree, the Yapfast window and its
+Windows plays except Circord's own process tree, the Circord window and its
 workers. It needs Windows 10's 2004 update or later. Unlike Linux, where
 each application is heard on its own and Discord's own client is left out,
 Windows mixes every other application into one stream and can leave out only
-Yapfast. Where Windows refuses process loopback, Yapfast shares without sound and
+Circord. Where Windows refuses process loopback, Circord shares without sound and
 logs why, as it does on Linux without a PulseAudio server.
 
 The stream's H264 goes to NVIDIA's NVENC, then AMD's AMF, through FFmpeg in
-`crates/yapfast-core/native/hwenc.c`, while "Encode streams with the GPU" is
+`crates/circord-core/native/hwenc.c`, while "Encode streams with the GPU" is
 on, and to x264 when neither opens or the setting is off. Intel graphics
 encode with x264 on Windows. Where the card encodes AV1 or H265, the stream
 offers those first, in the same way. The camera always uses x264. AMF has
@@ -156,8 +156,8 @@ the rest.
 Real Windows needs checking for: the window list's contents and titles,
 sharing a window that's minimized, moved to another screen or closed while
 shared, screens on mixed-DPI setups, Windows Graphics Capture's yellow
-border, process loopback hearing other applications and leaving out Yapfast's
-own voices, AMF on an AMD card in a whole Yapfast (AV1 on an RX 7000 or
+border, process loopback hearing other applications and leaving out Circord's
+own voices, AMF on an AMD card in a whole Circord (AV1 on an RX 7000 or
 newer), and the worker's start-up time from a
 packaged build.
 
@@ -180,11 +180,11 @@ The notification-area icon is `Shell_NotifyIconW` on a hidden window of the
 UI thread; see [the tray](tray.md#windows).
 
 Under Wine, closing the window to the tray and opening it again from the
-icon work. A right click reaches Yapfast (`WM_RBUTTONDOWN`, `WM_RBUTTONUP`) and
+icon work. A right click reaches Circord (`WM_RBUTTONDOWN`, `WM_RBUTTONUP`) and
 `TrackPopupMenu` runs, but Wine's Wayland driver never shows the menu,
 most likely because its owner is a window that was never shown. Until the
-menu closes, its loop holds Yapfast's UI thread, as every Win32 menu does; on
-Windows a click anywhere else closes it. So Open Yapfast, Disconnect and Quit
+menu closes, its loop holds Circord's UI thread, as every Win32 menu does; on
+Windows a click anywhere else closes it. So Open Circord, Disconnect and Quit
 in the menu are untested on Windows.
 
 [The tray](tray.md#windows) lists what to check on real Windows.
@@ -195,26 +195,26 @@ Desktop notifications are WinRT toasts, shown from a thread of their own
 (`src/notify.rs`). Windows shows a toast only from an app ID it knows. Setting
 one on the process would also have to go on the Start menu shortcut, or the
 taskbar would group the window apart from it, and a portable copy has no
-shortcut. So each start registers `io.github.yapfast.Yapfast` under
-`HKCU\Software\Classes\AppUserModelId` instead, with Yapfast's name and the
+shortcut. So each start registers `io.github.circord.Circord` under
+`HKCU\Software\Classes\AppUserModelId` instead, with Circord's name and the
 256-pixel picture from its icon, written to `notifications\icon.png` in the
 data folder; uninstalling removes the key. Each toast's author picture goes in
-`notifications\0.png` to `19.png`, in turn. Toasts are silent, since Yapfast
+`notifications\0.png` to `19.png`, in turn. Toasts are silent, since Circord
 plays its own sounds.
 
-Clicking a toast while Yapfast runs opens its conversation, through the toast's
+Clicking a toast while Circord runs opens its conversation, through the toast's
 `Activated` event, for the last 20 shown: as many as the notification center
-keeps of an app's. Yapfast registers no COM activator, so a toast clicked after
+keeps of an app's. Circord registers no COM activator, so a toast clicked after
 it quit doesn't start it.
 
-Wine has no toast service: Yapfast logs `starting toasts: 0x80040154` (class
+Wine has no toast service: Circord logs `starting toasts: 0x80040154` (class
 not registered) as it starts and goes on without notifications. The app ID's
 registry key and `icon.png` are still written, so that much can be checked
 there.
 
 Real Windows needs checking for: a toast's name, icon and picture; a click
 bringing the window forward from behind another and from the tray; Focus
-assist and Do Not Disturb; and Yapfast in Settings > System > Notifications.
+assist and Do Not Disturb; and Circord in Settings > System > Notifications.
 
 ## Rebuild from Linux
 
@@ -225,7 +225,7 @@ nix develop path:./nix#windows --command scripts/build-windows        # Discord 
 nix develop path:./nix#windows --command scripts/build-windows full   # full preview
 ```
 
-Both flavours build to the same `yapfast.exe`, so each run packages straight
+Both flavours build to the same `circord.exe`, so each run packages straight
 away; the packaging script tells them apart by the Matrix SDK's source paths
 and refuses the wrong one. This installs the pinned Rust toolchain's Windows
 target, cross-compiles with cargo-xwin and Clang, then packages the executable.
@@ -243,12 +243,12 @@ remaps source paths, so a binary people download names no folder of this
 machine ([Building](building.md#windows)). Source it the same way before any
 Windows binary you hand to someone.
 
-A [one-line WebRTC patch](../vendor/webrtc-sys/README.yapfast.md) also fixes an
+A [one-line WebRTC patch](../vendor/webrtc-sys/README.circord.md) also fixes an
 MSVC class/struct declaration mismatch, matching the upstream resolution.
 
 The package contains dependency notices, original licenses and build hashes.
-The source snapshot, `Yapfast-VERSION-source.zip` (the full preview's
-`Yapfast-VERSION-full-preview-source.zip`), sits beside the packages in
+The source snapshot, `Circord-VERSION-source.zip` (the full preview's
+`Circord-VERSION-full-preview-source.zip`), sits beside the packages in
 `target/dist/FLAVOUR` rather than in them, and goes on the release page with
 them, tag `vVERSION` or `vVERSION-full-preview`: `SOURCE.txt` in each package
 names that page and `BUILD.json` the snapshot's SHA-256, which the AGPL
@@ -268,10 +268,10 @@ Install the [native prerequisites](building.md#windows), then run:
 ```powershell
 cargo build --locked --profile fast
 cargo run --locked --profile fast -- --preview
-cargo test --locked --profile fast -p yapfast-core history
+cargo test --locked --profile fast -p circord-core history
 ```
 
-Nix and Wine are not required. The executable is `target/fast/yapfast.exe`.
+Nix and Wine are not required. The executable is `target/fast/circord.exe`.
 For Discord development, run against the fake server using the PowerShell
 commands in [Contributing](../CONTRIBUTING.md#build-and-test), which also
 lists the checks to run before review.
@@ -294,7 +294,7 @@ nix develop path:./nix#windows --command bash -c '
 ```
 
 Add `--features matrix` for the full build. The executable is
-`target/x86_64-pc-windows-msvc/fast/yapfast.exe`. `yapfast.exe --help` and
+`target/x86_64-pc-windows-msvc/fast/circord.exe`. `circord.exe --help` and
 `--smoke-test` run under Wine without a display; `--audio-devices` lists the
 microphones, speakers and cameras Wine sees.
 
@@ -305,35 +305,35 @@ Build the test executable without running it, then run it with Wine:
 ```sh
 nix develop path:./nix#windows --command \
   cargo xwin test --no-run --profile fast --target x86_64-pc-windows-msvc -p
-  yapfast-core --lib
+  circord-core --lib
 ```
 
 Cargo prints the path,
-`target/x86_64-pc-windows-msvc/fast/deps/yapfast_core-HASH.exe`. Run it in its
+`target/x86_64-pc-windows-msvc/fast/deps/circord_core-HASH.exe`. Run it in its
 own prefix, with the usual test filter and flags:
 
 ```sh
 nix develop path:./nix#windows --command env WINEPREFIX=/tmp/wine-test
 WINEDEBUG=-all \
   DISPLAY= WAYLAND_DISPLAY= wine
-  target/x86_64-pc-windows-msvc/fast/deps/yapfast_core-HASH.exe frames
+  target/x86_64-pc-windows-msvc/fast/deps/circord_core-HASH.exe frames
 ```
 
 A new prefix takes `wineboot -i` first. The device tests are `#[ignore]`d;
 run each by name with `--ignored`, and give it what its ignore reason asks
 for:
 
-- Sound (`audio_io` and `discord_audio` tests): `YAPFAST_TEST_AUDIO=1`, as
+- Sound (`audio_io` and `discord_audio` tests): `CIRCORD_TEST_AUDIO=1`, as
   tests otherwise open no sound device, and `PULSE_SERVER` naming a private
   PulseAudio of null sinks, whose default input hears its default output, so
   nothing reaches real speakers. `a_call_sends_what_the_microphone_hears` also
-  needs `bun testing/fake_discord.ts` and `YAPFAST_DISCORD_TEST_SERVER`.
+  needs `bun testing/fake_discord.ts` and `CIRCORD_DISCORD_TEST_SERVER`.
 - Screens and windows
   (`stream_worker::tests::shares_a_listed_screen_and_window`): an X display,
   such as `Xvfb`, with `wine notepad` open on it. Wine's GDI window capture
   gives black windows without a compositor; Windows uses Windows Graphics
   Capture.
-- Cameras (`camera::tests::films_a_real_camera`, with `YAPFAST_TEST_CAMERA`
+- Cameras (`camera::tests::films_a_real_camera`, with `CIRCORD_TEST_CAMERA`
   naming it): Wine's DirectShow, built without libv4l2, reads only a V4L2
   device that supports `read()` and BGR24, such as a v4l2loopback device fed
   by `ffmpeg -re -f lavfi -i testsrc2=size=1280x720:rate=30 -pix_fmt bgr24 -f
@@ -353,29 +353,29 @@ Wayland socket's path longer than its 108-byte limit.
 
 ```sh
 nix develop path:./nix#windows --command env TMPDIR=/tmp \
-  scripts/ui-session start --discord --desktop --bin /tmp/wine-yapfast.sh
+  scripts/ui-session start --discord --desktop --bin /tmp/wine-circord.sh
 ```
 
 There are two ways to show the window, and each misses something:
 
 - Wine's Wayland driver, on the session's Weston: the script unsets `DISPLAY`
-  and runs plain `wine yapfast.exe "$@"`. This is enough for most UI checks.
+  and runs plain `wine circord.exe "$@"`. This is enough for most UI checks.
   `wine explorer /desktop=…` fails here with "xdg_surface geometry … is
   larger than the configured fullscreen state", since the desktop's frame
   doesn't fit the kiosk window. Screen capture gets no frames, the preview of
   a share is black, Weston's kiosk shell ignores moves and resizes, and the
-  tray's menu never shows. Start the session with `--desktop`: Yapfast's own
+  tray's menu never shows. Start the session with `--desktop`: Circord's own
   title bar leaves the window frameless, so the kiosk shell sizes it to the
   whole display. Wine then confines the pointer to it, as to any fullscreen
   window, and moving that lock trips an assertion in Weston 14
   (`weston_coord_surface_to_global`). Weston quits, and Wine's Wayland driver
   ends every process with exit code 1 ("Failed to read events from the
-  compositor"), a few seconds after Yapfast starts.
+  compositor"), a few seconds after Circord starts.
 - Wine's X11 driver, on a rootful Xwayland inside the session: the script
   starts `Xwayland :58 -geometry 1120x760` (the session's size; not
   `-fullscreen`, which gives 640×480 stretched), then, with `DISPLAY=:58`
   and `WAYLAND_DISPLAY` unset, runs `wine explorer
-  /desktop=yapfast,1120x760 yapfast.exe "$@"`. GDI then captures the real
+  /desktop=circord,1120x760 circord.exe "$@"`. GDI then captures the real
   screen, and the window can be moved, resized and maximized. Stop the extra
   Xwayland by its PID after `scripts/ui-session stop`.
 
@@ -384,7 +384,7 @@ Vulkan behind it, so it shows the path works but nothing about a real card.
 `--renderer software` draws on the CPU whatever the setting says. To see
 a GPU that can't start, hide Vulkan from Wine in the script, with
 `VK_DRIVER_FILES=/nonexistent.json VK_ICD_FILENAMES=/nonexistent.json`:
-wgpu finds no adapter, and Yapfast starts again on the CPU with its
+wgpu finds no adapter, and Circord starts again on the CPU with its
 banner.
 
 ## What's open

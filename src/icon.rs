@@ -1,4 +1,4 @@
-//! Yapfast's icon on its window, and its pictures drawn from SVG. Linux
+//! Circord's icon on its window, and its pictures drawn from SVG. Linux
 //! desktops find the icon from the window's app ID, which names the desktop
 //! entry in packaging/linux, which an AppImage installs for itself
 //! (`crate::desktop_entry`); X11 shows the window's own where the entry
@@ -50,7 +50,7 @@ pub fn window_icon() -> Option<Rgba> {
     rasterize(include_bytes!("../packaging/icon.svg"), 64)
 }
 
-/// The icon in packaging/windows/yapfast.rc.
+/// The icon in packaging/windows/circord.rc.
 #[cfg(windows)]
 pub const RESOURCE: u16 = 1;
 

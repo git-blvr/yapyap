@@ -1,17 +1,17 @@
-# Maintainer: the Yapfast maintainers <https://github.com/yapfast/yapfast/issues>
+# Maintainer: the Circord maintainers <https://github.com/circord/circord/issues>
 #
 # Builds the Discord-only release the way nix/package.nix does, with Arch's toolchain.
 
-pkgname=yapfast
+pkgname=circord
 # The release to build, by its tag; scripts/set-version keeps it at Cargo.toml's version.
 pkgver=0.4.1
 pkgrel=1
-_id=io.github.yapfast.Yapfast
+_id=io.github.circord.Circord
 # The prebuilt native parts nix/native.nix pins.
 _webrtc=webrtc-51ef663
 pkgdesc='Native Discord client that stays light on memory'
 arch=(x86_64)
-url='https://github.com/yapfast/yapfast'
+url='https://github.com/circord/circord'
 license=(GPL-3.0-or-later)
 # The binary links glib2, libpulse, libstdc++, libgcc and glibc. Its one ld-linux entry is real: it imports
 # __tls_get_addr from the loader, which namcap reports as an unused library.
@@ -25,7 +25,7 @@ depends=(
   libx11 libxcb libxcursor libxi libxkbcommon-x11
   alsa-lib
 )
-# The GPU setting draws through Vulkan, or OpenGL where there is none; without either Yapfast draws on
+# The GPU setting draws through Vulkan, or OpenGL where there is none; without either Circord draws on
 # the processor. libwebrtc loads the rest at runtime for screen sharing (nix/native.nix).
 optdepends=(
   'vulkan-icd-loader: drawing with the GPU (Settings, Render with the GPU)'
@@ -45,7 +45,7 @@ makedepends=(cargo clang cmake git llvm21 nasm pkgconf protobuf)
 # webrtc-sys compiles C++ with cc; Arch's LTO flags would leave it unlinkable.
 options=(!lto)
 source=(
-  "$pkgname::git+https://github.com/yapfast/yapfast.git#tag=v$pkgver"
+  "$pkgname::git+https://github.com/circord/circord.git#tag=v$pkgver"
   "$_webrtc-linux-x64-release.zip::https://github.com/livekit/rust-sdks/releases/download/$_webrtc/webrtc-linux-x64-release.zip"
 )
 # The tag's commit holds this file, so it can't hold its own checksum; git checks the objects.
@@ -63,7 +63,7 @@ build() {
   export RUSTUP_TOOLCHAIN=stable CARGO_HOME="$srcdir/.cargo" CARGO_TARGET_DIR=target
   export CC=clang CXX=clang++ PROTOC=/usr/bin/protoc
   # This is the release's own build, not a development build (src/build_info.rs).
-  export YAPFAST_RELEASE=1
+  export CIRCORD_RELEASE=1
   export LK_CUSTOM_WEBRTC="$srcdir/linux-x64-release"
   # Rust's panic locations and C's __FILE__ would name the build directory, the builder's home
   # among them (as scripts/release-env notes); map it to makepkg's debug source path, whatever its
@@ -71,7 +71,7 @@ build() {
   export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$srcdir=/usr/src/debug/$pkgname"
   export CFLAGS="${CFLAGS:-} -ffile-prefix-map=$srcdir=/usr/src/debug/$pkgname"
   export CXXFLAGS="${CXXFLAGS:-} -ffile-prefix-map=$srcdir=/usr/src/debug/$pkgname"
-  # With makepkg's debug option, yapfast-debug gets full debug info for yapfast's own crates and line
+  # With makepkg's debug option, circord-debug gets full debug info for circord's own crates and line
   # tables (file:line in backtraces) for the dependencies, which shrinks the binary makepkg has to split
   # and strip. makepkg's -C debuginfo=2 would apply to every crate, so it is taken out of RUSTFLAGS; the
   # release profile strips at link time (Cargo.toml), so that is turned off too.
@@ -80,13 +80,13 @@ build() {
     RUSTFLAGS=$(sed -E 's/(^| )-C ?debuginfo=[^ ]*//g' <<<"$RUSTFLAGS")
     export CARGO_PROFILE_RELEASE_DEBUG=line-tables-only CARGO_PROFILE_RELEASE_STRIP=false
     local _crate
-    for _crate in yapfast yapfast-core yapfast-discord yapfast-iced yapfast-iced-kit; do
+    for _crate in circord circord-core circord-discord circord-iced circord-iced-kit; do
       _debug+=(--config "profile.release.package.$_crate.debug=\"full\"")
     done
   fi
   cargo build --frozen "${_debug[@]}" --release --no-default-features --features desktop,discord
-  # yapfast-debug copies the crates' sources with their modes, and some crates ship files readable by their
-  # owner only. namcap on yapfast-debug also reports "Referenced library ... is an uninstalled dependency"
+  # circord-debug copies the crates' sources with their modes, and some crates ship files readable by their
+  # owner only. namcap on circord-debug also reports "Referenced library ... is an uninstalled dependency"
   # for words in those Rust sources (version strings, "README.md"); it reads source text as library names.
   chmod -R a+rX "$CARGO_HOME/registry/src"
 }
@@ -95,7 +95,7 @@ build() {
 
 package() {
   cd "$pkgname"
-  install -Dm755 target/release/yapfast -t "$pkgdir/usr/bin"
+  install -Dm755 target/release/circord -t "$pkgdir/usr/bin"
   install -Dm644 packaging/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/$_id.svg"
   install -Dm644 "packaging/linux/$_id.desktop" -t "$pkgdir/usr/share/applications"
   install -Dm644 "packaging/linux/$_id.metainfo.xml" -t "$pkgdir/usr/share/metainfo"

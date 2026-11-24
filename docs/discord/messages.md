@@ -1,9 +1,9 @@
 # Channels and messages
 
-Yapfast shows Discord live from its own Discord connection. Every server, channel
+Circord shows Discord live from its own Discord connection. Every server, channel
 and DM is visible without copying anything into Matrix.
 
-Yapfast lists the linked account's Discord servers in the rail with their
+Circord lists the linked account's Discord servers in the rail with their
 channels. Channels the account's roles and channel overwrites keep it out of
 show greyed out with a lock, as in Discord; channels hidden from it appear the
 same way only with the "Show channels you can't access" setting, which is off
@@ -13,9 +13,9 @@ category, is named "No Access", as Discord's client names it, has no topic,
 and counts as hidden whatever its overwrites say. A hidden voice channel
 still lists who is in it, from the voice states Discord sends for every
 voice channel, as any voice channel does; a click on it joins nothing. Server text channels are listed under their Discord categories and
-open in Yapfast's timeline. Clicking a category's heading collapses it, leaving
+open in Circord's timeline. Clicking a category's heading collapses it, leaving
 the open channel, unread ones and voice channels with people in them, as in
-Discord; Yapfast remembers which categories are collapsed, per server. History
+Discord; Circord remembers which categories are collapsed, per server. History
 loads from Discord 50 messages at a time (`GET /channels/{id}/messages` with
 `before` the oldest loaded message and `limit=50`) as the timeline scrolls near
 its top, one page at a time per channel, until a short page shows the channel's
@@ -23,7 +23,7 @@ first message is there; and new messages, edits, deletions and reactions arrive
 live. A jump to a message that isn't loaded shows the messages around it; see
 [jumping to a message](#jumping-to-a-message). Opening a channel subscribes to
 its server, as the web client does, because Discord sends large servers'
-messages only to subscribers. Yapfast sends, replies, edits, deletes, reacts
+messages only to subscribers. Circord sends, replies, edits, deletes, reacts
 and sends files through Discord's cloud uploads. Mentions show as text, and
 timestamps (`<t:SECONDS:STYLE>`) as Discord's client writes each style (`t`,
 `T`, `d`, `D`, `f`, `F`, `s`, `S`, `R`), with the app's date format and
@@ -43,18 +43,18 @@ the one before it on the same reaction to reach Discord, and the account's own
 reaction counts once however its events arrive, so clicking fast can't push a
 count past the real one. Bots and webhooks have an APP tag after their name. An
 author's name takes their highest coloured role's colour, once their roles are
-known: live messages carry them, and for history Yapfast asks Discord for the
+known: live messages carry them, and for history Circord asks Discord for the
 authors' member profiles. A profile that's opened and a member list that
 arrives teach them too, and the open channel and the thread beside it
 re-render with the colours.
 
-Yapfast keeps the open channel's messages in memory, and those of the 40
+Circord keeps the open channel's messages in memory, and those of the 40
 channels open before it, so going back to one shows it at once. A closed
 channel keeps its newest 200 messages as metadata and follows new messages,
 edits, deletions and reactions while it's kept. Opening it again shows those
 without asking Discord, as long as it kept up: its latest page came, and no
 live event went by without it since, as when the connection drops for a new
-session (a resume replays what was missed) or Yapfast falls behind on
+session (a resume replays what was missed) or Circord falls behind on
 events. Otherwise it loads the latest page in the background and fits it
 in: messages kept within the page's
 span that it lacks were deleted meanwhile, and when a full page starts after
@@ -101,15 +101,15 @@ Discord's client does.
 Reading an unread channel marks it read, as Discord's client does: once its
 newest message is in view, with the window in front and the "New" divider
 placed, so opening a channel at its divider and leaving it doesn't. A
-channel whose new messages don't show, deleted, of a kind Yapfast leaves out
+channel whose new messages don't show, deleted, of a kind Circord leaves out
 or hidden as blocked, has no divider once its newest page has come, and reads
 then. With the "Mark messages read on Discord" setting, on by default,
-Yapfast acknowledges it on Discord within a second.
+Circord acknowledges it on Discord within a second.
 Reads within that second go together: one channel as its own
 acknowledgement, several, as when a server is marked read from its menu, in
 one `POST /read-states/ack-bulk` of up to 100 channels, as the official
 client does.
-Before it does, Yapfast notes the channel's last read message, from READY's read
+Before it does, Circord notes the channel's last read message, from READY's read
 state or the last acknowledgement since, and the "New" divider goes above the
 first message after it from someone else. Snowflakes order messages, so the
 divider finds its place even when the last read message was deleted. When
@@ -129,43 +129,43 @@ The open text channel lists its members on the right as Discord's sidebar
 does: under hoisted roles, then online, then offline, with offline members
 faded. Each shows a status dot for online, idle or do not disturb, their name
 in their highest coloured role's colour, and their custom status or what
-they're playing below it. Yapfast shows the list's first 100 rows, headings
+they're playing below it. Circord shows the list's first 100 rows, headings
 included. Discord keeps one list for all channels with the same readers, and
 its id says who they are: `everyone` when @everyone sees the channel and no
 overwrite hides it, else a MurmurHash3 of the overwrites that allow or deny
-seeing it, as Discord's client computes it. Yapfast keys its lists by that id, so
+seeing it, as Discord's client computes it. Circord keys its lists by that id, so
 moving between such channels shows the same list and asks Discord for
-nothing, and an update applies only to the list it names. Yapfast keeps the last
+nothing, and an update applies only to the list it names. Circord keeps the last
 40 lists. An INVALIDATE, by which Discord stops sending rows, leaves them as
 they were, to show when their channel is again. One Discord still sends, or
 sent within 10 minutes, shows without asking again. An older one shows at
-once while Yapfast subscribes, and Discord's sync replaces it. A list
+once while Circord subscribes, and Discord's sync replaces it. A list
 on screen that Discord doesn't send is asked for again once it's 10 minutes
 old. When no list comes within 8 seconds of opening a channel, the panel
 says Discord didn't send one instead of loading on, and the header says
 "Members" until a count is known. A build without Matrix shows the Discord
 account's name, avatar and connection in the bottom-left panel.
 
-Yapfast starts from Discord as it last saw it, kept in the data directory by
-`yapfast_discord::cache`, and Discord's answers replace it as they arrive:
+Circord starts from Discord as it last saw it, kept in the data directory by
+`circord_discord::cache`, and Discord's answers replace it as they arrive:
 
 - `discord-account.json` holds the account's name and avatar, its servers
   with their channels, roles and emoji, its DMs, friends, friend requests and
-  status. It also holds the names Yapfast learned (users, server nicknames,
+  status. It also holds the names Circord learned (users, server nicknames,
   server avatars and members' roles), which messages and member lists show
   people by, and the member lists shown lately. Every message Discord sends
-  from any server teaches Yapfast its author, so it keeps the 20,000 people it
+  from any server teaches Circord its author, so it keeps the 20,000 people it
   learned most lately and forgets a quarter of them, those learned longest
   ago, once there are more. It's written at most every 20
   seconds while connected. Calls and who is in voice aren't saved. On the
-  next start Yapfast shows it all at once, identifies with the saved status, and
-  READY replaces it. A saved member list shows at once, even before Yapfast
+  next start Circord shows it all at once, identifies with the saved status, and
+  READY replaces it. A saved member list shows at once, even before Circord
   connects, and Discord's sync replaces it. The list on screen is kept with
   them when the connection drops, so it shows again at once after
   reconnecting.
 - `discord-messages/` holds, for each channel shown lately, its newest 100
   messages, written within 20 seconds of a change, when the channel leaves
-  the 40 kept in memory, and when Yapfast closes. The 300 channels used last are
+  the 40 kept in memory, and when Circord closes. The 300 channels used last are
   kept. Opening a channel shows its saved messages, and the latest page fits
   in as it does for a channel kept in memory.
 - `discord-pictures/` holds avatars, server icons, emoji and stickers, and the
@@ -175,7 +175,7 @@ Yapfast starts from Discord as it last saw it, kept in the data directory by
   so a picture signed again is found. Past 256 MiB the least recently shown
   go. Attachments' own files aren't kept.
 - `discord-build-number` holds the web client's build number as its page
-  last gave it, which Yapfast sends with every request and the gateway's
+  last gave it, which Circord sends with every request and the gateway's
   identify, as the web client does. A start with it kept connects at once
   and reads the page meanwhile, keeping what it finds for the next start;
   without it, the page is read before connecting.
@@ -184,9 +184,9 @@ The files are readable only by the user and aren't encrypted. Each names its
 login by a SHA-256 hash of the token, so another linked account starts empty,
 and unlinking deletes them all. A file is written beside its own and then
 swapped in; when its folder is gone, as when a cleaner deletes the data folder
-while Yapfast runs, the write makes the folder again. While Discord is
+while Circord runs, the write makes the folder again. While Discord is
 unreachable, an open channel shows what was saved, waits, and loads once
-Yapfast is back, rather than showing an error.
+Circord is back, rather than showing an error.
 
 - Discord servers appear in the server rail with a Discord badge, and Discord
   DMs appear in the DM list with the same badge. A build without Matrix leaves
@@ -203,7 +203,7 @@ Yapfast is back, rather than showing an error.
   colour holding its first four servers' icons, with the pill, unread dot
   and mention count of all its servers; its tooltip is its name, or its
   servers' names when it has none. Clicking opens it: a folder icon in its
-  colour, its servers below it on a strip of that colour. Yapfast remembers the
+  colour, its servers below it on a strip of that colour. Circord remembers the
   open folders on this device, in `layout.json`, as Discord's client keeps
   them per device. Settings entries with an id are folders, read with their
   name and colour (`GuildFolder` fields 2 to 4, each in a wrapper); one
@@ -218,16 +218,16 @@ Yapfast is back, rather than showing an error.
   known, until its `GUILD_CREATE` brings it back. Only a `GUILD_DELETE`
   without `unavailable`, as when the account leaves, removes it.
 - Server icons and avatars come from Discord's CDN, which needs no login.
-  Yapfast asks for each one once it shows: in the rail, beside people in a
+  Circord asks for each one once it shows: in the rail, beside people in a
   voice channel of the open server, in the call, or beside a message. A
-  member's server avatar wins over their own. Yapfast decodes them at 128px
+  member's server avatar wins over their own. Circord decodes them at 128px
   before the UI sees them. Once more than 400 have arrived, those off
-  screen go, and Yapfast asks for them again, from disk, when they show.
+  screen go, and Circord asks for them again, from disk, when they show.
   Custom emoji stay, since the picker asks for hundreds at once.
   Initials show until a picture arrives or when it fails. A download that
   may work later, when the CDN is out of reach, fails or answers 429, is
   tried up to six times; every download then waits together, 10 seconds
-  and doubling up to five minutes, so a CDN in trouble hears from Yapfast
+  and doubling up to five minutes, so a CDN in trouble hears from Circord
   rarely. One Discord refuses, such as a 404, isn't tried again. A server
   without an icon keeps its initials, and a person without
   an avatar gets Discord's default avatar for their account.
@@ -277,10 +277,10 @@ Yapfast is back, rather than showing an error.
   message says. A link straight to a video file, which Discord embeds as the
   video alone, plays under the message as an attached video does, its first
   frame from the media proxy as its poster. Pictures come through Discord's
-  media proxy (`images-ext-*.discordapp.net`), so Yapfast never contacts the
+  media proxy (`images-ext-*.discordapp.net`), so Circord never contacts the
   linked site, and embeds of a message marked to hide them don't show.
 - Discord's own links to a server, channel, message or person open that
-  place in Yapfast, DM links included; an invite opens Join a Server first,
+  place in Circord, DM links included; an invite opens Join a Server first,
   an event link shows the scheduled event with its Interested button
   ([Event links](servers.md#event-links)), and a gift link
   (`discord.gift/…`, `/gifts/…`) shows the gift and redeems it on the click,
@@ -289,11 +289,11 @@ Yapfast is back, rather than showing an error.
   a payment source, or is from a promotion, offers its link in the browser
   instead, since only Discord redeems those. A dialog closed while its gift
   is redeeming and opened again shows it still redeeming, and Discord's
-  answer. The same reader takes web, `discord://` and `yapfast://` links
+  answer. The same reader takes web, `discord://` and `circord://` links
   handed to a start. Only Discord's own hosts and snowflake ids match, so a
-  look-alike stays an ordinary web link. Discord pages Yapfast has no screen for, such
+  look-alike stays an ordinary web link. Discord pages Circord has no screen for, such
   as the shop and server templates, still open in the browser, as does a
-  link Yapfast can't show: to a server the account isn't in, or any while
+  link Circord can't show: to a server the account isn't in, or any while
   Discord is offline (`AppState::opens_discord_route`).
 - An authorization link (`/oauth2/authorize`) shows what the application
   asks for, in the words of Discord's page, and authorizes it only on the
@@ -302,14 +302,14 @@ Yapfast is back, rather than showing an error.
   for Administrator; a bot's permissions no role switch names count as
   "N more". A link that locks its server shows that server and can't be
   moved to another: if the account can't add apps there, the dialog says so
-  and offers no Authorize. Like Discord's client, Yapfast sends only the
+  and offers no Authorize. Like Discord's client, Circord sends only the
   fields it read (`client_id`, `scope`, `response_type`, `redirect_uri`,
   `state`, `nonce`, the PKCE pair, `integration_type`), rebuilt into each
   query, with the server and permissions in the body; a link naming one of
   them twice opens in the browser, as do links without scopes (install
   links, whose scopes Discord's page reads from the application), links
   asking for `webhook.incoming` (which needs a channel picked) and links
-  with a scope Yapfast can't describe. Afterwards Yapfast goes where
+  with a scope Circord can't describe. Afterwards Circord goes where
   Discord's answer (`location`) says: a page of Discord's own ends the
   dialog at "Authorized", a web page opens in the browser, and any other
   address, such as an app's `myapp://`, is shown to copy and never opened,
@@ -364,7 +364,7 @@ Yapfast is back, rather than showing an error.
   mute button a slider sets how loud, as does the wheel; its travel is
   squared, so its middle sounds about half as loud. Turning it to nothing
   mutes, and unmuting brings back the level it had. The next video plays as
-  loud, until Yapfast closes.
+  loud, until Circord closes.
 - A voice message, a message flagged `IS_VOICE_MESSAGE` (`1 << 13`) whose
   only attachment is its Ogg Opus recording, shows as a pill instead of a file
   card, mixing Discord's phone and desktop players: a round button that plays
@@ -386,10 +386,10 @@ Yapfast is back, rather than showing an error.
   Once pressed it takes the keys: Up and Down turn it 5%, Page Up and Page
   Down 20%, and Escape closes it. Moving it unmutes, and 0 mutes.
   All of them apply to the one playing at once and to the next, until
-  Yapfast closes. The recording downloads whole, up to 16
+  Circord closes. The recording downloads whole, up to 16
   MiB, and is kept in memory while it's the last one played; it decodes a
   packet at a time on a thread of its own (`voice_message.rs`), is sped up
-  at the same pitch by WSOLA, as FFmpeg's `atempo` does (Yapfast's FFmpeg
+  at the same pitch by WSOLA, as FFmpeg's `atempo` does (Circord's FFmpeg
   has no filters), and plays on the call's speakers through `audio_io.rs`,
   on Linux and Windows. One plays at a time: playing another stops it, as
   does closing its channel, or its thread beside the channel. Paused, it
@@ -402,29 +402,29 @@ Yapfast is back, rather than showing an error.
   time.
 - Markdown shows as Discord's client shows it. Bold, italics, strikethrough,
   inline code, lists and links are runs of styled text
-  (`crates/yapfast-iced/src/markdown.rs`, which reads them with
+  (`crates/circord-iced/src/markdown.rs`, which reads them with
   pulldown-cmark). Headings (`#` to `###`),
   subtext (`-# `), quotes (`> ` lines, or `>>> ` and the rest) and code fenced
-  by three backticks are blocks that `blocks.rs` in `yapfast-core` splits out
+  by three backticks are blocks that `blocks.rs` in `circord-core` splits out
   by Discord's rules, read from its web client, before anything else changes
   the text. Each is then drawn apart, spaced as Discord's client spaces them,
   with its mentions, emoji and spoilers. Code shows as typed, in the system's
   monospace font, without highlighting. Discord shows headings and lists only
-  in messages from 22 March 2023; Yapfast shows them in older ones too. Rules
+  in messages from 22 March 2023; Circord shows them in older ones too. Rules
   (`---`) and lines under a line (`===`), which Discord doesn't have, show as
   typed. Embeds' descriptions and field values, pinned messages and search
   results show blocks too, a found message's up to 8 lines each. A reply's
   quote of the message above shows it on one line.
 - Spoilers, `||like this||`, show under an opaque cover that a click lifts.
   A covered run is drawn blank on a ground of its own colour, with a link to
-  `yapfast:spoiler/{item}/{n}` that the click follows
-  (`Ctx::run_span` in `crates/yapfast-iced/src/markdown.rs`). A spoiler in
+  `circord:spoiler/{item}/{n}` that the click follows
+  (`Ctx::run_span` in `crates/circord-iced/src/markdown.rs`). A spoiler in
   a reply
   or a notification reads "(spoiler)". Attachments named `SPOILER_...` or
   flagged as spoilers, and pictures linked inside a spoiler, show blurred with
-  a "Spoiler" label until clicked. Revealing lasts while Yapfast runs. The eye
+  a "Spoiler" label until clicked. Revealing lasts while Circord runs. The eye
   on a file waiting in the composer marks it as a spoiler, which blurs its
-  thumbnail; Yapfast uploads it as `SPOILER_` and its name, as Discord's client
+  thumbnail; Circord uploads it as `SPOILER_` and its name, as Discord's client
   does. Matrix has no spoiler for a file, so its rooms don't offer the eye.
 - Custom emoji show as pictures: in messages, as reactions and in the emoji
   picker, which lists them by server after the frequently used ones, the open
@@ -433,7 +433,7 @@ Yapfast is back, rather than showing an error.
   the text wraps and selects round it, and the picture is drawn there; a copy
   gives back its `:name:`. A message's Unicode emoji are text, drawn from
   Twemoji's pictures. They need no font at runtime:
-  `crates/yapfast-iced/build.rs` makes one colour bitmap (CBDT) font of all
+  `crates/circord-iced/build.rs` makes one colour bitmap (CBDT) font of all
   of them (`emoji_font_tables.rs`), which the program carries and every text
   falls back to after DM Sans, so an emoji is as cheap as a letter. An
   emoji of one character answers to its own code point, so text that keeps
@@ -450,12 +450,12 @@ Yapfast is back, rather than showing an error.
   many of the server's members are online and whether Discover lists it, so
   the card shows "3,999 Online" beside "Discoverable Server". It is asked
   for once for each server and kept; until it answers the count is left out,
-  and the note follows whether Yapfast has the server as a Community. An
+  and the note follows whether Circord has the server as a Community. An
   emoji of a server that can't be reached, one this account never joined or
   one that's gone, draws no server: its card says it is from a server that is
   either invite-only or unavailable, as Discord's does. The card
   follows the emoji through a link on its run
-  (`yapfast:emoji/` and the emoji's code points, or `c/`
+  (`circord:emoji/` and the emoji's code points, or `c/`
   and a custom emoji's id), as a mention follows its own.
   The picker, suggestions and reaction buttons show the picture itself; a
   quiet square holds each place until its picture arrives. A message of only
@@ -468,15 +468,15 @@ Yapfast is back, rather than showing an error.
   `FrecencyUserSettings`, the second settings protobuf. They come with the
   favourite GIFs' request when Discord connects, and through
   USER_SETTINGS_PROTO_UPDATE, where a partial update's missing field keeps what
-  Yapfast had. They're ranked when they come, as Discord's client ranks them
+  Circord had. They're ranked when they come, as Discord's client ranks them
   (`rank_emojis`, the top 42), which weighs a use by its age otherwise than a
   place's. This computer's reaction counts follow them. The settings name a
   custom emoji by its id, shown greyed if it's locked here and not at all if
   the account has left its server, and a Unicode emoji by Discord's name, such
-  as `slight_smile`; `crates/yapfast-core/src/emoji/names.rs`, which
+  as `slight_smile`; `crates/circord-core/src/emoji/names.rs`, which
   `scripts/discord-emoji-names` writes from emojibase-data (MIT, whose licence
   packages carry), holds those that differ from GitHub's shortcodes, which the
-  `emojis` crate knows. A flag comes from its country's two letters. Yapfast
+  `emojis` crate knows. A flag comes from its country's two letters. Circord
   doesn't change them yet.
 - Stickers show as pictures 160px square, as Discord draws them, whatever size
   their picture came at: the 160px one the CDN gives, decoded at that size
@@ -488,10 +488,10 @@ Yapfast is back, rather than showing an error.
   ThorVG's parser, whatever their bytes.
 - Messages from people this account blocked show collapsed as "Blocked
   message", which "Show it" opens, and they don't notify or show typing.
-  Yapfast learns the blocked from READY's relationships (type 2) and keeps them
+  Circord learns the blocked from READY's relationships (type 2) and keeps them
   current from RELATIONSHIP_ADD and RELATIONSHIP_REMOVE.
 - Messages from ignored users show collapsed in the timeline with a Show
-  button and don't notify. Yapfast reads `user_ignored` from relationships.
+  button and don't notify. Circord reads `user_ignored` from relationships.
 - A reply's quoted line jumps to the original and highlights it for a
   moment, as described under [jumping to a message](#jumping-to-a-message).
   It says the original was deleted only when `referenced_message` is
@@ -523,17 +523,17 @@ Yapfast is back, rather than showing an error.
   notify unless muted; message requests and spam don't. Apps' answers to
   slash commands and context menu commands notify as people's messages do;
   joins, pins and call notices don't. Nothing notifies while the account's
-  status is Do Not Disturb. They show while Yapfast
+  status is Do Not Disturb. They show while Circord
   isn't in front, titled with who wrote where, and clicking one opens the
   conversation. On Linux they go to the freedesktop notification service; on
   Windows they're toasts ([Windows](../windows-beta.md#notifications-on-windows)).
-  Each also plays Yapfast's message sound, or its mention sound, unless it's in
+  Each also plays Circord's message sound, or its mention sound, unless it's in
   the conversation in front; see [voice](../voice.md#sounds).
 - Mentions in messages are links on a light fill, in the role's colour for a
   role and the theme's mention colour for anyone else, as Discord shows them:
   a person's mention is not in their role's colour, though their name in a
   message and in the suggestions is. A person's opens their profile
-  card beside the mention, and a role's lists the members Yapfast has seen with it (from member lists, messages
+  card beside the mention, and a role's lists the members Circord has seen with it (from member lists, messages
   and member requests), each opening their card in turn.
 - Typing `@` suggests who to mention: the channel's listed members, those who
   wrote lately, this account among them as in Discord's client, and server
@@ -555,9 +555,9 @@ Yapfast is back, rather than showing an error.
   last said so or until their message arrives. Writing tells Discord Alice is
   typing, at most every eight seconds, unless a setting turns it off.
 - Clicking the account's avatar or name, bottom left, opens a menu of Online,
-  Idle, Do Not Disturb and Invisible, as in Discord. Yapfast saves the choice in
+  Idle, Do Not Disturb and Invisible, as in Discord. Circord saves the choice in
   the settings below and sends it with opcode 3. Do Not Disturb holds back
-  Yapfast's message notifications. Closing Yapfast takes the person offline, like
+  Circord's message notifications. Closing Circord takes the person offline, like
   closing the Discord app.
 - The same menu ends with Edit Profile, which opens the [main profile's
   editor](people.md#editing-ones-main-profile), as Edit profile in My account does.
@@ -566,13 +566,13 @@ Yapfast is back, rather than showing an error.
   picker, words, and when it clears (never, 30 minutes, an hour, four hours,
   or at midnight). Discord keeps it in the account's settings, a protobuf
   (`PreloadedUserSettings`, field 11), which arrive in READY as
-  `user_settings_proto` and change in USER_SETTINGS_PROTO_UPDATE. Yapfast reads
+  `user_settings_proto` and change in USER_SETTINGS_PROTO_UPDATE. Circord reads
   only the status and custom status from it, and changes either with `PATCH
   /users/@me/settings-proto/1`, whose body sets nothing else. Discord resets
   what such a body leaves out of a top-level field, so each change of the
   status, the custom status or [game sharing](people.md#game-detection)
   sends the whole `StatusSettings` with the one field changed, fields
-  Yapfast doesn't know included: a new custom status keeps Do Not Disturb.
+  Circord doesn't know included: a new custom status keeps Do Not Disturb.
   As in Discord's client, a change starts from the `StatusSettings` READY
   or the last update brought, never from a GET, and joins the changes still
   on their way, each PATCH carrying all of them, so changes made quickly
@@ -581,7 +581,7 @@ Yapfast is back, rather than showing an error.
   `status_created_at_ms` to now, or keeps it for the same status; a new
   custom status says when it was set in its `created_at_ms`. A cleared one
   is left out, and an update whose `status` has no custom status clears it,
-  as when another device clears it or it runs out there. Each session shows the status to others itself, so Yapfast sends it with
+  as when another device clears it or it runs out there. Each session shows the status to others itself, so Circord sends it with
   opcode 3 once connected, whenever the settings change, and clears it when
   it ends. A custom emoji in a status needs Nitro.
 
@@ -601,7 +601,7 @@ click or a submit sends one, and none is sent again on its own.
 - A message's controls wait while one of them waits for its bot, and only
   that message's, as Discord's client queues one interaction a message;
   another bot's message can still be used. The gateway's word, by nonce,
-  ends the wait. Once Discord took the request, Yapfast waits 15 seconds
+  ends the wait. Once Discord took the request, Circord waits 15 seconds
   for it, which a reconnect can lose; with none, the bot "did not respond",
   in Discord's words. Discord itself fails a bot after 3 s.
 - A failure says why under the message's controls, as Discord's client
@@ -610,10 +610,10 @@ click or a submit sends one, and none is sent again on its own.
   when Discord refused the request for that (429). The line stays until the
   channel changes or a control of that message is used again. Another
   refusal says "This interaction failed"; a request that couldn't be sent
-  gives Yapfast's reason.
+  gives Circord's reason.
 - The app a control names is the message's `application_id`, or else its
   author's id, which a bot's user shares with its app, as Discord's client
-  sends it; Yapfast asks nothing more just to send a click. A menu's picks
+  sends it; Circord asks nothing more just to send a click. A menu's picks
   go as `values`, with the menu's kind as `type` beside them.
 - A select menu opens as a dropdown under itself, above when there's no room
   below, with each option's emoji and description. A menu of one option
@@ -621,7 +621,7 @@ click or a submit sends one, and none is sent again on its own.
   has only closes it. A menu of several sends when it closes, by a click
   outside or Escape, and only if what's picked changed and is as many as it
   takes. Menus of people, roles and channels have a search field.
-- `INTERACTION_MODAL_CREATE` opens the app's form wherever Yapfast is, since
+- `INTERACTION_MODAL_CREATE` opens the app's form wherever Circord is, since
   Discord sends it only to the session that asked, even after its control
   stopped waiting; when it leaves out the server, the control's room, or
   else the form's channel, gives it. A form shows its text (TEXT_DISPLAY, as
@@ -634,12 +634,12 @@ click or a submit sends one, and none is sent again on its own.
   a command's are (see "Sending apps' commands"), `data.attachments` naming
   each by its place, and the upload's `values` holding those places as
   numbers. A radio group left alone goes as `"value": null`, as Discord's
-  client sends it. A part Yapfast can't fill shows as such,
-  and the form can't be sent from Yapfast; a form Yapfast can't read at all
+  client sends it. A part Circord can't fill shows as such,
+  and the form can't be sent from Circord; a form Circord can't read at all
   says so. A form that fails, or isn't complete, stays open with what was
   entered and why, in the form, until something is changed.
 - The people, role, mentionable and channel menus offer the people, roles and
-  channels Yapfast knows, and searching people asks Discord for the server's
+  channels Circord knows, and searching people asks Discord for the server's
   members who match. Channel menus keep to the bot's channel types, visible
   categories included, and a default pick shows its name, or its id when the
   name isn't known. An optional single pick can be cleared.
@@ -647,13 +647,13 @@ click or a submit sends one, and none is sent again on its own.
   and opens the SKU's store page in the browser,
   `discord.com/application-directory/{app}/store/{sku}` (Discord's own docs,
   "Managing SKUs"), `{app}` the message's application, or the bot's own id
-  when the message doesn't name one; nothing is bought through Yapfast, and
+  when the message doesn't name one; nothing is bought through Circord, and
   the SKU's name and price aren't asked for.
 - Pictures in a gallery or beside a section are read by a screen reader by
   their alt text (`description`), as an attached picture's is.
 - An app that answers with a web page in a window
   (INTERACTION_IFRAME_MODAL_CREATE) says to use Discord for it.
-- Yapfast doesn't unarchive a thread before a control in it is used, as
+- Circord doesn't unarchive a thread before a control in it is used, as
   Discord's client does, and doesn't count a bot's reply carrying the nonce
   as its answer; Discord sends `INTERACTION_SUCCESS` as well.
 - An app's answer only this account sees (message flag EPHEMERAL, `1 << 6`)
@@ -662,7 +662,7 @@ click or a submit sends one, and none is sent again on its own.
   this account's session alone, perhaps without `guild_id`, so it's placed in
   the server of its channel rather than taken for a DM's message, and it
   counts as neither unread nor read up to. Its channel's history never lists
-  it: it stays until it's dismissed or Yapfast closes, and it's never kept on
+  it: it stays until it's dismissed or Circord closes, and it's never kept on
   disk. Dismiss message hides it for good without asking Discord, which has
   no endpoint for it.
 - An answer still to come (flag LOADING, `1 << 7`) shows "{app} is
@@ -765,7 +765,7 @@ composer offers the slash commands:
   required options filled, whole numbers and numbers within `min_value` and
   `max_value`, text within `min_length` and `max_length`, a choice's name or
   a known person, role or channel. Until then each wrong pill says why in red,
-  and the first takes the composer. The wording is Yapfast's; Discord's isn't
+  and the first takes the composer. The wording is Circord's; Discord's isn't
   documented.
 
 ### Apps
@@ -778,7 +778,7 @@ The same rules decide which the person may use there as for slash commands.
 
 - A message's menu has Apps on a Discord message that was sent, not on one
   still sending or failed, an answer only the account sees or one still
-  thinking (flag LOADING), or Yapfast's
+  thinking (flag LOADING), or Circord's
   "Sending command…" row. It opens beside the menu on hover or a click, on
   the left near the window's right edge. A message in the thread beside the
   channel has none: Apps offers the open channel's commands.
@@ -828,7 +828,7 @@ again; a click on a bot's control or an autocomplete isn't.
   its place; INTERACTION_SUCCESS, or a form, ends it too. A command Discord
   or the app refused, or that Discord never confirmed, says why there
   instead, with Retry, which sends it again with a new nonce, and Cancel.
-  The row is Yapfast's own and lives only while Yapfast runs.
+  The row is Circord's own and lives only while Circord runs.
 - An option whose app completes it (`autocomplete`) asks the app for its
   choices with a type 4 interaction, debounced as Discord's client does it:
   the first keystroke asks at once, and the others once typing pauses for
@@ -844,7 +844,7 @@ again; a click on a bot's control or an autocomplete isn't.
 
 An app's answer names the interaction it answers in `interaction_metadata`
 (docs.discord.food, "Message Interaction Metadata Object"), or, on older
-messages, only in the deprecated `interaction`, which Yapfast reads
+messages, only in the deprecated `interaction`, which Circord reads
 without the other. Over the answer, where a reply would quote, a line says
 who used which command, as Discord's client heads one:
 
@@ -868,7 +868,7 @@ composer, as typing it
 would, so the picker offers it again; subcommands are left for the picker.
 The names are the server's, as the timeline's are. Discord's exact
 wording for a user command's target, and whether its client writes a
-clicked command in the composer, aren't documented; Yapfast's follow the
+clicked command in the composer, aren't documented; Circord's follow the
 docs' fields and Discord's client as remembered.
 
 ## GIFs
@@ -876,7 +876,7 @@ docs' fields and Discord's client as remembered.
 The GIF button left of the emoji button, or Ctrl+G, opens a picker with two
 tabs, GIFs and Emoji, as Discord's does; Ctrl+E opens it on Emoji. The two
 share the window: its left edge drags it wider, and each tab fits what it shows
-to that width. Discord finds GIFs through Klipy, and Yapfast asks Discord as
+to that width. Discord finds GIFs through Klipy, and Circord asks Discord as
 its desktop client does:
 
 - The home is `GET /gifs/trending?media_format=tinywebp&locale=en-US`:
@@ -891,7 +891,7 @@ its desktop client does:
   buttons under the results ("Your perfect GIF is in another castle").
 - A click sends the GIF's page URL as a message, keeping a reply that was
   being written, and a search's pick is reported with `POST /gifs/select`
-  `{id, q}`. Discord unfurls the URL into a gifv embed, whose picture Yapfast
+  `{id, q}`. Discord unfurls the URL into a gifv embed, whose picture Circord
   plays. Shift and a click puts the URL in the message instead.
 - A favourite's thumbnail is kept in `discord-gifs/`: a video, or a file up to
   256 KiB, as it came, and any other as a VP9 WebM at the tile's width, which
@@ -942,7 +942,7 @@ its desktop client does:
   `/attachments/` or `/ephemeral-attachments/` loses its `ex`, `is` and
   `hm`, the signature that expires; any other stays as it is.
 - Favourites show at once, without waiting on Discord or the GIF providers.
-  Yapfast keeps the list on disk, shows it when the picker opens and replaces
+  Circord keeps the list on disk, shows it when the picker opens and replaces
   it when Discord answers; a star used meanwhile shows at once and is
   applied to Discord's list once it comes, so a change made on another
   device stays. Each favourite shown gets a thumbnail in `discord-gifs/`,
@@ -952,7 +952,7 @@ its desktop client does:
   - The picture itself, when it's a video or no larger than 64 KB, which
     keeps a small GIF's transparency.
   - Otherwise a VP9 WebM of it at the tiles' width, made once, off the UI
-    thread, with the VP9 encoder already in Yapfast's libwebrtc. It's about
+    thread, with the VP9 encoder already in Circord's libwebrtc. It's about
     a fifth of an animated WebP at the same quality, and a fifth of its
     decoding work. A transparent GIF goes over the panel's tone, as VP9
     keeps no transparency.
@@ -968,7 +968,7 @@ sent message of a Discord channel, thread or DM. Alt+Enter on a message,
 Discord's key for it, marks it unread too. Copy Message Link copies
 `https://discord.com/channels/{server or @me}/{channel}/{message}`, and Copy
 Message ID the message's snowflake. Discord's client shows Copy Message ID
-only with Developer Mode on; Yapfast has no such setting, and offers it as
+only with Developer Mode on; Circord has no such setting, and offers it as
 it offers Copy ID on channels, servers and people.
 
 Mark Unread does what Discord's client does: the channel is read up to the
@@ -976,18 +976,18 @@ newest loaded message before the one chosen, or up to the millisecond before
 it when none is loaded, and `POST
 /channels/{channel}/messages/{that one}/ack` says so with `{"manual": true,
 "mention_count": n}`, where n counts the loaded messages after it that call
-on this account; in a DM every one from someone else counts, as Yapfast
+on this account; in a DM every one from someone else counts, as Circord
 counts DM mentions everywhere. Discord sends back
 `MESSAGE_ACK` with `manual` and that count, which sets the channel's read
-state as any acknowledgement does. Yapfast sets it at once, drops a read of
+state as any acknowledgement does. Circord sets it at once, drops a read of
 the channel still waiting to go, and puts the "New" divider above the
-message. With "Mark messages read on Discord" off it stays in Yapfast, as
+message. With "Mark messages read on Discord" off it stays in Circord, as
 reads do. The channel then isn't read again while it shows, even with its
 newest message in view, until another channel or thread opens, as in
 Discord's client.
 
 Discord's client also marks a thread it isn't in, or an archived one, after
-joining it or opening it again; Yapfast offers Mark Unread only in threads
+joining it or opening it again; Circord offers Mark Unread only in threads
 this account is in that aren't archived. Its Bookmark Message, which saves a
 message to the inbox's "For Later" list with `PUT
 /users/@me/saved-messages/{channel}/{message}`, isn't here: it needs that
@@ -1010,7 +1010,7 @@ the width is the same for all three tabs and comes back at the next start
 
 - Frequently Used lists the 8 stickers this device sent most, by how often it
   sent them, kept in `layout.json` as the frequent reactions are. Its rail
-  button and its heading carry a clock, Yapfast's own drawing, rather than a
+  button and its heading carry a clock, Circord's own drawing, rather than a
   system emoji.
 - A collection's rail button is its picture, 32px: a server's icon, or a
   pack's first sticker. A server's heading carries the same icon at 16px
@@ -1024,7 +1024,7 @@ the width is the same for all three tabs and comes back at the next start
   the snapshot as it opens, follows a change while it is open, and lets go of
   them as it closes.
 - The default packs are `GET /sticker-packs`, with the sticker packs' ids,
-  names and stickers. Yapfast keeps them in `discord-sticker-packs.json`,
+  names and stickers. Circord keeps them in `discord-sticker-packs.json`,
   public and unsealed, which unlinking deletes, and shows them at once at a
   start within a day of
   Discord's answer; past that it asks again, which the snapshot asks at every
@@ -1055,22 +1055,22 @@ the width is the same for all three tabs and comes back at the next start
 ## Jumping to a message
 
 A reply's quote, a pin, a search result and the banner over the messages
-jump to a message. A loaded one scrolls into view. Otherwise Yapfast asks for
+jump to a message. A loaded one scrolls into view. Otherwise Circord asks for
 `GET /channels/{id}/messages?around={id}&limit=50`, as Discord's client does,
 and the messages around it show in place of the timeline: a window of older
 messages, with "You're viewing older messages" and "Jump to present" in a pill
 over its end. Discord answers around a snowflake even when no message has it,
-so a deleted message's place shows, and Yapfast says it couldn't find the
+so a deleted message's place shows, and Circord says it couldn't find the
 message. A jump into another channel opens that channel at the message.
 
 Scrolling down the window loads the 50 `after` its newest message, and up,
 the 50 `before` its oldest, a page at a time. Discord sends at most half a
-page from before the snowflake, and as its client does, Yapfast takes fewer
+page from before the snowflake, and as its client does, Circord takes fewer
 than that, less one (under 24), as the channel's start, so a window around
 the first unread message of a new channel asks for nothing before it.
 Otherwise it learns where the channel starts from a page before. It learns
 that the window reached the newest message from a short page after, or once
-it reaches the newest messages Yapfast kept.
+it reaches the newest messages Circord kept.
 
 While the window shows, the channel's newest messages wait beside it, at
 most 200 as a closed channel keeps, and follow new messages, edits,
@@ -1102,7 +1102,7 @@ Each forward is `POST /channels/{target}/messages` with no content and a
 `message_reference` of type 1 (FORWARD) naming the original's message,
 channel and server, with `X-Context-Properties` of `{"location":
 "forwarding"}`, as Discord's client sends it. Discord copies the original
-into the new message's `message_snapshots`, which Yapfast shows under
+into the new message's `message_snapshots`, which Circord shows under
 "Forwarded". Discord takes no text with a forward (error 160011), so the
 message added goes after it as one of its own, with the same location, to
 each conversation the forward reached. A slowmode channel this account
@@ -1117,7 +1117,7 @@ forward again. In a server, the account needs Read Message History in the
 channel, and the server mustn't list `FORWARDING_DISABLED` among its
 features. Targets are the DMs, group DMs, channels and threads this account
 may send in, but not forums, whose posts start with a title, nor Matrix
-rooms. Once each conversation answers, Yapfast says "Message forwarded.",
+rooms. Once each conversation answers, Circord says "Message forwarded.",
 or opens the dialog again with those it failed in chosen, the message
 added kept, and Discord's reason, so Send retries them. If the forward went
 but the message added didn't, a notice says where.
@@ -1135,9 +1135,9 @@ to date by USER_SETTINGS_PROTO_UPDATE. It maps each channel's id to how
 often it was used and the times of the last ten uses. A use counts 100 on
 its day, 70 a day later, 50 at two or three days, 30 up to a week, then 10; a
 place's frecency is its uses in all times that sum, over the number of
-recent uses. Each conversation opened in Yapfast counts as a use, added
+recent uses. Each conversation opened in Circord counts as a use, added
 again to each count that comes, as Discord's client does until it saves
-its own. Yapfast doesn't save them.
+its own. Circord doesn't save them.
 
 A search lists every place whose name matches, ranked as Discord's search
 ranks them. A channel or group DM scores 10 for its whole name, 7 for its
@@ -1148,10 +1148,10 @@ letters in order. Each score is raised by up to double for a place used
 most, and a person's by 0.2 more for a friend and 0.1 for the DM. `@`
 searches people only, `#` channels only. Choosing a place clears the
 search. Discord's search also finds people with no DM yet and opens one
-to forward to; Yapfast lists only DMs that exist.
+to forward to; Circord lists only DMs that exist.
 
 Discord's client also greys out a channel where the original's files,
-embeds or stickers couldn't be posted, and an age-restricted one. Yapfast
+embeds or stickers couldn't be posted, and an age-restricted one. Circord
 lists those, and Discord's refusal shows when the forward fails there.
 Mentions and custom emoji in the message added go as typed.
 
@@ -1160,13 +1160,13 @@ Mentions and custom emoji in the message added go as typed.
 Discord keeps the account's notification settings per server, and one set
 for DMs: READY lists them in `user_guild_settings`, and
 USER_GUILD_SETTINGS_UPDATE replaces a server's
-(`yapfast_discord::notifications`). Each holds the server's mute, with
+(`circord_discord::notifications`). Each holds the server's mute, with
 `mute_config`'s `end_time` when it ends, its level (every message, mentions
 only, nothing, or the server's own default, `default_message_notifications`),
 whether @everyone and @here, and role mentions, call on the account, whether
 muted channels hide, and `channel_overrides`: each channel's and
 category's own mute and level, where 3 means the category's or server's.
-Yapfast publishes each server's settings with the server, shared between
+Circord publishes each server's settings with the server, shared between
 snapshots until Discord changes them, and marks each channel muted when it
 or its category is. A muted channel shows faint, as a muted DM does, and a
 server set to hide muted channels leaves them out of the channel list, but
@@ -1187,7 +1187,7 @@ server's switches. A server's menu and its header's dropdown offer the
 server's own.
 
 A server text channel and a category offer their own mute and level, as
-Discord's do, built alike in `crates/yapfast-iced/src/place_menus.rs`
+Discord's do, built alike in `crates/circord-iced/src/place_menus.rs`
 (`Notify`):
 
 - The bell in the channel's header opens a menu of "Mute channel", whose
@@ -1203,7 +1203,7 @@ Discord's do, built alike in `crates/yapfast-iced/src/place_menus.rs`
 - Right-clicking a category's heading, or the Menu key on it, offers "Mute
   category" or "Unmute category" and "Notification settings", for the
   category's own override; a muted category's channels show muted. The
-  heading names its first channel, and Yapfast finds the channel's category
+  heading names its first channel, and Circord finds the channel's category
   (`Application::category_of`); an empty category's heading names the
   category itself.
 

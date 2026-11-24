@@ -1,11 +1,11 @@
-//! Yapfast's icon in the system tray, which keeps Yapfast running with its window
-//! closed: a StatusNotifierItem on Linux, on the session bus Yapfast is given,
+//! Circord's icon in the system tray, which keeps Circord running with its window
+//! closed: a StatusNotifierItem on Linux, on the session bus Circord is given,
 //! and a notification-area icon on Windows. Clicking it opens the window; its
-//! menu opens Yapfast, leaves a call and quits.
+//! menu opens Circord, leaves a call and quits.
 
 use std::cell::Cell;
 
-/// The xdg-activation token of the tray click or Open Yapfast that is
+/// The xdg-activation token of the tray click or Open Circord that is
 /// opening the window, which lets a Wayland window come to the front.
 #[cfg(target_os = "linux")]
 static TOKEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
@@ -56,7 +56,7 @@ pub struct Tray {
 }
 
 impl Tray {
-    /// Puts Yapfast's icon in the tray. `chosen` is handed what the person
+    /// Puts Circord's icon in the tray. `chosen` is handed what the person
     /// picked. `None` where there's no tray to use. On Windows it starts on
     /// the window's thread, whose message loop runs the icon's window.
     pub fn start(chosen: Chosen) -> Option<Self> {
@@ -94,24 +94,23 @@ impl From<bool> for Badge {
     }
 }
 
-/// Yapfast's marigold logo with the notification badge cut into its corner.
+/// Circord's logo in its orange, `size` pixels square, with the notification
+/// badge at its corner.
 fn logo(size: u32, badge: Badge) -> Option<crate::icon::Rgba> {
-    let mut svg = include_str!("../crates/yapfast-iced-kit/icons/logo.svg")
+    let mut svg = include_str!("../crates/circord-iced-kit/icons/logo.svg")
         .replacen(
             r#"width="24" height="24""#,
             &format!(r#"width="{size}" height="{size}""#),
             1,
         )
-        .replacen(r##"fill="#fff" mask"##, r##"fill="#ffbf47" mask"##, 1);
+        .replacen(r##"fill="#fff""##, r##"fill="#ff9046""##, 1);
     svg = match badge {
         Badge::None => svg,
-        Badge::Dot => svg
-            .replacen("</mask>", r#"<circle cx="74" cy="74" r="21" /></mask>"#, 1)
-            .replacen(
-                "</svg>",
-                r##"<circle cx="74" cy="74" r="15" fill="#f0545e" /></svg>"##,
-                1,
-            ),
+        Badge::Dot => svg.replacen(
+            "</svg>",
+            r##"<circle cx="76" cy="76" r="16" fill="#f0545e" stroke="#fff" stroke-width="4" /></svg>"##,
+            1,
+        ),
         #[cfg(windows)]
         Badge::Count(count) => {
             // Stroked digits stay readable at small sizes and need no font.
@@ -136,8 +135,7 @@ fn logo(size: u32, badge: Badge) -> Option<crate::icon::Rgba> {
                 r#"<rect x="{left}" y="12" width="{}" height="31" rx="15.5""#,
                 90 - left
             );
-            svg.replacen("</mask>", &format!(r##"{badge} stroke="#000" stroke-width="6"/></mask>"##), 1)
-                .replacen("</svg>", &format!(r##"{badge} fill="#d12c43"/><path transform="translate({x} 18) scale(1.18)" d="{digit}{plus}" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>"##), 1)
+            svg.replacen("</svg>", &format!(r##"{badge} fill="#d12c43" stroke="#fff" stroke-width="4"/><path transform="translate({x} 18) scale(1.18)" d="{digit}{plus}" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>"##), 1)
         }
     };
     crate::icon::rasterize(svg.as_bytes(), size)
@@ -199,7 +197,7 @@ mod linux {
             let (updates, shown) = mpsc::channel();
             // Registering waits on the bus, and so does each update.
             let started = std::thread::Builder::new()
-                .name("yapfast-tray".into())
+                .name("circord-tray".into())
                 .spawn(move || run(item, shown));
             if let Err(error) = started {
                 tracing::warn!(%error, "could not start the tray icon");
@@ -223,12 +221,12 @@ mod linux {
         let chosen = item.chosen.clone();
         // Until registering says otherwise; it reports a missing watcher.
         online.store(true, Ordering::Relaxed);
-        // A tray that starts after Yapfast, or comes back, still gets the icon.
+        // A tray that starts after Circord, or comes back, still gets the icon.
         let handle = match item.assume_sni_available(true).spawn() {
             Ok(handle) => handle,
             Err(error) => {
                 online.store(false, Ordering::Relaxed);
-                tracing::info!(%error, "no tray icon; closing the window quits Yapfast");
+                tracing::info!(%error, "no tray icon; closing the window quits Circord");
                 return;
             }
         };
@@ -265,11 +263,11 @@ mod linux {
 
     impl ksni::Tray for Item {
         fn id(&self) -> String {
-            "yapfast".into()
+            "circord".into()
         }
 
         fn title(&self) -> String {
-            "Yapfast".into()
+            "Circord".into()
         }
 
         fn category(&self) -> ksni::Category {
@@ -282,7 +280,7 @@ mod linux {
 
         fn tool_tip(&self) -> ksni::ToolTip {
             ksni::ToolTip {
-                title: "Yapfast".into(),
+                title: "Circord".into(),
                 description: if self.shown.unread {
                     "Unread messages".into()
                 } else {
@@ -305,7 +303,7 @@ mod linux {
                 }
                 .into()
             };
-            let mut menu = vec![item("Open Yapfast", Choice::Open)];
+            let mut menu = vec![item("Open Circord", Choice::Open)];
             if self.shown.call {
                 menu.push(item("Disconnect", Choice::Disconnect));
             }
@@ -401,7 +399,7 @@ mod windows {
                 let class = WNDCLASSW {
                     lpfnWndProc: Some(procedure),
                     hInstance: instance,
-                    lpszClassName: w!("YapfastTray"),
+                    lpszClassName: w!("CircordTray"),
                     ..std::mem::zeroed()
                 };
                 RegisterClassW(&class);
@@ -409,8 +407,8 @@ mod windows {
                 // which wouldn't hear that Explorer restarted.
                 let window = CreateWindowExW(
                     0,
-                    w!("YapfastTray"),
-                    w!("Yapfast"),
+                    w!("CircordTray"),
+                    w!("Circord"),
                     WS_OVERLAPPED,
                     0,
                     0,
@@ -440,12 +438,12 @@ mod windows {
                     hIcon: icons[0],
                     ..std::mem::zeroed()
                 };
-                for (place, unit) in data.szTip.iter_mut().zip("Yapfast".encode_utf16()) {
+                for (place, unit) in data.szTip.iter_mut().zip("Circord".encode_utf16()) {
                     *place = unit;
                 }
                 let added = notify(NIM_ADD, &data);
                 if !added {
-                    tracing::info!("no notification area; closing the window quits Yapfast");
+                    tracing::info!("no notification area; closing the window quits Circord");
                 }
                 ICON.set(Some(Icon {
                     data,
@@ -572,7 +570,7 @@ mod windows {
         // this thread.
         let picked = unsafe {
             let menu = CreatePopupMenu();
-            AppendMenuW(menu, MF_STRING, OPEN, w!("Open Yapfast"));
+            AppendMenuW(menu, MF_STRING, OPEN, w!("Open Circord"));
             if call {
                 AppendMenuW(menu, MF_STRING, DISCONNECT, w!("Disconnect"));
             }
@@ -627,15 +625,15 @@ mod none {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn the_logo_is_marigold_and_unread_adds_a_red_dot() {
+    fn the_logo_is_orange_and_unread_adds_a_red_dot() {
         let plain = super::logo(32, super::Badge::None).unwrap();
         let unread = super::logo(32, super::Badge::Dot).unwrap();
         assert_eq!((plain.width, plain.height), (32, 32));
-        let marigold = |pixel: &[u8]| pixel == [0xff, 0xbf, 0x47, 255];
+        let orange = |pixel: &[u8]| pixel == [0xff, 0x90, 0x46, 255];
         let red = |pixel: &[u8]| pixel == [0xf0, 0x54, 0x5e, 255];
-        assert!(plain.pixels.chunks_exact(4).any(marigold));
+        assert!(plain.pixels.chunks_exact(4).any(orange));
         assert!(!plain.pixels.chunks_exact(4).any(red));
-        assert!(unread.pixels.chunks_exact(4).any(marigold));
+        assert!(unread.pixels.chunks_exact(4).any(orange));
         // The dot is in the bottom-right corner.
         let corner = (24 * 32 + 24) * 4;
         assert!(red(&unread.pixels[corner..corner + 4]));

@@ -1,4 +1,4 @@
-//! Yapfast port (patch 26): whether this renderer may start, as the app
+//! Circord port (patch 26): whether this renderer may start, as the app
 //! chooses between it and iced_wgpu in one build.
 //!
 //! iced's fallback renderer tries wgpu, then tiny-skia, and reads the

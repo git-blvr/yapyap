@@ -90,9 +90,9 @@ recording. Each change is kept at once in
 - Notifications, Sounds (the set, which plays a sound when chosen, the
   volume, and each sound's own with its play button) and Advanced.
   Advanced holds Start when you sign in, Open Discord
-  links in Yapfast (outside the preview), Close to tray, saying where
+  links in Circord (outside the preview), Close to tray, saying where
   there's no tray, and the renderer's switch: while it differs from the
-  renderer drawing, when it takes effect and Restart Yapfast.
+  renderer drawing, when it takes effect and Restart Circord.
 - Appearance (`appearance.rs`): each theme as a small window in its own
   colours, as many 150 px or wider across as fit; a click shows one and
   keeps it. New theme opens the editor on a copy of the theme shown (Start
@@ -101,13 +101,13 @@ recording. Each change is kept at once in
   its field shows its change at once, or says "Not a colour"; Save keeps the
   theme among the person's own and chooses it, Cancel (or leaving Appearance or Settings) shows the theme
   from before, and a saved one's Delete asks once more. Then the system
-  title bar's switch, where Yapfast can draw its own, and the profile
+  title bar's switch, where Circord can draw its own, and the profile
   switches, which the core is told of.
 - Discord: linking, as the sign-in screen's panel, while none is linked;
   then Unlink in a build with Matrix, hidden channels, reads marked on
   Discord, idle while away, blocked people's messages hidden, and those
   blocked, five more at a time, each with Unblock. Whether someone is
-  using Yapfast (`away.rs`): a key, a click or the
+  using Circord (`away.rs`): a key, a click or the
   wheel counts; once nobody has for 15 s, Discord hears since when, with
   idle while away, and goes AFK and idle on its own clock, and moving
   pictures hold still until someone is back. Input while someone is using
@@ -122,5 +122,5 @@ A setting that came with an update has a NEW tag after its name, and its
 page's row in the list one too, until Settings leaves that page; what was
 seen is kept in `layout.json` (`seen_new`), with the version a fresh
 install has met (`first_version`). Which settings are tagged and when one
-is new is the core's (`yapfast_core::new_tags`); `form::new_tag` draws
+is new is the core's (`circord_core::new_tags`); `form::new_tag` draws
 it.

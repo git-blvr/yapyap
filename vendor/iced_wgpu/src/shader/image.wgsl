@@ -109,7 +109,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let position = input.clip_bounds.xy;
     let scale = input.clip_bounds.zw;
 
-    // Yapfast port: the offset from the centre negated, as the quad shader
+    // Circord port: the offset from the centre negated, as the quad shader
     // has it, for `rounded_box_sdf`'s corner order (top left, top right,
     // bottom right, bottom left). Stock, each corner took its opposite's
     // radius: a banner round at the top only came out round at the bottom.
@@ -119,7 +119,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
         input.border_radius * 2.0,
     ) / 2.0;
 
-    // Yapfast port: the edge where the box is, as the quad shader and
+    // Circord port: the edge where the box is, as the quad shader and
     // tiny-skia put it (`0.5 - d`). Stock, `1.0 - d` put it half a pixel
     // outside, and the image's own bounds cut that off: round avatars came
     // out fuller, with flat sides.

@@ -47,7 +47,7 @@ pub const KEYS: Keys = Keys {
 
 /// The trusted comment a signature of `tag`'s sums carries.
 pub fn comment(tag: &str) -> String {
-    format!("yapfast {tag} SHA256SUMS.txt")
+    format!("circord {tag} SHA256SUMS.txt")
 }
 
 /// Whether `signature` is one of `keys` for `release`'s kind over `sums`, with

@@ -16,7 +16,7 @@ class FontNoticesTest(unittest.TestCase):
     def test_packages_keep_each_font_license_and_its_attribution(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            fonts = root / "crates/yapfast-iced-kit/fonts"
+            fonts = root / "crates/circord-iced-kit/fonts"
             fonts.mkdir(parents=True)
             notices = {"LICENSE-OFL-DisplayNames.txt": "display name fonts' license", "LICENSE-OFL-DMSans.txt": "DMSans license", "README.md": "font provenance"}
             for name, text in notices.items():
@@ -29,7 +29,7 @@ class FontNoticesTest(unittest.TestCase):
             (root / "src/LICENSE-emojibase.txt").write_text("emojibase license")
             twemoji = root / "vendor/twemoji"
             twemoji.mkdir(parents=True)
-            for name in ["LICENSE-GRAPHICS", "LICENSE", "README.md", "README.yapfast.md"]:
+            for name in ["LICENSE-GRAPHICS", "LICENSE", "README.md", "README.circord.md"]:
                 (twemoji / name).write_text("Twemoji notice")
             (twemoji / "REVISION").write_text("revision")
             with patch.object(release_package, "ROOT", root):

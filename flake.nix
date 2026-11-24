@@ -1,8 +1,8 @@
 {
-  description = "Yapfast, a native Discord client";
+  description = "Circord, a native Discord client";
 
   # Development happens in nix/flake.nix's shells; this flake only builds the
-  # app, so `nix profile add github:yapfast/yapfast` needs no checkout.
+  # app, so `nix profile add github:circord/circord` needs no checkout.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     rust-overlay = {
@@ -16,7 +16,7 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; overlays = [ rust-overlay.overlays.default ]; };
       # The commit and its day, which the build can't ask Git for in Nix's
-      # sandbox; Settings and `yapfast --version` show them. A dirty tree has
+      # sandbox; Settings and `circord --version` show them. A dirty tree has
       # no `rev`, and a release is built from one after scripts/set-version,
       # so its `dirtyRev` names the commit as well. Both are empty outside a
       # Git checkout.
@@ -28,13 +28,13 @@
       build = import ./nix/package.nix;
     in {
       packages.${system} = rec {
-        yapfast = build { inherit pkgs commit date; };
+        circord = build { inherit pkgs commit date; };
         # What the release's AppImage holds: the same build, which calls
         # itself a stable release or a nightly, not a development build.
         release = build { inherit pkgs commit date; release = true; };
         # The AppDir and runtime scripts/package-linux.py packs into the AppImage.
-        appdir = import ./nix/appimage.nix { inherit pkgs; yapfast = release; };
-        default = yapfast;
+        appdir = import ./nix/appimage.nix { inherit pkgs; circord = release; };
+        default = circord;
       };
     };
 }

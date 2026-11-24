@@ -1,4 +1,4 @@
-//! Gives the Windows executable its icon: compiles packaging/windows/yapfast.rc
+//! Gives the Windows executable its icon: compiles packaging/windows/circord.rc
 //! with the available resource compiler and links the result. Tells the
 //! program which build it is.
 
@@ -14,12 +14,12 @@ fn main() {
 
 /// Hands src/build_info.rs the commit and its date, and whether this is a
 /// release build. Nix's sandbox has no Git, so nix/package.nix gives the
-/// first two in `YAPFAST_COMMIT` and `YAPFAST_COMMIT_DATE`; a build in a
+/// first two in `CIRCORD_COMMIT` and `CIRCORD_COMMIT_DATE`; a build in a
 /// checkout asks Git. Without either, the build names no commit. Only a
-/// release's packaging sets `YAPFAST_RELEASE`: every other build, such as
+/// release's packaging sets `CIRCORD_RELEASE`: every other build, such as
 /// `cargo run`, is a development build.
 fn build_info() {
-    for name in ["YAPFAST_COMMIT", "YAPFAST_COMMIT_DATE", "YAPFAST_RELEASE"] {
+    for name in ["CIRCORD_COMMIT", "CIRCORD_COMMIT_DATE", "CIRCORD_RELEASE"] {
         println!("cargo:rerun-if-env-changed={name}");
     }
     // Only this directory's own repository counts: source unpacked inside
@@ -40,11 +40,11 @@ fn build_info() {
             }
         }
     }
-    let commit = env::var("YAPFAST_COMMIT")
+    let commit = env::var("CIRCORD_COMMIT")
         .ok()
         .filter(|commit| !commit.is_empty())
         .or_else(|| git(&["rev-parse", "HEAD"]).filter(|_| checkout));
-    let date = env::var("YAPFAST_COMMIT_DATE")
+    let date = env::var("CIRCORD_COMMIT_DATE")
         .ok()
         .filter(|date| !date.is_empty())
         .or_else(|| {
@@ -60,13 +60,13 @@ fn build_info() {
                 .map(|date| date.trim().to_owned())
         });
     if let Some(commit) = commit.filter(|commit| !commit.is_empty()) {
-        println!("cargo:rustc-env=YAPFAST_BUILD_COMMIT={commit}");
+        println!("cargo:rustc-env=CIRCORD_BUILD_COMMIT={commit}");
     }
     if let Some(date) = date.filter(|date| !date.is_empty()) {
-        println!("cargo:rustc-env=YAPFAST_BUILD_DATE={date}");
+        println!("cargo:rustc-env=CIRCORD_BUILD_DATE={date}");
     }
-    if env::var_os("YAPFAST_RELEASE").is_some_and(|release| !release.is_empty()) {
-        println!("cargo:rustc-env=YAPFAST_BUILD_RELEASE=1");
+    if env::var_os("CIRCORD_RELEASE").is_some_and(|release| !release.is_empty()) {
+        println!("cargo:rustc-env=CIRCORD_BUILD_RELEASE=1");
     }
 }
 
@@ -81,13 +81,13 @@ fn git(arguments: &[&str]) -> Option<String> {
 }
 
 fn windows_icon() {
-    let resources = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("yapfast.res");
+    let resources = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("circord.res");
     // The script names only the icon beside it, so it needs no preprocessor.
     let status = match Command::new("llvm-rc")
         .current_dir("packaging/windows")
         .args(["-no-preprocess", "-FO"])
         .arg(&resources)
-        .arg("yapfast.rc")
+        .arg("circord.rc")
         .status()
     {
         Ok(status) => status,
@@ -99,7 +99,7 @@ fn windows_icon() {
                 .current_dir("packaging/windows")
                 .args(["/fo"])
                 .arg(&resources)
-                .arg("yapfast.rc")
+                .arg("circord.rc")
                 .status()
                 .unwrap_or_else(|error| panic!("could not run the Windows SDK's rc.exe: {error}"))
         }
@@ -107,7 +107,7 @@ fn windows_icon() {
     };
     assert!(
         status.success(),
-        "resource compiler could not compile yapfast.rc"
+        "resource compiler could not compile circord.rc"
     );
     // The MSVC linker takes compiled resources as an input.
     println!("cargo:rustc-link-arg-bins={}", resources.display());

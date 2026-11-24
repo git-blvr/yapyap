@@ -8,17 +8,17 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 minisign() { nix shell nixpkgs#minisign -c minisign "$@"; }
 if [[ ${1:-} == new-keys ]]; then
   for key in stable nightly; do
-    minisign -G -f -W -p "$key.pub" -s "$key.key" -c "Yapfast update tests: $key key"
+    minisign -G -f -W -p "$key.pub" -s "$key.key" -c "Circord update tests: $key key"
   done
 fi
 sum() { printf '%s' "$1" | sha256sum | cut -d' ' -f1; }
 # NAME KEY TAG TEXT: TEXT signed with KEY for TAG's release, as NAME.minisig.
 sign() {
   printf '%s' "$4" > "$1"
-  minisign -S -s "$2.key" -m "$1" -x "$1.minisig" -t "yapfast $3 SHA256SUMS.txt" -c "signature from the $2 test key"
+  minisign -S -s "$2.key" -m "$1" -x "$1.minisig" -t "circord $3 SHA256SUMS.txt" -c "signature from the $2 test key"
   rm "$1"
 }
-setup=Yapfast-0.4.1-windows-x64-setup.exe appimage=Yapfast-0.4.1-x86_64.AppImage
+setup=Circord-0.4.1-windows-x64-setup.exe appimage=Circord-0.4.1-x86_64.AppImage
 # What install.rs's tests serve as SHA256SUMS.txt.
 sign installer stable v0.4.1 "$(sum $'#!/bin/sh\nexit 0\n')  $setup"$'\n'
 sign mismatched stable v0.4.1 "$(sum 'what was published')  $setup"$'\n'

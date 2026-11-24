@@ -268,7 +268,7 @@ impl graphics::Compositor for Compositor {
         shell: Shell,
         backend: Option<&str>,
     ) -> Result<Self, graphics::Error> {
-        // Yapfast port: off unless the app draws with the GPU.
+        // Circord port: off unless the app draws with the GPU.
         if !crate::enabled::enabled() {
             return Err(graphics::Error::GraphicsAdapterNotFound {
                 backend: "wgpu",

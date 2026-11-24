@@ -1,9 +1,9 @@
-# The C sources under crates/yapfast-core/native compile with headers the dev
+# The C sources under crates/circord-core/native compile with headers the dev
 # shell provides — dav1d, FFmpeg, libvpx and libyuv — and which clangd has none
 # of outside it. Their absence is not a fault in these files, so the errors that
 # follow from it are left to the build, which does have them.
 If:
-  PathMatch: .*/crates/yapfast-core/native/.*[.](c|cc)$
+  PathMatch: .*/crates/circord-core/native/.*[.](c|cc)$
 Diagnostics:
   Suppress:
     - pp_file_not_found

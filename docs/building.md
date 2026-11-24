@@ -18,7 +18,7 @@ that work:
   [Windows beta guide](windows-beta.md).
 
 The repository's own `flake.nix` builds no shell, only the package that
-`nix profile add github:yapfast/yapfast#yapfast` installs: the Discord-only
+`nix profile add github:circord/circord#circord` installs: the Discord-only
 release build, from `nix/package.nix`. It shares libwebrtc and the
 system libraries with the development shell through `nix/native.nix`, and pins
 the same nixpkgs in its own `flake.lock`. `nix build` puts it in `result`.
@@ -29,7 +29,7 @@ hash there; a `nix build` with the old one prints it.
 
 ## Dependencies
 
-Yapfast pins Rust 1.97.1 and iced 0.14.0. Cargo.lock pins the complete Rust
+Circord pins Rust 1.97.1 and iced 0.14.0. Cargo.lock pins the complete Rust
 graph. iced's two renderers and its text shaper, cosmic-text, are patched in
 `vendor/`; see [dependency sources](#dependency-sources) and [the vendored
 toolkit](client/toolkit.md).
@@ -37,18 +37,18 @@ toolkit](client/toolkit.md).
 The Matrix SDK revision follows the pinned MatrixRTC revision. Keep those two
 sources together when upgrading.
 
-Every emoji Yapfast draws, in the picker, reactions, suggestions, names and
+Every emoji Circord draws, in the picker, reactions, suggestions, names and
 message text, is drawn from Twemoji's pictures, the artwork Discord's client uses: `vendor/twemoji` is
 `assets/72x72` from https://github.com/discord/twemoji at the revision
 `vendor/twemoji/REVISION` names, under CC-BY 4.0, which asks for the attribution
-`vendor/twemoji/README.yapfast.md` gives. `crates/yapfast-iced/build.rs` makes them
+`vendor/twemoji/README.circord.md` gives. `crates/circord-iced/build.rs` makes them
 one font the window loads (`emoji_font_tables.rs` beside it writes the font's
 tables). The font maps each single emoji's own code point and joins each sequence
 of several, such as a flag or a skin tone, into its picture with GSUB ligatures, so
 text draws Twemoji's picture for an emoji as typed; no system emoji font is used,
 and the picker lists only the emoji Twemoji has a picture for. `scripts/release_package.py` copies the
 licences and attribution into each package and `THIRD-PARTY.json`. Update by
-taking the new commit's files over these, as `vendor/twemoji/README.yapfast.md`
+taking the new commit's files over these, as `vendor/twemoji/README.circord.md`
 says.
 
 LiveKit's Rust crates must stay on the mutually compatible versions in
@@ -83,20 +83,20 @@ own, `target/fast/`. Use it for tests, local runs and checks: `cargo build
 apart from the ones everyday work replaces.
 
 A plain `cargo build`, `cargo build --workspace` (`scripts/check`'s) and
-`scripts/ui-session`'s build give `yapfast-core`, the window and the binary
+`scripts/ui-session`'s build give `circord-core`, the window and the binary
 the same features, so after an edit only the first of them compiles: Cargo
 compiles a crate once per set of features, and these three are the slowest.
 Two things keep them alike. The root's `discord` feature also turns on
-`yapfast-core/default`, which `--workspace` turns on as it selects the core.
-And the programs ui-session runs beside Yapfast, `testing/tray_host.rs` and
+`circord-core/default`, which `--workspace` turns on as it selects the core.
+And the programs ui-session runs beside Circord, `testing/tray_host.rs` and
 `testing/record_host.rs`, are the package `testing/hosts`, not examples of
 the root: an example builds with the root's dev-dependencies, which turn on
-`yapfast-core/test-fixtures`. Tests do build with that feature, so `cargo
+`circord-core/test-fixtures`. Tests do build with that feature, so `cargo
 test` compiles those crates once more, apart from these.
 
 ### Dependency sources
 
-Yapfast patches these crates in `vendor/`, through `[patch.crates-io]` or a path
+Circord patches these crates in `vendor/`, through `[patch.crates-io]` or a path
 dependency in Cargo.toml:
 
 - `matrix-rtc-livekit`: Element's matrix-rust-rtc at `5831af8`, with native
@@ -146,10 +146,10 @@ patches let NVENC, AMF and VA-API change their bitrate without a keyframe.
 Its build script compiles it, and NASM assembles its x86-64 assembly, with
 every symbol prefixed, apart from the FFmpeg in libwebrtc, and it loads
 libva, NVIDIA's driver and AMD's AMF runtime only when an encoder opens.
-Its `README.yapfast.md` explains the rest. Targets without a `gen/` folder build without hardware
+Its `README.circord.md` explains the rest. Targets without a `gen/` folder build without hardware
 encoding or H265 decoding.
 
-Each has a `README.yapfast.md` with its changes.
+Each has a `README.circord.md` with its changes.
 
 Crates that aren't vendored are in
 `~/.cargo/registry/src/index.crates.io-*/NAME-VERSION/`. The Matrix SDK is a git
@@ -160,7 +160,7 @@ the short form of the revision pinned in Cargo.toml. libwebrtc's headers are in
 ### Media libraries
 
 Three libraries decode and encode media, each for its own formats. The C
-files named here are in `crates/yapfast-core/native/`.
+files named here are in `crates/circord-core/native/`.
 
 - LiveKit's libwebrtc archive, `$LK_CUSTOM_WEBRTC` in the development shell,
   holds libvpx, dav1d, libyuv and Chromium's FFmpeg, which has H264 and
@@ -189,7 +189,7 @@ nm $LK_CUSTOM_WEBRTC/lib/libwebrtc.a | grep ' T avformat_open_input'
 
 On NixOS, a binary run outside `nix develop` opens NVENC only with
 `LD_LIBRARY_PATH=/run/opengl-driver/lib`, which the dev shell and the Nix
-package's wrapper add. Yapfast names the libva driver for each render node
+package's wrapper add. Circord names the libva driver for each render node
 itself, but `vainfo` or FFmpeg's command line on a host that sets
 `LIBVA_DRIVER_NAME=nvidia` needs `env -u LIBVA_DRIVER_NAME` to reach AMD's
 or Intel's driver.
@@ -202,7 +202,7 @@ builds with the `fast` profile, as local work does. It runs, in order:
 formatting; `scripts/check-doc-links`, which fails on a Markdown link to a
 missing file or heading; Clippy with warnings denied and the tests for the
 whole workspace; a build; and the smoke test, which runs
-`target/<profile>/yapfast` from that build. These build the default features,
+`target/<profile>/circord` from that build. These build the default features,
 the release's: the window with Discord (see [Networks](#networks)).
 
 Clippy checks more than its defaults: the root `Cargo.toml`'s
@@ -220,7 +220,7 @@ so their binary doesn't replace the desktop one, the builds without the
 window: Clippy with Matrix alone, in the program and the core, and the
 headless build's Clippy and smoke test with both networks. Run it before a
 release and after a change to code that Matrix shares, such as
-`#[cfg(feature = "matrix")]` branches in `yapfast-core` and the app. Each
+`#[cfg(feature = "matrix")]` branches in `circord-core` and the app. Each
 step prints `=== step` and `rc=N` when it ends, with Rust's errors when it
 fails, and keeps its full log under `target/check/`. The script runs every
 step and exits non-zero if any failed.
@@ -245,23 +245,23 @@ Tests open no sound device. The core's tests, and the clients' once they
 make their window's state, play to and record from silent stand-ins that
 take and give samples at a device's pace (`audio_io::silence_audio`), so a
 test is never heard and never hears the room. The ignored device tests use
-the system's devices when `YAPFAST_TEST_AUDIO` is set; set it only with
+the system's devices when `CIRCORD_TEST_AUDIO` is set; set it only with
 `PULSE_SERVER` naming a private PulseAudio of null sinks, as
 `scripts/run-framework-isolated --audio` makes, never the desktop's own.
 
 ## Seeing the app
 
-`scripts/ui-session` runs Yapfast on a private Weston display, for screenshots and
+`scripts/ui-session` runs Circord on a private Weston display, for screenshots and
 checks by hand, without touching the desktop or a real account:
 
 ```sh
 scripts/ui-session start      # the preview; --discord for the fake Discord
 scripts/ui-session do 'click 40 100' 'type hello' 'key enter' 'shot sent'
-scripts/ui-session relaunch   # rebuild and restart Yapfast on the same display
+scripts/ui-session relaunch   # rebuild and restart Circord on the same display
 scripts/ui-session stop
 ```
 
-`start` builds the default build, the release's, into `target/fast/yapfast`
+`start` builds the default build, the release's, into `target/fast/circord`
 and runs a copy of it: on the preview, or with `--discord` against the fake
 Discord. Screenshots go to `.local/ui-session/shots/`, and `scripts/ui-session
 --help` lists every option and command. `start --tray` adds a stand-in tray on
@@ -277,7 +277,7 @@ scripts/ui-session do 'record start tour' 'glide 400 600' 'click 170 264 glide' 
 
 `testing/record_host.rs` takes the frames through Weston's capture protocol
 and ffmpeg encodes them to `.local/ui-session/videos/tour.mp4`, which later
-starts keep. `--zoom` opens Yapfast at that zoom level, `--cursor` shows the
+starts keep. `--zoom` opens Circord at that zoom level, `--cursor` shows the
 pointer, `glide` and `click … glide` move it as a hand would, `scroll
 PIXELS SECONDS` scrolls smoothly as a touchpad whose fingers stay down,
 `fling PIXELS SECONDS` as one at a steady speed whose fingers then lift,
@@ -290,7 +290,7 @@ another refresh rate, and `steps` records every repaint's row sums instead
 of a video:
 
 ```sh
-scripts/ui-session start --discord --size 1920x1080 --refresh 180 --bin target/fast/yapfast
+scripts/ui-session start --discord --size 1920x1080 --refresh 180 --bin target/fast/circord
 scripts/ui-session do 'move 900 500' 'steps start notch 400 1300' 'wheel -1' 'sleep 1' 'steps stop'
 testing/frame_steps.py .local/ui-session/videos/notch.rows --from 60 --to 1000
 ```
@@ -302,8 +302,8 @@ moved, and how even the steps were. Weston's headless output times its
 repaints in whole milliseconds and waits at least one more, so a busy
 display repaints every `floor(1000 / HZ) + 1` ms or a little over: 180
 gives about 164 repaints a second, 250 about 196. The window's own
-timings come from its frame trace (`YAPFAST_LOG=debug`, target
-`yapfast::frames`; see [the window](client/window.md#building-and-running)).
+timings come from its frame trace (`CIRCORD_LOG=debug`, target
+`circord::frames`; see [the window](client/window.md#building-and-running)).
 
 ## Networks
 
@@ -330,18 +330,18 @@ device list for both networks. A build without `desktop`, such as
 `--no-default-features --features matrix,discord`, has no window: it runs only
 the commands that need none.
 
-`YAPFAST_DISCORD_TEST_SERVER=http://127.0.0.1:18400` points Discord at
+`CIRCORD_DISCORD_TEST_SERVER=http://127.0.0.1:18400` points Discord at
 `testing/fake_discord.ts` (`bun testing/fake_discord.ts --port 18400`). It uses
 a test token instead of the linked account, so the real token never reaches it.
 `scripts/test-fake-discord [FILTER]` runs the ignored tests in
-`crates/yapfast-discord/tests/fake_server/` with the `fast` profile, or those
+`crates/circord-discord/tests/fake_server/` with the `fast` profile, or those
 a filter names, such as `forum` or `calls_in_dms`, a second or so apiece. Each starts a
 fake of its own, so none depends on another and a filter runs any alone. `cargo
 nextest`, in the development shell, runs them side by side, eight at a time
 (`.config/nextest.toml`), and the whole file takes about 15 seconds; without
 it, `cargo test` runs them one after another in about a minute. The script then
-runs yapfast-core's Discord tests against one fake, and
-`crates/yapfast-discord/tests/fake_env.rs` against a fake that runs the example
+runs circord-core's Discord tests against one fake, and
+`crates/circord-discord/tests/fake_env.rs` against a fake that runs the example
 environment.
 
 `--env PATH` replaces the fake's built-in content with an environment, for
@@ -363,7 +363,7 @@ Media paths are relative to the environment file. Videos need `ffprobe` and
 and the result is cached in the system's temporary directory. Without
 `--env`, the fake serves its built-in content unchanged, and the tests rely
 on it.
-`YAPFAST_DISCORD_TEST_UNLINKED=1` starts Yapfast unlinked, to link against the fake.
+`CIRCORD_DISCORD_TEST_UNLINKED=1` starts Circord unlinked, to link against the fake.
 [Network memory](measurements/README.md) compares the three builds.
 
 With [direnv](https://direnv.net/), the repository's `.envrc` loads the Nix
@@ -381,7 +381,7 @@ to match LiveKit.
 the default, or the full preview with Matrix, and passes the options to
 `scripts/package-windows.py`, such as `--no-installer`.
 `scripts/package-windows.py`, which `scripts/build-windows` runs, makes the
-flavour's portable ZIP and compiles the installer, `packaging/windows/yapfast.iss`, with
+flavour's portable ZIP and compiles the installer, `packaging/windows/circord.iss`, with
 Inno Setup 7.1.0 under Wine. The first run downloads Inno Setup's installer,
 pinned by SHA-256, and installs it into its own Wine prefix in
 `.local/windows/inno-setup`, under `xvfb-run`, since it opens windows even
@@ -392,7 +392,7 @@ Rust embeds source paths for panic messages, and C's `__FILE__` reaches
 AWS-LC's errors and asserts, so a plain build names its builder's home folder
 thousands of times, through `~/.cargo`. `scripts/release-env TARGET`, sourced
 before `cargo build --target TARGET`, maps the home folder, Cargo's folder and
-the repository to `/home`, `/cargo` and `/yapfast` with `--remap-path-prefix`
+the repository to `/home`, `/cargo` and `/circord` with `--remap-path-prefix`
 and Clang's `-ffile-prefix-map`. On Windows it takes `cargo xwin env`'s
 environment and adds the C flags to it, since `cargo xwin build` sets the
 `CFLAGS_<target>` the `cc` crate reads first; `scripts/build-windows` uses it.
@@ -434,7 +434,7 @@ $env:LIBCLANG_PATH = 'C:\Program Files\LLVM\bin'
 
 Adjust both paths if LLVM is installed elsewhere. A network connection is
 needed once for the libwebrtc archive.
-`vendor/ffmpeg-src/build.rs` and `crates/yapfast-core/build.rs` select
+`vendor/ffmpeg-src/build.rs` and `crates/circord-core/build.rs` select
 `clang-cl` for MSVC targets only when `CC`/`CXX` are unset, because FFmpeg's x86
 assembly and the camera shim's Clang warning flags need it; an explicitly
 selected compiler wins.
@@ -442,7 +442,7 @@ selected compiler wins.
 ```powershell
 cargo build --locked --profile fast
 cargo run --locked --profile fast -- --preview
-cargo test --locked --profile fast -p yapfast-core history
+cargo test --locked --profile fast -p circord-core history
 ```
 
 The downloadable package needs none of these tools to run.
@@ -453,10 +453,10 @@ on the tester's actual GPU.
 
 ## Logs
 
-Yapfast logs only its own operational events at info level and above. Dependency
+Circord logs only its own operational events at info level and above. Dependency
 logs are disabled on purpose, because they can expose authentication data or
-message content. Yapfast ignores `RUST_LOG`; `YAPFAST_LOG=debug` turns on Yapfast's own
-debug logs (`crates/yapfast-core/src/logging.rs`).
+message content. Circord ignores `RUST_LOG`; `CIRCORD_LOG=debug` turns on Circord's own
+debug logs (`crates/circord-core/src/logging.rs`).
 Typed text never enters the log. Future errors must use fixed event
 names and safe classifications rather than raw protocol responses or SDK Debug
 output.
@@ -464,11 +464,11 @@ output.
 ## Initial resource measurement
 
 After a `measure` build with the release's features (see
-[Networks](#networks)), open `target/measure/yapfast` inside the Nix shell;
+[Networks](#networks)), open `target/measure/circord` inside the Nix shell;
 measure `release` only for the shipped build's absolute numbers. Leave it
 inactive for at least 15 seconds, then sample its PID on Linux.
-`scripts/ui-session` writes the PID of the Yapfast it runs to
-`.local/ui-session/yapfast.pid`.
+`scripts/ui-session` writes the PID of the Circord it runs to
+`.local/ui-session/circord.pid`.
 
 ```sh
 scripts/measure-process PID --seconds 30
@@ -486,7 +486,7 @@ Synapse and the authorization service communicate over an internal TLS listener
 using a throwaway self-signed certificate. LiveKit and authorization share a
 network namespace, and use the same signaling port inside and outside Docker.
 Authorization uses the standalone `/get_token` mode from lk-jwt-service 0.7.0.
-Yapfast's native experiment sets the local authorization fallback explicitly,
+Circord's native experiment sets the local authorization fallback explicitly,
 because this stack does not advertise a production RTC discovery endpoint.
 See [sessions](sessions.md) for credential storage and headless sign-in.
 

@@ -38,7 +38,7 @@ impl Primitive {
         }
     }
 
-    /// Yapfast port (patch 27): the pixels the [`Primitive`] can touch: a
+    /// Circord port (patch 27): the pixels the [`Primitive`] can touch: a
     /// stroke's path bounds grown by half its width, and either grown by a
     /// pixel for anti-aliasing. A straight stroke's path bounds have no
     /// height (or width) and were dropped from a layer's extent.

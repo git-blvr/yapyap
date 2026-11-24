@@ -4,13 +4,13 @@
 # Run it on the machine that holds the stable key, once the sums are final,
 # whether the files were built here or downloaded from a draft release. It
 # asks for the key's password, writes SHA256SUMS.txt.minisig beside the sums,
-# and checks it with the public keys the app carries. YAPFAST_SIGNING_KEY
+# and checks it with the public keys the app carries. CIRCORD_SIGNING_KEY
 # names another key file, the backup's say. See docs/packaging.md.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 usage="usage: scripts/sign-release DIR TAG"
 dir=${1:?$usage} tag=${2:?$usage}
-key=${YAPFAST_SIGNING_KEY:-$HOME/.minisign/yapfast-stable.key}
+key=${CIRCORD_SIGNING_KEY:-$HOME/.minisign/circord-stable.key}
 if [[ $tag != v* || $tag == *-nightly.* ]]; then
   echo "scripts/sign-release: $tag isn't the tag of a release the stable key signs" >&2
   exit 2
@@ -21,8 +21,8 @@ minisign() {
   if type -P minisign > /dev/null; then command minisign "$@"
   else nix shell nixpkgs#minisign -c minisign "$@"; fi
 }
-comment="yapfast $tag SHA256SUMS.txt"
-minisign -S -s "$key" -m "$sums" -t "$comment" -c "Yapfast $tag"
+comment="circord $tag SHA256SUMS.txt"
+minisign -S -s "$key" -m "$sums" -t "$comment" -c "Circord $tag"
 for public in packaging/keys/stable.pub packaging/keys/stable-backup.pub; do
   if [[ $(minisign -V -p "$public" -m "$sums" -Q 2> /dev/null) == "$comment" ]]; then
     echo "Signed $sums for $tag, checked with $public."

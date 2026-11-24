@@ -1,4 +1,4 @@
-//! The window's desktop (`yapfast_iced::Desktop`), made of this crate's
+//! The window's desktop (`circord_iced::Desktop`), made of this crate's
 //! desktop modules: the tray (`tray`), notifications (`notify`), the single
 //! instance (`instance`), starting at sign-in (`autostart`), Discord's links
 //! (`protocol`), copied pictures (`copy`), pasted files and pictures
@@ -11,8 +11,8 @@ use std::{
     sync::{Arc, Mutex, OnceLock},
 };
 
-use yapfast_core::{chat::Alert, runtime::BackgroundRuntime};
-use yapfast_iced::{Heard, Offered, Tell, TrayChoice, UpdateChoices, UpdateStatus, UpdatesShown};
+use circord_core::{chat::Alert, runtime::BackgroundRuntime};
+use circord_iced::{Heard, Offered, Tell, TrayChoice, UpdateChoices, UpdateStatus, UpdatesShown};
 
 use crate::{
     keybinds, paste,
@@ -22,7 +22,7 @@ use crate::{
     },
 };
 
-/// What the window asks of the desktop, for one start of Yapfast.
+/// What the window asks of the desktop, for one start of Circord.
 pub struct Shell {
     runtime: Arc<BackgroundRuntime>,
     /// The preview offers neither starting at sign-in nor Discord's links.
@@ -30,7 +30,7 @@ pub struct Shell {
     instance: Mutex<crate::instance::Instance>,
     tell: OnceLock<Tell>,
     updates: Arc<Mutex<Updating>>,
-    /// Where pasted pictures are saved, until Yapfast closes.
+    /// Where pasted pictures are saved, until Circord closes.
     pasted: Arc<Mutex<Option<tempfile::TempDir>>>,
 }
 
@@ -43,8 +43,8 @@ struct Updating {
     checking: bool,
     /// The last look's task and the last update's: dropping one stops it,
     /// and a finished one is replaced by the next.
-    look: Option<yapfast_core::runtime::BackgroundTask<()>>,
-    install: Option<yapfast_core::runtime::BackgroundTask<()>>,
+    look: Option<circord_core::runtime::BackgroundTask<()>>,
+    install: Option<circord_core::runtime::BackgroundTask<()>>,
     installing: Option<Installing>,
     install_error: String,
     /// An update that is ready for `main` to finish once the window closes.
@@ -101,7 +101,7 @@ impl Shell {
 /// The tray, as `tray::Tray`.
 struct Tray(crate::tray::Tray);
 
-impl yapfast_iced::Tray for Tray {
+impl circord_iced::Tray for Tray {
     fn available(&self) -> bool {
         self.0.available()
     }
@@ -113,13 +113,13 @@ impl yapfast_iced::Tray for Tray {
 
 struct Notifier(crate::notify::Notifier);
 
-impl yapfast_iced::Notifier for Notifier {
+impl circord_iced::Notifier for Notifier {
     fn show(&self, alert: Alert, text: bool) {
         self.0.show(alert, crate::notify::Style { text });
     }
 }
 
-impl yapfast_iced::Desktop for Shell {
+impl circord_iced::Desktop for Shell {
     fn app_id(&self) -> &'static str {
         crate::APP_ID
     }
@@ -137,7 +137,7 @@ impl yapfast_iced::Desktop for Shell {
             });
     }
 
-    fn tray(&self, tell: Tell) -> Option<Box<dyn yapfast_iced::Tray>> {
+    fn tray(&self, tell: Tell) -> Option<Box<dyn circord_iced::Tray>> {
         let tray = crate::tray::Tray::start(Arc::new(move |choice| {
             tell(Heard::Tray(match choice {
                 crate::tray::Choice::Open => TrayChoice::Open,
@@ -153,13 +153,13 @@ impl yapfast_iced::Desktop for Shell {
         crate::tray::take_activation_token()
     }
 
-    fn notifier(&self, root: &Path, tell: Tell) -> Option<Box<dyn yapfast_iced::Notifier>> {
+    fn notifier(&self, root: &Path, tell: Tell) -> Option<Box<dyn circord_iced::Notifier>> {
         let notifier =
             crate::notify::Notifier::start(Arc::new(move |room| tell(Heard::Opened(room))), root);
         Some(Box::new(Notifier(notifier)))
     }
 
-    fn activate(&self, window: &dyn yapfast_iced::Window, token: &str) {
+    fn activate(&self, window: &dyn circord_iced::Window, token: &str) {
         #[cfg(target_os = "linux")]
         crate::instance::activate(window, token);
         #[cfg(not(target_os = "linux"))]
@@ -168,14 +168,14 @@ impl yapfast_iced::Desktop for Shell {
 
     fn pointer(
         &self,
-        window: &dyn yapfast_iced::Window,
+        window: &dyn circord_iced::Window,
         scale: f64,
-    ) -> Option<Box<dyn yapfast_iced::PointerAt>> {
+    ) -> Option<Box<dyn circord_iced::PointerAt>> {
         crate::drop::Pointer::of(window, scale)
-            .map(|pointer| Box::new(pointer) as Box<dyn yapfast_iced::PointerAt>)
+            .map(|pointer| Box::new(pointer) as Box<dyn circord_iced::PointerAt>)
     }
 
-    fn decorate(&self, window: &dyn yapfast_iced::Window, tell: Tell, unread: u8) {
+    fn decorate(&self, window: &dyn circord_iced::Window, tell: Tell, unread: u8) {
         #[cfg(windows)]
         if let Some(hwnd) = win32(window) {
             crate::icon::set_on(hwnd, unread);
@@ -191,13 +191,13 @@ impl yapfast_iced::Desktop for Shell {
     }
 
     #[cfg(windows)]
-    fn taskbar_unread(&self, window: &dyn yapfast_iced::Window, unread: u8) {
+    fn taskbar_unread(&self, window: &dyn circord_iced::Window, unread: u8) {
         if let Some(hwnd) = win32(window) {
             crate::icon::set_taskbar(hwnd, unread);
         }
     }
 
-    fn window_place(&self, window: &dyn yapfast_iced::Window) -> Option<[i32; 2]> {
+    fn window_place(&self, window: &dyn circord_iced::Window) -> Option<[i32; 2]> {
         #[cfg(windows)]
         {
             crate::window_place::read(win32(window)?)
@@ -209,7 +209,7 @@ impl yapfast_iced::Desktop for Shell {
         }
     }
 
-    fn put_window(&self, window: &dyn yapfast_iced::Window, at: [i32; 2]) {
+    fn put_window(&self, window: &dyn circord_iced::Window, at: [i32; 2]) {
         #[cfg(windows)]
         if let Some(window) = win32(window) {
             crate::window_place::put(window, at);
@@ -218,7 +218,7 @@ impl yapfast_iced::Desktop for Shell {
         let _ = (window, at);
     }
 
-    fn monitor_scale(&self, window: &dyn yapfast_iced::Window) -> Option<f32> {
+    fn monitor_scale(&self, window: &dyn circord_iced::Window) -> Option<f32> {
         #[cfg(windows)]
         {
             use windows_sys::Win32::{
@@ -281,7 +281,7 @@ impl yapfast_iced::Desktop for Shell {
         release_memory();
     }
 
-    fn paste_reader(&self) -> Option<yapfast_iced::PasteReader> {
+    fn paste_reader(&self) -> Option<circord_iced::PasteReader> {
         let pasted = self.pasted.clone();
         Some(Box::new(move || pasted_files(&pasted)))
     }
@@ -290,7 +290,7 @@ impl yapfast_iced::Desktop for Shell {
         &self,
         watched: Vec<keybinds::Watched>,
         runtime: &BackgroundRuntime,
-        toggled: yapfast_iced::Toggled,
+        toggled: circord_iced::Toggled,
         told: Box<dyn Fn(keybinds::Status) + Send + Sync>,
     ) -> Option<Box<dyn std::any::Any>> {
         if watched.is_empty() {
@@ -311,14 +311,14 @@ impl yapfast_iced::Desktop for Shell {
         keybinds::window_key(scancode, pressed);
     }
 
-    fn updates(&self) -> Option<&dyn yapfast_iced::Updates> {
+    fn updates(&self) -> Option<&dyn circord_iced::Updates> {
         Some(self)
     }
 }
 
 /// The window's Win32 handle.
 #[cfg(windows)]
-fn win32(window: &dyn yapfast_iced::Window) -> Option<windows_sys::Win32::Foundation::HWND> {
+fn win32(window: &dyn circord_iced::Window) -> Option<windows_sys::Win32::Foundation::HWND> {
     let handle = window.window_handle().ok()?;
     match handle.as_raw() {
         raw_window_handle::RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as _),
@@ -329,7 +329,7 @@ fn win32(window: &dyn yapfast_iced::Window) -> Option<windows_sys::Win32::Founda
 /// Files dragged over a Wayland window, which winit doesn't follow there,
 /// through a data device of the shared `drop` module's own.
 #[cfg(target_os = "linux")]
-fn watch_wayland_drops(window: &dyn yapfast_iced::Window, tell: Tell) {
+fn watch_wayland_drops(window: &dyn circord_iced::Window, tell: Tell) {
     use raw_window_handle::RawDisplayHandle;
     static WATCHING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
     let Ok(display) = window.display_handle() else {
@@ -343,10 +343,10 @@ fn watch_wayland_drops(window: &dyn yapfast_iced::Window, tell: Tell) {
         return;
     }
     // SAFETY: winit's display stays connected while its event loop runs,
-    // which is as long as Yapfast does.
+    // which is as long as Circord does.
     unsafe {
         crate::drop::wayland::watch(display.display, move |drag| {
-            use yapfast_iced::Drag;
+            use circord_iced::Drag;
             let drag = match drag {
                 crate::drop::Drag::Entered => Drag::Entered,
                 crate::drop::Drag::Left => Drag::Left,
@@ -408,7 +408,7 @@ fn install_offer(release: &Release) -> (bool, String) {
             let megabytes = target.asset().size.div_ceil(1_000_000);
             (
                 true,
-                format!("{megabytes} MB. Yapfast restarts when it's done."),
+                format!("{megabytes} MB. Circord restarts when it's done."),
             )
         }
         Err(_) if update::source().manager().is_some() => (false, String::new()),
@@ -416,7 +416,7 @@ fn install_offer(release: &Release) -> (bool, String) {
     }
 }
 
-impl yapfast_iced::Updates for Shell {
+impl circord_iced::Updates for Shell {
     fn look(&self) {
         let mut updating = self.lock_updates();
         if updating.checking {
@@ -589,7 +589,7 @@ impl yapfast_iced::Updates for Shell {
         drop(updating);
         // The download's file closes as its task stops, a moment from now.
         let _ = std::thread::Builder::new()
-            .name("yapfast-update-cancel".into())
+            .name("circord-update-cancel".into())
             .spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(500));
                 let _ = std::fs::remove_file(&part);
@@ -602,7 +602,7 @@ impl yapfast_iced::Updates for Shell {
     }
 }
 
-impl yapfast_iced::PointerAt for crate::drop::Pointer {
+impl circord_iced::PointerAt for crate::drop::Pointer {
     fn at(&self) -> Option<(f64, f64)> {
         match crate::drop::Pointer::at(self)? {
             crate::drop::Drag::Moved { x, y } => Some((x, y)),
@@ -621,7 +621,7 @@ fn pasted_files(pasted: &Mutex<Option<tempfile::TempDir>>) -> Option<Vec<PathBuf
             let mut folder = pasted.lock().ok()?;
             if folder.is_none() {
                 *folder = tempfile::Builder::new()
-                    .prefix("yapfast-pasted-")
+                    .prefix("circord-pasted-")
                     .tempdir()
                     .inspect_err(
                         |error| tracing::warn!(%error, "could not make a folder for pasted pictures"),

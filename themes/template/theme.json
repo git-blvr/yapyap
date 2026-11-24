@@ -205,7 +205,7 @@
   },
   "variants": {
     "dark": {
-      "base": "yap",
+      "base": "circord",
       "content": { "names": { "palette": ["#7aa2ff", "#93e0b3", "#f5c27a", "#e79bd8"] } },
       "colours": {
         "accent": "#7aa2ff",

@@ -209,7 +209,7 @@ impl Layer {
         ));
     }
 
-    /// Yapfast port (patch 27): where this layer draws: each quad (with
+    /// Circord port (patch 27): where this layer draws: each quad (with
     /// its shadow's reach), text, primitive and image, inside its bounds.
     /// A layer is often as large as the window (an overlay's, a stack's
     /// upper children's, a picture cut to its box) though it draws a
@@ -251,7 +251,7 @@ impl Layer {
 
     pub fn damage(previous: &Self, current: &Self) -> Vec<Rectangle> {
         if previous.bounds != current.bounds {
-            // Yapfast port (patch 27): what each drew, not their bounds.
+            // Circord port (patch 27): what each drew, not their bounds.
             let mut damage = previous.extent();
             damage.extend(current.extent());
             return damage;
@@ -260,7 +260,7 @@ impl Layer {
         let mut damage = damage::list(
             &previous.quads,
             &current.quads,
-            // Yapfast port (15): with its shadow's reach. Stock counted the
+            // Circord port (15): with its shadow's reach. Stock counted the
             // quad alone, so where a raised panel shrank or moved (mention
             // suggestions narrowing as a name is typed), the old shadow
             // outside the new one stayed on screen.
@@ -337,7 +337,7 @@ impl Layer {
         let images = damage::list(
             &previous.images,
             &current.images,
-            // Yapfast port (patch 40): where it can draw, inside the layer.
+            // Circord port (patch 40): where it can draw, inside the layer.
             |image| {
                 image_reach(image)
                     .and_then(|reach| reach.intersection(&current.bounds))
@@ -354,12 +354,12 @@ impl Layer {
     }
 }
 
-/// Yapfast port (patch 31): whether two pictures draw the same, their
+/// Circord port (patch 31): whether two pictures draw the same, their
 /// handles told apart by id. Stock compared them with `Image::eq`, and an
 /// `Rgba` handle's derived equality compares every byte of its pixels:
 /// each frame compared each picture's whole buffer with itself, a theme's
 /// window-sized art and glass among them (13% of a scrolled frame's work).
-/// Yapfast port (patch 41): what changed from one frame's layers to the
+/// Circord port (patch 41): what changed from one frame's layers to the
 /// next's. Stock paired the two frames' layers by place alone, so a layer
 /// added or gone partway (a list's picture scrolled into view) paired every
 /// layer after it with the one before it: a window-sized overlay with a
@@ -383,7 +383,7 @@ impl Changes {
     }
 }
 
-/// Yapfast port (patch 41): pairs `previous`'s layers with `current`'s:
+/// Circord port (patch 41): pairs `previous`'s layers with `current`'s:
 /// by place when there are as many, else those at the start that lie
 /// where they lay by place and those at the end from the end, the rest
 /// between them gone or new.
@@ -433,7 +433,7 @@ pub fn changes(previous: &[Layer], current: &[Layer]) -> Changes {
     }
 }
 
-/// Yapfast port (patch 40): where a picture or SVG can draw: its turned
+/// Circord port (patch 40): where a picture or SVG can draw: its turned
 /// bounds, a pixel out for an anti-aliased edge, cut to its own clip, as
 /// the engine cuts it (patch 30). Stock damaged its whole bounds: a
 /// picture laid larger than its box (`ContentFit::Cover`, a theme's

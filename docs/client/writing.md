@@ -33,7 +33,7 @@ channel's composer, the thread beside's, the New Thread form's or a new
 forum post's message (files
 copied in a file manager, or a picture, which
 the root crate's `paste.rs` reads and saves as `image.<extension>` in a
-folder removed as Yapfast closes; text otherwise; files are looked for
+folder removed as Circord closes; text otherwise; files are looked for
 even with ten waiting, so the core says why they can't go, and not where
 files never go, the preview or a channel not to write in, which take the
 text), or dropped on the
@@ -64,7 +64,7 @@ Escape cancels.
 Over the field typed in last (`suggest.rs`), an `@` or `#` word suggests
 the people, roles and channels the core finds, and a `:name` word of two
 letters or more the emoji whose names hold it, a server's own first
-(`yapfast_core::emoji`). Up and Down
+(`circord_core::emoji`). Up and Down
 light one, Tab, Enter or a click takes it, Escape closes them until the
 word is left.
 
@@ -179,7 +179,7 @@ An app's form (`bot_modal.rs`) shows over
 the dimmed window: its title, then its parts in order (Markdown to read,
 a line or a paragraph to write, a select menu with its dropdown, radio
 buttons, checkboxes, a checkbox of its own, files to upload with Choose
-files and each file's Remove, or a note for a part Yapfast can't fill),
+files and each file's Remove, or a note for a part Circord can't fill),
 why it failed, and Cancel and Submit ("Submitting…" while Discord
 answers). Escape, Cancel or a click outside closes it. What it holds is
 the core's; the window keeps only the paragraphs' editors and the text to
