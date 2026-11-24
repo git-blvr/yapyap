@@ -101,6 +101,10 @@ const MENTION_EDGE: f32 = 2.0;
 const REPLY_TARGET: Color = Color::from_rgba8(0x58, 0x65, 0xf2, 0x2b as f32 / 255.0);
 const REPLY_TARGET_HOVER: Color = Color::from_rgba8(0x58, 0x65, 0xf2, 0x35 as f32 / 255.0);
 const REPLY_EDGE: Color = Color::from_rgb8(0x58, 0x65, 0xf2);
+/// The pointer's shade on a row: a translucent dark at 15%, so the message
+/// dims a little over whatever ground it sits on — a custom background keeps
+/// showing through — rather than taking a solid slab of `row_hover`.
+pub(crate) const ROW_SHADE: Color = Color::from_rgba8(0x00, 0x00, 0x00, 0x26 as f32 / 255.0);
 /// The marigold edge down the message the keys are stepping on.
 const KEYED_EDGE: f32 = 3.0;
 /// A file's card's height, and an embed's text, for estimates.

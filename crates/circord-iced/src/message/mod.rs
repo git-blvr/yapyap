@@ -685,7 +685,7 @@ pub fn message_content<'a>(
                 .filter(|_| pointed)
                 .map(|event| crate::themes::argb(event.colour));
             let tint = crate::timeline::view::row_ground(ctx, index, look)
-                .filter(|tint| highlighter.is_none() || *tint != theme.row_hover);
+                .filter(|tint| highlighter.is_none() || *tint != crate::timeline::ROW_SHADE);
             let edge = if ctx.lanes.keyed == Some(message.item.as_ref()) {
                 Some((theme.accent, 3.0))
             } else if look.highlighted {

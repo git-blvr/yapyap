@@ -22,8 +22,8 @@ use crate::{
 
 use super::{
     ASIDE, DIVIDER, EDGE, Edge, Event, Intro, KEYED_EDGE, MENTION_EDGE, MENTION_GOLD, MENTIONED,
-    MENTIONED_HOVER, PRESENT_BAR, REPLY_EDGE, REPLY_TARGET, REPLY_TARGET_HOVER, RowLook, TAIL,
-    TIMELINE, UNREAD_BAR, top_space,
+    MENTIONED_HOVER, PRESENT_BAR, REPLY_EDGE, REPLY_TARGET, REPLY_TARGET_HOVER, ROW_SHADE, RowLook,
+    TAIL, TIMELINE, UNREAD_BAR, top_space,
 };
 
 /// What the unread bar says: how many new messages (more when the window
@@ -168,7 +168,7 @@ pub(crate) fn row_ground(ctx: crate::ctx::Ctx<'_>, index: usize, look: &RowLook)
     } else if pointed && !crate::theme_effects::message_row_active(ctx) && !bubbled(ctx, message) {
         // Slint lays no band under a bubble's row; the bubble is the
         // message.
-        Some(theme.row_hover)
+        Some(ROW_SHADE)
     } else {
         None
     }
