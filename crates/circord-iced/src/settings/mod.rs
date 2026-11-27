@@ -332,8 +332,8 @@ impl Settings {
         Task::none()
     }
 
-    /// Escape closes an open dropdown, stops recording a key, then closes
-    /// Settings.
+    /// Escape closes an open dropdown or colour picker, stops recording a
+    /// key, then closes Settings.
     pub fn escape(&mut self, cx: &mut Cx<'_>) {
         if self.open.take().is_some() {
             return;

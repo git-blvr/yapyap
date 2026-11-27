@@ -106,11 +106,12 @@ impl Files {
                 if metadata.len() > MAX_FONT_BYTES.max(MAX_IMAGE_BYTES) || total > MAX_THEME_BYTES {
                     return Err(format!(
                         "{} is too large: a theme holds at most 24 MiB, a font 4 MiB and a picture 2 MiB",
-                        shown(&relative)
+                        super::theme_path(&relative)
                     ));
                 }
-                let bytes = std::fs::read(&path)
-                    .map_err(|error| format!("{} couldn't be read: {error}", shown(&relative)))?;
+                let bytes = std::fs::read(&path).map_err(|error| {
+                    format!("{} couldn't be read: {error}", super::theme_path(&relative))
+                })?;
                 files.insert(relative, bytes);
             }
         }
@@ -147,15 +148,6 @@ pub(crate) fn within(root: Option<&Path>, path: &Path) -> bool {
         (Some(root), Ok(path)) => path.starts_with(root),
         _ => false,
     }
-}
-
-/// A path inside a theme as the theme names it: `a/b.png`, with `/` on every
-/// system, as a manifest writes its files.
-pub(crate) fn shown(path: &Path) -> String {
-    path.components()
-        .map(|part| part.as_os_str().to_string_lossy().into_owned())
-        .collect::<Vec<_>>()
-        .join("/")
 }
 
 /// What a check found.
@@ -483,8 +475,8 @@ pub fn check(files: &Files, strictness: Strictness) -> Report {
             if *known != relative {
                 report.errors.push(format!(
                     "{} and {} differ only in letter case, which Windows and macOS read as one file",
-                    shown(known),
-                    shown(&relative)
+                    super::theme_path(known),
+                    super::theme_path(&relative)
                 ));
             }
         } else {
@@ -498,7 +490,7 @@ pub fn check(files: &Files, strictness: Strictness) -> Report {
         let Some(bytes) = files.files.get(&relative) else {
             report.errors.push(format!(
                 "{MANIFEST} names {}, which isn't in the theme",
-                shown(&relative)
+                super::theme_path(&relative)
             ));
             continue;
         };
@@ -510,7 +502,9 @@ pub fn check(files: &Files, strictness: Strictness) -> Report {
             check_file(&relative, bytes)
         };
         if let Err(error) = checked {
-            report.errors.push(format!("{}: {error}", shown(&relative)));
+            report
+                .errors
+                .push(format!("{}: {error}", super::theme_path(&relative)));
         }
     }
     for variant in &resolved {
@@ -521,7 +515,7 @@ pub fn check(files: &Files, strictness: Strictness) -> Report {
                 {
                     let sentence = format!(
                         "{}: lasts {seconds:.1} s, and a {} sound lasts at most {} s",
-                        shown(file),
+                        super::theme_path(file),
                         slot.name(),
                         slot.longest()
                     );
@@ -733,7 +727,11 @@ fn display_type(resolved: &[Resolved], files: &Files) -> Option<String> {
                 continue;
             };
             if let Some(face) = display_face(font, bytes) {
-                add(format!("{} in {face} ({})", role.name(), shown(font)));
+                add(format!(
+                    "{} in {face} ({})",
+                    role.name(),
+                    super::theme_path(font)
+                ));
             }
         }
         if variant.layout.names.is_some() {
@@ -1777,11 +1775,17 @@ mod tests {
             .find(|note| note.contains("Readable text"))
             .expect("a note about display type");
         assert!(
-            note.contains("names in blackletter (fonts/HurtFraktur-Bold.ttf)"),
+            note.contains(&format!(
+                "names in blackletter ({})",
+                crate::themes::theme_path(&Path::new("fonts").join("HurtFraktur-Bold.ttf"))
+            )),
             "{note}"
         );
         assert!(
-            note.contains("labels in pixel (fonts/Silkscreen-Regular.ttf)"),
+            note.contains(&format!(
+                "labels in pixel ({})",
+                crate::themes::theme_path(&Path::new("fonts").join("Silkscreen-Regular.ttf"))
+            )),
             "{note}"
         );
         assert!(note.contains("ransom"), "{note}");
@@ -2006,11 +2010,12 @@ mod tests {
             r##""art": { "surfaces": { "window": { "image": "art/sky.jpg" } } }"##,
         );
         let report = check(&files(&manifest), Strictness::Install);
+        let image = Path::new("art").join("sky.jpg");
         assert!(
             report
                 .errors
                 .iter()
-                .any(|error| error.contains("art/sky.jpg"))
+                .any(|error| error.contains(&crate::themes::theme_path(&image)))
         );
     }
 

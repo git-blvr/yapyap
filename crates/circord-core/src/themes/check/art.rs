@@ -499,7 +499,7 @@ pub fn memory(variant: &Resolved, files: &Files) -> u64 {
 /// when a blend mixes with it. Opacity isn't baked: it's drawn.
 pub fn bake_key(layer: &Layer, ground: Option<&str>) -> String {
     let source = match &layer.source {
-        Source::Image(path) => format!("image:{}", super::shown(path)),
+        Source::Image(path) => format!("image:{}", path.display()),
         Source::Texture(texture) => format!("texture:{}:{:08x}", texture.name(), layer.colour),
     };
     let ground = if layer.blend == Blend::Normal {

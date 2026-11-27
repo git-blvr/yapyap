@@ -147,7 +147,7 @@ mod windows {
                         delete_value(PROTOCOL, Some("URL Protocol"))?;
                     }
                 }
-                // SAFETY: the string is NUL-terminated and outlives the call.
+                // SAFETY: the NUL-terminated key path lives through the registry call.
                 match unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, wide(BACKUP).as_ptr()) } {
                     ERROR_FILE_NOT_FOUND => Ok(()),
                     status => checked(status),
@@ -221,8 +221,8 @@ mod windows {
         kind: REG_VALUE_TYPE,
     ) -> io::Result<()> {
         let value = wide(value);
-        // SAFETY: the strings and value are NUL-terminated or sized, and
-        // outlive the call.
+        // SAFETY: the key and any supplied name are NUL-terminated. The value
+        // buffer holds the stated byte count and lives through the call.
         let status = unsafe {
             RegSetKeyValueW(
                 HKEY_CURRENT_USER,
@@ -239,7 +239,8 @@ mod windows {
     }
 
     fn delete_value(key: &str, name: Option<&str>) -> io::Result<()> {
-        // SAFETY: the strings are NUL-terminated and outlive the call.
+        // SAFETY: the key and any supplied name are NUL-terminated and live
+        // through the call. A null name selects the default value.
         let status = unsafe {
             RegDeleteKeyValueW(
                 HKEY_CURRENT_USER,
@@ -266,7 +267,8 @@ mod windows {
         let (key, name) = (wide(key), name.map(wide));
         let name = name.as_ref().map_or(std::ptr::null(), Vec::as_ptr);
         let mut size = 0u32;
-        // SAFETY: the strings are NUL-terminated and outlive the call.
+        // SAFETY: the key and any supplied name are NUL-terminated. Null data
+        // requests the required buffer size, and size is writable.
         let status = unsafe {
             RegGetValueW(
                 HKEY_CURRENT_USER,
@@ -283,8 +285,8 @@ mod windows {
         }
         let mut data = vec![0u8; size as usize];
         let mut kind = REG_SZ;
-        // SAFETY: `size` bytes of `data` are written, and the strings are
-        // NUL-terminated and outlive the call.
+        // SAFETY: the strings remain valid, data is writable for size bytes,
+        // and kind and size are writable outputs.
         let status = unsafe {
             RegGetValueW(
                 HKEY_CURRENT_USER,

@@ -801,7 +801,8 @@ mod tests {
             Some(directory.path()),
         )
         .unwrap_err();
-        assert!(error.contains("art/gone.png"), "{error}");
+        let image = Path::new("art").join("gone.png");
+        assert!(error.contains(&crate::themes::theme_path(&image)), "{error}");
     }
 
     #[test]
