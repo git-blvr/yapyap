@@ -113,6 +113,9 @@ pub struct Page {
 pub struct Message {
     pub id: Box<str>,
     pub channel_id: Box<str>,
+    /// The server it is in, from `guild_id`, or none in a DM.
+    #[serde(default)]
+    pub guild_id: Option<Box<str>>,
     #[serde(default)]
     pub application_id: Option<Box<str>>,
     #[serde(default)]
@@ -166,6 +169,9 @@ pub struct Message {
     /// shows as its own.
     #[serde(default)]
     pub forwarded: bool,
+    /// Where a forwarded message came from, from its `message_reference`.
+    #[serde(default)]
+    pub forward_origin: Option<ForwardOrigin>,
     /// Can be forwarded, as Discord's client decides from the message
     /// alone: written, and without a poll, a call or an activity.
     #[serde(default)]
@@ -195,6 +201,22 @@ pub struct Message {
     /// What a voice message's recording, its first attachment, sounds like.
     #[serde(default)]
     pub voice: Option<VoiceMessage>,
+}
+
+/// Where a forwarded message came from, from its `message_reference`.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ForwardOrigin {
+    /// The server the original message was sent in; `None` for a DM.
+    #[serde(default)]
+    pub guild_id: Option<String>,
+    /// The channel or DM the original message was sent in.
+    pub channel_id: String,
+    /// The original message's id.
+    pub message_id: String,
+    /// When the original message was sent, from its id, in seconds since
+    /// the Unix epoch.
+    #[serde(default)]
+    pub timestamp: u64,
 }
 
 /// The interaction an app's message answers, from its
@@ -725,6 +747,7 @@ pub fn parse(value: &Value) -> Option<Message> {
         let mut message = parse(original)?;
         message.id = value["id"].as_str()?.into();
         message.channel_id = value["channel_id"].as_str().unwrap_or_default().into();
+        message.guild_id = value["guild_id"].as_str().map(Into::into);
         message.nonce = None;
         message.editable = false;
         message.forwardable = false;
@@ -765,6 +788,33 @@ pub fn parse(value: &Value) -> Option<Message> {
     let shown = match &value["message_snapshots"][0]["message"] {
         snapshot @ Value::Object(_) if forwarded => snapshot,
         _ => value,
+    };
+    let forward_origin = if forwarded {
+        let reference = &value["message_reference"];
+        match (
+            reference["channel_id"].as_str(),
+            reference["message_id"].as_str(),
+        ) {
+            (Some(channel_id), Some(message_id))
+                if !channel_id.is_empty() && !message_id.is_empty() =>
+            {
+                // Discord's client dates the original by its id, not by
+                // the snapshot's timestamp.
+                let timestamp = snowflake_ms(message_id) / 1000;
+                Some(ForwardOrigin {
+                    guild_id: reference["guild_id"]
+                        .as_str()
+                        .filter(|id| !id.is_empty())
+                        .map(str::to_owned),
+                    channel_id: channel_id.to_owned(),
+                    message_id: message_id.to_owned(),
+                    timestamp,
+                })
+            }
+            _ => None,
+        }
+    } else {
+        None
     };
     // `null` says the original was deleted; no field at all says nothing.
     // An app's answer to a command used on a message quotes that message,
@@ -897,6 +947,7 @@ pub fn parse(value: &Value) -> Option<Message> {
     Some(Message {
         id: value["id"].as_str()?.into(),
         channel_id: value["channel_id"].as_str().unwrap_or_default().into(),
+        guild_id: value["guild_id"].as_str().map(Into::into),
         application_id: value["application_id"].as_str().map(Into::into),
         flags: value["flags"].as_u64().unwrap_or_default(),
         nonce: match &value["nonce"] {
@@ -951,6 +1002,7 @@ pub fn parse(value: &Value) -> Option<Message> {
         },
         pinned: value["pinned"].as_bool().unwrap_or(false),
         forwarded,
+        forward_origin,
         forwardable: written(kind)
             && value["flags"].as_u64().unwrap_or_default() & !FORWARDABLE_FLAGS == 0
             && [
@@ -1827,6 +1879,30 @@ impl Names {
         }
         self.members.insert(key);
         self.version += u64::from(known && learned);
+    }
+
+    /// Applies a confirmed role change to a member whose roles are known.
+    pub(crate) fn change_member_role(
+        &mut self,
+        guild: &str,
+        user: &str,
+        role: &str,
+        add: bool,
+    ) -> bool {
+        let Some(held) = member_key(guild, user).and_then(|key| self.roles.get_mut(&key)) else {
+            return false;
+        };
+        if held.iter().any(|known| &**known == role) == add {
+            return false;
+        }
+        *held = held
+            .iter()
+            .filter(|known| known.as_ref() != role)
+            .cloned()
+            .chain(add.then(|| role.into()))
+            .collect();
+        self.version += 1;
+        true
     }
 
     /// Forgets what's known of someone as a member of a server they left,
@@ -2794,12 +2870,42 @@ mod tests {
         }))
         .unwrap();
         assert!(message.forwarded && !message.editable);
-        assert_eq!(&*message.content, "look");
+        assert_eq!(
+            message.forward_origin,
+            Some(ForwardOrigin {
+                guild_id: Some("10".into()),
+                channel_id: "12".into(),
+                message_id: "9".into(),
+                timestamp: snowflake_ms("9") / 1000,
+            })
+        );
+                assert_eq!(&*message.content, "look");
         assert_eq!(
             message.attachments[0].video_url.as_deref(),
             Some("https://cdn/clip.mp4")
         );
         assert_eq!(message.attachments[1].shown, Shown::Sticker);
+
+        // A forward from a DM has no guild_id.
+        let dm_forward = parse(&json!({
+            "id": "1300000000000000001",
+            "channel_id": "11",
+            "type": 0,
+            "content": "",
+            "author": {"id": "1", "username": "me"},
+            "message_reference": {"type": 1, "channel_id": "55", "message_id": "1300000000000000000"},
+            "message_snapshots": [{"message": {"type": 0, "content": "from dm"}}],
+        }))
+        .unwrap();
+        assert_eq!(
+            dm_forward.forward_origin,
+            Some(ForwardOrigin {
+                guild_id: None,
+                channel_id: "55".into(),
+                message_id: "1300000000000000000".into(),
+                timestamp: snowflake_ms("1300000000000000000") / 1000,
+            })
+        );
 
         // A reply's reference has the default type, so it shows its own content.
         let reply = parse(&json!({
@@ -2809,6 +2915,7 @@ mod tests {
         }))
         .unwrap();
         assert!(!reply.forwarded);
+        assert!(reply.forward_origin.is_none());
         assert_eq!(&*reply.content, "mine");
     }
 

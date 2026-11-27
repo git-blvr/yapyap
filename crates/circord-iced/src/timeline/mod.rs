@@ -304,6 +304,21 @@ impl<'a> Lanes<'a> {
             None => self.timeline.looks.get(row),
         }
     }
+
+    /// Whether `pointed` is a message of the group row `head` starts: its
+    /// author's avatar and decoration play then, as Discord's client plays
+    /// them while the pointer is on any message of the group
+    /// (`ANIMATE_CHAT_AVATAR`, keyed by the group and its author).
+    pub fn group_pointed(self, head: usize, pointed: Option<&str>) -> bool {
+        let Some(pointed) = pointed else {
+            return false;
+        };
+        (head..)
+            .map_while(|row| self.row_look(row))
+            .enumerate()
+            .take_while(|(at, look)| *at == 0 || !look.first)
+            .any(|(_, look)| &*look.item == pointed)
+    }
 }
 
 /// The channel's timeline and the thread's, for what reads rows.
@@ -379,6 +394,11 @@ pub enum Event {
     /// An app's slash command a row names, by its name: written in the
     /// composer for its list to find.
     UseCommand(String),
+    /// Jump to a message in `room`, such as a forwarded message's original.
+    JumpInRoom {
+        room: String,
+        item: String,
+    },
 }
 
 /// What each of the timeline's events does.
@@ -506,6 +526,10 @@ pub fn update(app: &mut App, event: Event) -> Task<Message> {
                 app.sync(),
                 iced::widget::operation::focus(crate::composer::COMPOSER),
             ])
+        }
+        Event::JumpInRoom { room, item } => {
+            app.client.dispatch(Action::JumpInRoom { room, item });
+            app.sync()
         }
     }
 }

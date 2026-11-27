@@ -28,6 +28,7 @@
 #![cfg_attr(not(test), warn(clippy::let_underscore_must_use))]
 
 mod account;
+mod accounts;
 mod active_now;
 mod animated;
 mod app;
@@ -49,6 +50,7 @@ use circord_iced_kit::controls;
 mod conversation;
 mod ctx;
 mod customize;
+use circord_iced_kit::custom_font;
 mod desktop;
 mod slot;
 use circord_iced_kit::dialog;
@@ -158,8 +160,8 @@ use iced::Task;
 
 use crate::{app::App, client::Client};
 pub use desktop::{
-    Desktop, Drag, Heard, Notifier, Offered, PasteReader, PointerAt, Tell, Toggled, Tray,
-    TrayChoice, UpdateChoices, UpdateStatus, Updates, UpdatesShown,
+    Autostart, Desktop, Drag, Heard, IconChoice, IconTarget, Notifier, Offered, PasteReader,
+    PointerAt, Tell, Toggled, Tray, TrayChoice, UpdateChoices, UpdateStatus, Updates, UpdatesShown,
 };
 /// The window the desktop's parts act on, by its handles.
 pub use iced::window::Window;
@@ -178,8 +180,7 @@ pub struct Options {
     pub gpu_failure: Option<String>,
     /// Which build this is, as Settings shows it.
     pub build: settings::Build,
-    /// `--background`: start in the tray with a saved session, as starting
-    /// at sign-in does.
+    /// `--background`: start in the tray with a saved session.
     pub background: bool,
     /// `--default-theme`: this start shows the default look, keeping the
     /// theme chosen, a way back from a theme that makes the window hard to
@@ -201,8 +202,8 @@ pub enum Exit {
     Closed,
     /// An update was downloaded and checked; `main` finishes it.
     Update,
-    /// Settings' Restart Circord, for the GPU setting: `main` starts
-    /// Circord again, which follows the setting.
+    /// Restart Circord, in Settings for the GPU setting or in the tray:
+    /// `main` starts Circord again, which follows the setting.
     Restart,
     /// The GPU failed to start, for this reason: `main` starts Circord
     /// again on the CPU, which tells of it.
@@ -252,6 +253,11 @@ pub fn run(
     video::install();
     frames::install();
     fonts::install(TWEMOJI);
+    // The font the person chose to draw the window in, if any.
+    let own_font = layout::Layout::read(&root).prefs.ui_font_files;
+    if !own_font.is_empty() {
+        custom_font::set(&own_font);
+    }
     EXECUTOR
         .set(runtime.block_on(async { tokio::runtime::Handle::current() }))
         .ok();

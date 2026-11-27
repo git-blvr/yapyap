@@ -138,7 +138,20 @@ pub const DEFAULT_REACTIONS: [&str; 4] = ["👍", "❤️", "😂", "🎉"];
 pub enum Navigation {
     #[default]
     DirectMessages,
+    Favorites,
     Server(String),
+}
+
+/// A saved Discord channel reference or Favorites category.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ChannelFavorite {
+    pub id: String,
+    pub name: String,
+    pub reference: bool,
+    pub category: bool,
+    pub parent: String,
+    pub position: u32,
+    pub collapsed: bool,
 }
 
 /// The dialog for starting a DM, while it's open.
@@ -168,6 +181,14 @@ pub enum DiscordLink {
     /// at this address, open in the browser.
     Captcha(String),
     Failed(String),
+}
+
+/// Manage Accounts, the dialog that lists the Discord accounts linked on
+/// this device, while it's open.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ManageAccounts {
+    /// The account whose "more" menu is open, by id.
+    pub menu: Option<String>,
 }
 
 /// The dialog that sends a friend request by Discord username.
@@ -276,6 +297,9 @@ pub struct Peek {
     /// Oldest first; `None` while they're on their way.
     pub messages: Option<Result<Vec<ChatMessage>, String>>,
 }
+/// The most of this account's recent mentions Circord keeps, which is all
+/// Discord's page sends.
+pub const RECENT_MENTIONS: usize = 100;
 
 /// A search, while its results show: of a DM, or of a whole Discord server,
 /// which stays open while its channels do.
@@ -584,6 +608,15 @@ pub struct AppState {
     /// connected, and linking one, while that's under way.
     pub discord_linked: bool,
     pub discord_link: Option<DiscordLink>,
+    /// The Discord accounts linked on this device, in the order they were
+    /// linked, and the active one's id, which is empty while none is.
+    pub discord_accounts: Vec<chat::DiscordAccount>,
+    pub discord_active: String,
+    pub manage_accounts: Option<ManageAccounts>,
+    /// The account last unlinked was linked with a pasted token, whose
+    /// session in the app or browser it came from stays signed in, as the
+    /// sign-in screen says until linking starts again.
+    pub discord_session_kept: bool,
     pub add_friend: Option<AddFriend>,
     /// A screen of the DM list open in place of a conversation.
     pub dm_screen: Option<DmScreen>,
@@ -671,6 +704,13 @@ pub struct AppState {
     pub tag_server: Option<(String, chat::TagServerAnswer)>,
     /// Who else is typing, by room.
     pub typing: HashMap<String, Vec<String>>,
+    /// The DMs and group DMs someone else is typing in, whose rows in the
+    /// DM list show typing dots in place of the status dot, as Discord's.
+    /// Kept as each typing change comes, so a row looks itself up once. A
+    /// Discord DM's stays as other rooms open, since Discord says who types
+    /// in every channel; a Matrix one's goes, as Matrix says it only for
+    /// the open room.
+    pub typing_dms: std::collections::BTreeSet<String>,
     /// When this account may send again in a room whose slowmode it waits
     /// out, in Unix milliseconds: its slowmode after a message of its own
     /// went, as Discord's client guesses it.
@@ -708,6 +748,10 @@ pub struct AppState {
     /// them.
     pub people_changes: u64,
     pub navigation: Navigation,
+    pub channel_favorites: Vec<ChannelFavorite>,
+    pub favorites_visible: bool,
+    /// Favorites muted as a whole: their tile shows mentions but no unread mark.
+    pub favorites_muted: bool,
     pub selected: Option<String>,
     /// The selected voice channel shows its chat in place of its call.
     pub voice_chat: bool,
@@ -782,6 +826,13 @@ pub struct AppState {
     /// the peek shows.
     pub peek: Option<Peek>,
     pub search: Option<Search>,
+    /// This account's recent Discord mentions, each with its room, the
+    /// newest first, as its Mentions inbox lists them; see
+    /// [`DiscordCommand::RecentMentions`]. Each answer makes a new list, so
+    /// a view can tell it changed by its pointer.
+    pub recent_mentions: Arc<Vec<(String, Arc<ChatMessage>)>>,
+    /// What they were last asked for, whose answer the list holds or will.
+    pub recent_mentions_query: Option<crate::chat::MentionsQuery>,
     /// The open Discord channel's list of its threads.
     pub threads: Option<ThreadList>,
     /// The Discord forum on screen.
@@ -947,6 +998,15 @@ impl AppState {
         Some((format!("{}/{id}", network_link(room)), id.to_string()))
     }
 
+    /// A Discord message's link and id, as [`Self::message_link`] gives
+    /// them, from its room and item: for one found by a search, which
+    /// needn't be in the timeline. None for any other network's.
+    pub fn found_link(room: &str, item: &str) -> Option<(String, String)> {
+        let id = discord::item_order(item)?;
+        (Network::of(room) == Network::Discord)
+            .then(|| (format!("{}/{id}", network_link(room)), id.to_string()))
+    }
+
     /// Whether this account's devices can write to the selected room.
     pub fn can_write(&self) -> bool {
         !self.busy
@@ -1009,6 +1069,7 @@ impl AppState {
             || self.forwarding.is_some()
             || self.new_dm.is_some()
             || self.add_friend.is_some()
+            || self.manage_accounts.is_some()
             || self.status_editor.is_some()
             || self.person_dialog.is_some()
             || self.invite.is_some()
@@ -1088,9 +1149,20 @@ impl AppState {
             .any(|place| Some(place) != current.as_ref() && self.place_exists(place))
     }
 
+    pub fn is_channel_favorite(&self, room: &str) -> bool {
+        discord::parse_room(room).is_some_and(|(_, id)| {
+            self.channel_favorites
+                .iter()
+                .any(|entry| entry.reference && entry.id == id)
+        })
+    }
+
     pub fn in_scope(&self, room: &ChatRoom) -> bool {
         match &self.navigation {
             Navigation::DirectMessages => room.direct,
+            Navigation::Favorites => {
+                !room.locked && !room.request && self.is_channel_favorite(&room.id)
+            }
             Navigation::Server(id) => {
                 !room.direct
                     && self
@@ -1123,12 +1195,19 @@ impl AppState {
         &'a self,
         navigation: &Navigation,
     ) -> impl Iterator<Item = &'a ChatRoom> + use<'a> {
+        let favorites = (*navigation == Navigation::Favorites).then(|| {
+            self.channel_favorites
+                .iter()
+                .filter(|entry| entry.reference)
+                .map(|entry| entry.id.as_str())
+                .collect::<HashSet<_>>()
+        });
         let server = match navigation {
-            Navigation::DirectMessages => None,
+            Navigation::DirectMessages | Navigation::Favorites => None,
             Navigation::Server(id) => self.servers.iter().find(|server| &server.id == id),
         };
         let channels: Option<HashSet<&str>> = match navigation {
-            Navigation::DirectMessages => None,
+            Navigation::DirectMessages | Navigation::Favorites => None,
             Navigation::Server(_) => Some(
                 server
                     .map(|server| server.channels.iter().map(String::as_str).collect())
@@ -1146,19 +1225,24 @@ impl AppState {
             })
             .map(|room| room.parent.as_deref().unwrap_or(&room.id))
             .collect();
-        self.rooms
-            .iter()
-            .map(Arc::as_ref)
-            .filter(move |room| match &channels {
-                None => room.direct,
-                Some(channels) => {
-                    !room.direct
-                        && channels.contains(room.id.as_str())
-                        && !(hide_muted && self.hidden_muted(room))
-                        && !(room.unlisted
-                            && !shown.contains(room.parent.as_deref().unwrap_or(&room.id)))
+        self.rooms.iter().map(Arc::as_ref).filter(move |room| {
+            if let Some(favorites) = &favorites {
+                !room.locked
+                    && !room.request
+                    && discord::parse_room(&room.id).is_some_and(|(_, id)| favorites.contains(id))
+            } else {
+                match &channels {
+                    None => room.direct,
+                    Some(channels) => {
+                        !room.direct
+                            && channels.contains(room.id.as_str())
+                            && !(hide_muted && self.hidden_muted(room))
+                            && !(room.unlisted
+                                && !shown.contains(room.parent.as_deref().unwrap_or(&room.id)))
+                    }
                 }
-            })
+            }
+        })
     }
 
     /// Who else is typing in the open conversation, as the strip over the
@@ -1262,6 +1346,7 @@ impl AppState {
                 group_icon: None,
                 role_icon: None,
                 boosting_since: None,
+                color_end: None,
             });
         }
         // Someone in a Discord voice channel, as it lists them, the open
@@ -1294,6 +1379,7 @@ impl AppState {
                 group_icon: None,
                 role_icon: None,
                 boosting_since: None,
+                color_end: None,
             });
         }
         let target = Target::User(user.to_owned());
@@ -1326,6 +1412,7 @@ impl AppState {
             group_icon: None,
             role_icon: None,
             boosting_since: None,
+            color_end: None,
         })
     }
 
@@ -1716,6 +1803,10 @@ pub enum Action {
     /// does: only here, with no request. Phase 1d; application/ephemeral.rs.
     DismissEphemeral(String),
     Navigate(Navigation),
+    FavoriteChannel {
+        room: String,
+        favorite: bool,
+    },
     SelectRoom(String),
     /// Mark a listed conversation read, or every conversation of a listed
     /// server, as their menus do.
@@ -1989,6 +2080,9 @@ pub enum Action {
     /// Peek at a room's newest messages without opening or reading it, as
     /// holding Alt over it in the channel list asks, or stop.
     Peek(Option<String>),
+    /// Asks for this account's recent Discord mentions, as its Mentions
+    /// inbox lists them under its filter.
+    LoadRecentMentions(crate::chat::MentionsQuery),
     /// The pointer went over a message's reaction, by item and key, or left
     /// it.
     HoverReaction(Option<(String, String)>),
@@ -2376,6 +2470,16 @@ pub enum Action {
     OpenDiscordCaptcha,
     CancelDiscordLink,
     UnlinkDiscord,
+    /// Open Manage Accounts, or close it. Closing it stops linking too.
+    OpenManageAccounts,
+    CloseManageAccounts,
+    /// Open one account's "more" menu in Manage Accounts, or close the one
+    /// open with an empty id.
+    OpenAccountMenu(String),
+    /// Make this Discord account, by id, the active one.
+    SwitchDiscordAccount(String),
+    /// Log this Discord account, by id, out on this device.
+    LogOutDiscordAccount(String),
     /// Open the custom status dialog, set the status, clear it, or close it.
     /// The emoji is a Unicode one or a custom one's `:name:`, which needs Nitro.
     OpenStatusEditor,
@@ -2424,6 +2528,11 @@ pub enum Action {
     },
     DismissVoiceError,
     Voice(voice::Command),
+    /// Watch someone's stream beside those watched already, by their id,
+    /// as Shift and a click on their tile, or its Start watching multiple
+    /// streams, do in Discord's client. `Voice(Command::Watch)` watches it
+    /// in place of the one watched, as a plain click does.
+    WatchAlongside(String),
     /// Turn the microphone on as a call connects, as a preference asks; quietly,
     /// since joining already made a sound.
     UnmuteOnJoin,
@@ -2457,6 +2566,11 @@ pub enum Action {
     ActivityCardsHidden(bool),
     /// A tab of the full profile opened.
     OpenProfileTab(ProfileTab),
+    /// One of someone's Rich Presence buttons clicked: its address opens
+    /// after the question a link to outside asks. As Discord's client finds
+    /// it: in the presence's own metadata, else in what Discord gave for the
+    /// person's activity, else asked of Discord.
+    OpenActivityButton(ActivityButtonPress),
     /// The account's card opened: ask for its own profile, which it draws from.
     LoadOwnProfile,
     /// Pick the server whose tag to wear in the profile editor; empty for none.
@@ -2508,6 +2622,21 @@ pub enum Action {
     CloseRole,
 }
 
+/// A Rich Presence button clicked on someone's activity card: whose it is,
+/// the activity's session and application, by which Discord gives its
+/// buttons' addresses, which button, whether the presence carried metadata
+/// (which Discord's client then reads the address from rather than asking),
+/// and the address it gave.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ActivityButtonPress {
+    pub user: String,
+    pub session: Option<String>,
+    pub application: Option<String>,
+    pub index: usize,
+    pub metadata: bool,
+    pub url: Option<String>,
+}
+
 /// An adapter executes these effects with the shared backend, then applies its events.
 pub enum Effect {
     Start(chat::Start),
@@ -2527,6 +2656,10 @@ pub enum Effect {
     StopDiscordLink,
     /// Open this web page in the browser.
     OpenPage(String),
+    /// Ask before opening this address outside Circord, as a masked link
+    /// does: a Rich Presence button's, which Discord's client opens as
+    /// untrusted.
+    AskToOpen(String),
     /// Put this picture, a file as it was downloaded, on the clipboard.
     CopyPicture(Vec<u8>),
     /// Film for a preview call with the camera with this id, or the first,
@@ -2606,6 +2739,8 @@ pub struct Application {
     searched: HashSet<String>,
     /// A conversation to open once it's listed, such as a DM just started.
     pending_open: Option<String>,
+    /// A message to jump to once its conversation (`pending_open`) is listed.
+    pending_jump: Option<(String, String)>,
     /// A thread to show beside the selected channel once it's listed.
     pending_aside: Option<String>,
     /// A thread just started, whose first message, its draft, goes once
@@ -2653,6 +2788,9 @@ pub struct Application {
     /// member list as they were left, shown again at once on going back
     /// while the backend sends them afresh.
     shown: Vec<Shown>,
+    /// The addresses Discord gave for people's activities' Rich Presence
+    /// buttons, for this account.
+    activity_links: profiles::ActivityLinks,
 }
 
 /// A message to someone, held until their DM is open and ready to send.
@@ -2724,12 +2862,19 @@ fn pictures_on_screen<'a>(
         .filter(move |_| list_avatars)
         .filter_map(|server| server.icon.as_deref())
         .chain(state.account_avatar.as_deref())
+        // The accounts the switcher lists.
+        .chain(
+            state
+                .discord_accounts
+                .iter()
+                .filter_map(|account| account.avatar.as_deref()),
+        )
         .chain(cosmetics.decoration(state.account_decoration.as_deref()))
         .chain(
             state
                 .account_profile
                 .iter()
-                .filter_map(|profile| profile.banner.as_deref()),
+                .filter_map(move |profile| cosmetics.background(profile.banner.as_deref())),
         )
         .chain(
             state
@@ -2744,8 +2889,11 @@ fn pictures_on_screen<'a>(
                 .into_iter()
                 .flatten()
                 .flat_map(move |room| {
+                    let group = room.group_avatars.as_ref();
                     [
                         room.avatar.as_deref(),
+                        group.map(|pair| pair[0].avatar.as_str()),
+                        group.map(|pair| pair[1].avatar.as_str()),
                         cosmetics.decoration(room.decoration.as_deref()),
                         tag_badge(cosmetics, &room.tag),
                     ]
@@ -2753,11 +2901,14 @@ fn pictures_on_screen<'a>(
                 .flatten()
                 .take(LISTED_PICTURES),
         )
-        .chain(
-            state
-                .selected_room()
-                .and_then(|room| room.avatar.as_deref()),
-        )
+        .chain(state.selected_room().into_iter().flat_map(|room| {
+            room.avatar.as_deref().into_iter().chain(
+                room.group_avatars
+                    .iter()
+                    .flatten()
+                    .map(|member| member.avatar.as_str()),
+            )
+        }))
         // A DM's row shows its nameplate only selected or under the pointer.
         .chain(
             state
@@ -2893,18 +3044,15 @@ fn pictures_on_screen<'a>(
                 .chain(inviters)
                 .chain(moderators)
         }))
-        .chain(state.profile_editor.iter().flat_map(|editor| {
+        .chain(state.profile_editor.iter().flat_map(move |editor| {
             // The profile's pictures and its fallback's, which show where
             // the profile's are reset.
-            editor.profile.iter().flat_map(|profile| {
-                [
-                    &profile.avatar,
-                    &profile.banner,
-                    &profile.fallback.avatar,
-                    &profile.fallback.banner,
-                ]
-                .into_iter()
-                .filter_map(Option::as_deref)
+            editor.profile.iter().flat_map(move |profile| {
+                [&profile.avatar, &profile.fallback.avatar]
+                    .into_iter()
+                    .chain(cosmetics.background(Some(&profile.banner)))
+                    .chain(cosmetics.background(Some(&profile.fallback.banner)))
+                    .filter_map(Option::as_deref)
             })
         }))
         .chain(
@@ -2920,8 +3068,9 @@ fn pictures_on_screen<'a>(
                             .iter()
                             .find(|effect| effect.sku == sku)
                     });
-                    [&profile.avatar, &profile.banner]
+                    [&profile.avatar]
                         .into_iter()
+                        .chain(cosmetics.background(Some(&profile.banner)))
                         .chain(
                             profile
                                 .servers
@@ -2949,10 +3098,17 @@ fn pictures_on_screen<'a>(
                                     .map(|layer| layer.src.as_str()),
                             )
                         }))
-                        .chain(profile.badges.iter().flat_map(|badge| {
-                            std::iter::once(badge.icon.as_str())
-                                .chain(badge.level.iter().map(|level| level.picture.as_str()))
-                        }))
+                        .chain(
+                            cosmetics
+                                .badges(&profile.badges)
+                                .into_iter()
+                                .flatten()
+                                .flat_map(|badge| {
+                                    std::iter::once(badge.icon.as_str()).chain(
+                                        badge.level.iter().map(|level| level.picture.as_str()),
+                                    )
+                                }),
+                        )
                 }),
         )
         .chain(
@@ -3099,7 +3255,11 @@ impl Application {
             .pending_open
             .take_if(|room| self.state.rooms.iter().any(|listed| &listed.id == room))
         {
-            effects.extend(self.dispatch(Action::Open(room.clone())));
+            if let Some((_, item)) = self.pending_jump.take_if(|(target, _)| *target == room) {
+                effects.extend(self.jump_in_room(room.clone(), item));
+            } else {
+                effects.extend(self.dispatch(Action::Open(room.clone())));
+            }
             if std::mem::take(&mut self.pending_call) {
                 effects.extend(self.dispatch(Action::RequestJoinVoice(room)));
             }
@@ -3743,6 +3903,7 @@ impl Application {
             Action::CloseDm(room) => self.close_dm(room),
             Action::ShowPins(shown) => self.show_pins(shown),
             Action::Peek(room) => self.peek(room),
+            Action::LoadRecentMentions(query) => self.load_recent_mentions(query),
             Action::HoverReaction(hovered) => self.hover_reaction(hovered),
             Action::OpenGifs => self.open_gifs(),
             Action::OpenStickers => self.open_stickers(),
@@ -3862,6 +4023,7 @@ impl Application {
                 self.change_notifications(place, change)
             }
             Action::PinChannel { room, pinned } => self.pin_channel(room, pinned),
+            Action::FavoriteChannel { room, favorite } => self.favorite_channel(room, favorite),
             Action::MoveChannel { room, landing } => self.move_channel(room, landing),
             Action::AnswerMoveSync(sync) => self.answer_move_sync(sync),
             Action::FollowChannel { room, follow } => self.follow_channel(room, follow),
@@ -4029,20 +4191,22 @@ impl Application {
                 change,
             } => self.change_member(place, user, change),
             Action::LinkDiscord => {
-                if self.state.preview || self.state.discord_linked || !cfg!(feature = "discord") {
+                if !self.can_link_discord() {
                     return vec![];
                 }
                 self.state.discord_link = Some(DiscordLink::Starting);
+                self.state.discord_session_kept = false;
                 vec![Effect::LinkDiscord]
             }
             Action::LinkDiscordToken(token) => {
-                if self.state.preview || self.state.discord_linked || !cfg!(feature = "discord") {
+                if !self.can_link_discord() {
                     return vec![];
                 }
                 if token.trim().is_empty() {
                     return vec![];
                 }
                 self.state.discord_link = Some(DiscordLink::Checking);
+                self.state.discord_session_kept = false;
                 vec![Effect::LinkDiscordToken(token)]
             }
             Action::OpenDiscordCaptcha => match &self.state.discord_link {
@@ -4055,10 +4219,59 @@ impl Application {
             },
             Action::UnlinkDiscord => {
                 if self.state.discord_linked && self.state.account.is_some() {
-                    vec![Effect::Backend(Command::Discord(DiscordCommand::Unlink))]
+                    // Only the active account, as logging out in Discord does.
+                    vec![Effect::Backend(Command::Discord(
+                        if self.state.discord_active.is_empty() {
+                            DiscordCommand::Unlink
+                        } else {
+                            DiscordCommand::RemoveAccount(self.state.discord_active.clone())
+                        },
+                    ))]
                 } else {
                     vec![]
                 }
+            }
+            Action::OpenManageAccounts => {
+                if !self.state.discord_accounts.is_empty() {
+                    self.state.manage_accounts = Some(ManageAccounts::default());
+                }
+                vec![]
+            }
+            Action::CloseManageAccounts => {
+                self.state.manage_accounts = None;
+                match self.state.discord_link.take() {
+                    Some(_) => vec![Effect::StopDiscordLink],
+                    None => vec![],
+                }
+            }
+            Action::OpenAccountMenu(id) => {
+                if let Some(dialog) = &mut self.state.manage_accounts {
+                    let open = dialog.menu.as_deref() == Some(id.as_str());
+                    dialog.menu = (!id.is_empty() && !open).then_some(id);
+                }
+                vec![]
+            }
+            Action::SwitchDiscordAccount(id) => {
+                if let Some(dialog) = &mut self.state.manage_accounts {
+                    dialog.menu = None;
+                }
+                if id == self.state.discord_active || !self.linked_account(&id) {
+                    return vec![];
+                }
+                vec![Effect::Backend(Command::Discord(
+                    DiscordCommand::SwitchAccount(id),
+                ))]
+            }
+            Action::LogOutDiscordAccount(id) => {
+                if let Some(dialog) = &mut self.state.manage_accounts {
+                    dialog.menu = None;
+                }
+                if !self.linked_account(&id) {
+                    return vec![];
+                }
+                vec![Effect::Backend(Command::Discord(
+                    DiscordCommand::RemoveAccount(id),
+                ))]
             }
             Action::OpenAddFriend => {
                 if self.state.discord_user.is_some() {
@@ -4244,6 +4457,7 @@ impl Application {
                 vec![]
             }
             Action::OpenProfileTab(tab) => self.open_profile_tab(tab),
+            Action::OpenActivityButton(press) => self.open_activity_button(press),
             Action::LoadOwnProfile => self.load_own_profile(),
             Action::OpenWishlist => self.open_wishlist(),
             Action::ChooseServerTag(server) => {
@@ -4313,7 +4527,9 @@ impl Application {
             }
             Action::AnswerRequest(accept) => self.answer_request(accept),
             Action::Voice(voice::Command::Join(id)) => self.dispatch(Action::RequestJoinVoice(id)),
+            Action::Voice(voice::Command::Watch(user)) => self.watch(user, false),
             Action::Voice(command) => self.voice_command(command),
+            Action::WatchAlongside(user) => self.watch(user, true),
             Action::UnmuteOnJoin => self.voice_command_quietly(voice::Command::Mute(false)),
             Action::DeafenOnJoin { unmuted } => self.voice_command_quietly(if unmuted {
                 voice::Command::DeafenUnmuted
@@ -4465,6 +4681,26 @@ impl Application {
             Event::Notify(_) if self.state.do_not_disturb() => {}
             Event::Notify(notification) => return vec![Effect::Notify(self.alert(notification))],
             Event::Typing { room, names } => {
+                // A Discord DM's id names it; a Matrix room says it's one,
+                // and counts only while it's open: Matrix says who types
+                // only there, so a late word for a room closed since would
+                // never be taken back.
+                let direct = match discord::parse_room(&room) {
+                    Some((guild, _)) => guild == discord::DM_GUILD,
+                    None => {
+                        self.state.selected.as_deref() == Some(room.as_str())
+                            && self
+                                .state
+                                .rooms
+                                .iter()
+                                .any(|known| known.id == room && known.direct)
+                    }
+                };
+                if !direct || names.is_empty() {
+                    self.state.typing_dms.remove(&room);
+                } else if !self.state.typing_dms.contains(&room) {
+                    self.state.typing_dms.insert(room.clone());
+                }
                 if names.is_empty() {
                     self.state.typing.remove(&room);
                 } else {
@@ -4520,6 +4756,12 @@ impl Application {
             Event::Wishlist { id, wishlist } => self.wishlist_loaded(&id, wishlist),
             Event::ProfileBoard { user, widgets } => self.profile_board_named(&user, widgets),
             Event::ProfileRecent { user, recent } => self.profile_recent_came(&user, recent),
+            Event::ActivityLinks {
+                user,
+                session,
+                application,
+                result,
+            } => return self.activity_links_came(&user, &session, &application, result),
             Event::BadgeLevels { user, badges } => self.show_badge_levels(&user, badges),
             Event::ProfileFrame { user, frame } => self.show_profile_frame(&user, &frame),
             Event::ProfilePresence {
@@ -4568,6 +4810,7 @@ impl Application {
             Event::ThreadOpened { room, result } => self.thread_opened(room, result),
             Event::Pins { room, result } => self.pins_came(room, result),
             Event::Peeked { room, result } => self.peeked(room, result),
+            Event::RecentMentions { query, result } => self.recent_mentions_came(query, result),
             Event::GifCategories(result) => self.gif_categories_came(result),
             Event::Gifs { query, result } => self.gifs_came(query, result),
             Event::GifSuggestions { query, terms } => self.gif_suggestions_came(query, terms),
@@ -4737,8 +4980,12 @@ impl Application {
                 server,
                 role,
                 result,
+            } => self.role_holders(server, role, result),
+            Event::RoleCount {
+                server,
+                role,
                 count,
-            } => self.role_holders(server, role, result, count),
+            } => self.role_count(&server, &role, count),
             Event::RoleCandidates {
                 server,
                 query,
@@ -4755,6 +5002,28 @@ impl Application {
                 }
             }
             Event::DiscordUnlinked => return self.forget_discord(),
+            Event::DiscordSwitched => return self.switched_discord(),
+            Event::DiscordAccounts { accounts, active } => {
+                self.state.discord_accounts = accounts;
+                self.state.discord_active = active;
+                // The list is what was stored, which may not have the connected
+                // account's name yet.
+                let own = self.discord.as_deref().and_then(|snapshot| {
+                    let account = snapshot.account.as_ref()?;
+                    Some((
+                        account.username.clone(),
+                        account.name.clone(),
+                        account.avatar.clone(),
+                    ))
+                });
+                if let Some((username, name, avatar)) = own {
+                    self.describe_active_account(&username, &name, &avatar);
+                }
+                if self.state.discord_accounts.is_empty() {
+                    self.state.manage_accounts = None;
+                }
+            }
+            Event::DiscordSessionKept => self.state.discord_session_kept = true,
             Event::Note { user, result } => {
                 if let Ok(note) = &result {
                     for view in [&mut self.state.profile, &mut self.state.panel_profile]
@@ -4798,6 +5067,11 @@ impl Application {
             }
             Event::CustomStatusSet(Ok(())) => {
                 self.state.status_editor = None;
+            }
+            Event::ChannelFavorited(result) => {
+                if let Err(error) = result {
+                    self.state.notice = Some(format!("Couldn't save your Favorites: {error}"));
+                }
             }
             Event::ServerFiled(result) => {
                 if let Err(error) = result {
@@ -5300,7 +5574,7 @@ impl Application {
             .iter()
             .filter_map(|(navigation, room)| match navigation {
                 Navigation::Server(server) => Some((server.clone(), room.clone())),
-                Navigation::DirectMessages => None,
+                Navigation::DirectMessages | Navigation::Favorites => None,
             })
             .collect()
     }

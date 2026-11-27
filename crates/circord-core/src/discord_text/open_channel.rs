@@ -1840,6 +1840,7 @@ impl OpenChannel {
                 .style(Some(&self.guild), &message.author_id)
                 .map(|style| Arc::new(style.into())),
             color: server.and_then(|server| discord.color(server, &message.author_id)),
+            color_end: server.and_then(|server| discord.gradient(server, &message.author_id)),
             bot: message.bot,
             tag: discord::server_tag(discord.server_tag(&message.author_id)),
             // Discord's client marks a person, not a bot, who joined in the
@@ -1853,6 +1854,14 @@ impl OpenChannel {
                         .is_some_and(|joined| now.saturating_sub(joined) < NEW_MEMBER_MS)
             },
             forwarded: message.forwarded,
+            forward_origin: message.forward_origin.as_ref().map(|origin| {
+                let guild = origin.guild_id.as_deref().unwrap_or(discord::DM_GUILD);
+                crate::chat::ForwardOrigin {
+                    room: discord::room_id(guild, &origin.channel_id),
+                    item: format!("d:{}", origin.message_id),
+                    timestamp: origin.timestamp,
+                }
+            }),
             body: body.into(),
             formatted: ordinary,
             time: crate::clock::time(timestamp).into(),

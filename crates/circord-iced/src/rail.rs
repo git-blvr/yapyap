@@ -20,9 +20,7 @@ use circord_core::{
 };
 use iced::{
     Alignment, Color, Element, Length, Padding, Size, Task,
-    widget::{
-        Space, column, container, mouse_area, row, scrollable::Viewport, stack, text, tooltip,
-    },
+    widget::{Space, column, container, mouse_area, row, stack, text, tooltip},
 };
 
 use crate::{
@@ -30,10 +28,9 @@ use crate::{
     controls::{self, RAIL_COUNT, bar, count_badge, count_pill},
     elide::elide,
     fonts::{BOLD, MEDIUM},
-    pictures::{Icon, initials},
+    pictures::{GroupIcon, Icon, initials, room_group_icon},
     style::{corners, hex, rounded, scrollbar},
-    sync::MARGIN,
-    sync::Scroll,
+    sync::{MARGIN, Scroll},
     widgets::{Drags, Pic, RightPress, Rows},
 };
 
@@ -159,7 +156,7 @@ const CARD_WIDTH: f32 = 220.0;
 /// What's done on the rail.
 #[derive(Clone, Debug)]
 pub enum Event {
-    Scrolled(Viewport),
+    Scrolled(Scroll),
     /// The pointer came onto a tile or left it, by its id ("" for the home,
     /// "+" for the add-a-server tile).
     Point(String, bool),
@@ -220,6 +217,7 @@ pub struct RailItem {
     pub id: String,
     pub name: String,
     pub icon: Option<String>,
+    pub group_icon: Option<GroupIcon>,
     pub kind: Kind,
     pub selected: bool,
     pub unread: bool,
@@ -276,6 +274,7 @@ impl RailItem {
             id: server.id.clone(),
             name: server.name.clone(),
             icon: server.icon.clone(),
+            group_icon: None,
             kind: Kind::Server,
             selected,
             unread: marks.unread,
@@ -371,6 +370,7 @@ pub fn rail(state: &AppState, open_folders: &BTreeSet<String>) -> Vec<RailItem> 
             id: room.id.clone(),
             name: room.name.clone(),
             icon: room.avatar.clone(),
+            group_icon: room_group_icon(room),
             kind: Kind::Dm,
             selected: false,
             unread: true,
@@ -387,6 +387,7 @@ pub fn rail(state: &AppState, open_folders: &BTreeSet<String>) -> Vec<RailItem> 
         id: "divider".into(),
         name: String::new(),
         icon: None,
+        group_icon: None,
         kind: Kind::Divider,
         selected: false,
         unread: false,
@@ -497,6 +498,7 @@ pub fn rail(state: &AppState, open_folders: &BTreeSet<String>) -> Vec<RailItem> 
             id: folder.id.clone(),
             name,
             icon: None,
+            group_icon: None,
             kind: Kind::Folder {
                 open,
                 tint,
@@ -528,11 +530,59 @@ pub fn rail(state: &AppState, open_folders: &BTreeSet<String>) -> Vec<RailItem> 
             }
         }
     }
+    if state.discord_linked
+        && (state.favorites_visible || state.navigation == Navigation::Favorites)
+    {
+        // As Discord's client marks the tile: the mentions of the channels
+        // saved and of their threads, and unread unless Favorites are muted.
+        let saved: HashSet<&str> = state
+            .channel_favorites
+            .iter()
+            .filter(|entry| entry.reference)
+            .map(|entry| entry.id.as_str())
+            .collect();
+        let is_saved =
+            |room: &str| discord::parse_room(room).is_some_and(|(_, id)| saved.contains(id));
+        let (unread, mentions) = state
+            .rooms
+            .iter()
+            .filter(|room| {
+                !room.locked
+                    && !room.request
+                    && (is_saved(&room.id) || room.parent.as_deref().is_some_and(is_saved))
+            })
+            .fold((false, 0), |(unread, mentions), room| {
+                (
+                    unread
+                        || room.mentions > 0
+                        || (room.unread > 0 && !room.muted && !(room.voice && !room.direct)),
+                    mentions + room.mentions,
+                )
+            });
+        items.insert(
+            0,
+            RailItem {
+                id: "@favorites".into(),
+                name: "Favorites".into(),
+                icon: None,
+                group_icon: None,
+                kind: Kind::Server,
+                selected: state.navigation == Navigation::Favorites,
+                unread: unread && !state.favorites_muted,
+                badge: count_badge(mentions),
+                call: false,
+                media: None,
+                busy: Busy::default(),
+                unavailable: false,
+            },
+        );
+    }
     if state.discord_online || state.preview {
         items.push(RailItem {
             id: ADD.into(),
             name: "Add a server".into(),
             icon: None,
+            group_icon: None,
             kind: Kind::Add,
             selected: false,
             unread: false,
@@ -746,11 +796,15 @@ pub fn drag_subscription(app: &App) -> Option<iced::Subscription<Message>> {
     }))
 }
 
+fn scrolled(offset: f32, height: f32) -> Message {
+    Message::Rail(Event::Scrolled(Scroll { offset, height }))
+}
+
 /// What's done on the rail.
 pub fn update(app: &mut App, event: Event) -> Task<Message> {
     match event {
         Event::Scrolled(viewport) => {
-            app.rail.scroll = Scroll::of(viewport);
+            app.rail.scroll = viewport;
             return app.ask();
         }
         Event::Point(id, entered) => {
@@ -793,8 +847,11 @@ pub fn update(app: &mut App, event: Event) -> Task<Message> {
                 .dispatch(Action::Navigate(Navigation::DirectMessages));
         }
         Event::Server(id) => {
-            app.client
-                .dispatch(Action::Navigate(Navigation::Server(id)));
+            app.client.dispatch(Action::Navigate(if id == "@favorites" {
+                Navigation::Favorites
+            } else {
+                Navigation::Server(id)
+            }));
         }
         Event::Folder(id) => {
             app.lists_shown = None;
@@ -1011,7 +1068,7 @@ impl<'a> View<'a> {
             );
         }
         let list = scroll_view(rows)
-            .on_scroll(|viewport| Message::Rail(Event::Scrolled(viewport)))
+            .on_vertical_viewport(scrolled)
             .height(Length::Fill)
             .style(scrollbar(theme));
         // As Slint lays a theme's tiles: the home tile in a slot of its own
@@ -1812,6 +1869,16 @@ impl<'a> View<'a> {
     /// A server's or a DM's face: its picture, else its initials on the
     /// raised ground (the accent while lit); faded while out of reach.
     fn server_face(self, item: &RailItem, lit: bool) -> Element<'a, Message> {
+        if item.id == "@favorites" {
+            let theme = self.cx.look.theme;
+            let ground = if lit { theme.raised } else { theme.rail };
+            let (width, height) = self.tile_size();
+            return container(self.cx.look.glyph(Icon::StarFilled, 20, theme.text))
+                .center_x(width)
+                .center_y(height)
+                .style(move |_| rounded(ground, RADIUS))
+                .into();
+        }
         self.server_face_at(item, lit, 1.0)
     }
 
@@ -1855,6 +1922,16 @@ impl<'a> View<'a> {
                 .expect("a gel theme");
             }
             return picture.into();
+        }
+        if item.icon.is_none()
+            && let Some(group_icon) = &item.group_icon
+        {
+            return match group_icon {
+                GroupIcon::Placeholder(ground) => {
+                    self.cx.group_placeholder(*ground, TILE, RADIUS, opacity)
+                }
+                GroupIcon::Pair(pair) => self.cx.group_pair(pair, TILE, opacity),
+            };
         }
         let (ground, ink) = if lit {
             (theme.accent, theme.on_accent)
@@ -2813,6 +2890,7 @@ mod tests {
             id,
             name: String::new(),
             icon: None,
+            group_icon: None,
             kind,
             selected: false,
             unread: false,

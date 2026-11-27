@@ -205,7 +205,7 @@ pub fn message_content<'a>(
             FIRST_PART,
             Look {
                 size: text_size(ctx),
-                line_height: LINE_HEIGHT,
+                line_height: line_height(ctx),
                 ink,
             },
         );
@@ -290,6 +290,11 @@ pub fn message_content<'a>(
     }
     if let Some(failed) = crate::components::bot_failed(ctx, message) {
         content = content.push(failed);
+    }
+    if let Some(origin) = &message.forward_origin
+        && let Some(footer) = forward_footer(ctx, look, origin)
+    {
+        content = content.push(container(footer).padding(Padding::ZERO.top(4)));
     }
     // In bubbles the reactions sit under the bubble, on its side, as
     // Slint's; elsewhere they end the message.
@@ -400,7 +405,7 @@ pub fn message_content<'a>(
                     line = line.push(crate::theme_art::irc_rule(
                         separator,
                         text_size(ctx),
-                        LINE_HEIGHT,
+                        line_height(ctx),
                         theme.font("body", REGULAR),
                         theme.faint,
                         content.into(),
@@ -863,7 +868,7 @@ fn hidden_row<'a>(ctx: crate::ctx::Ctx<'a>, look: &RowLook, blocked: bool) -> El
                     .size(text_size(ctx))
                     .font(MEDIUM)
                     .color(theme.text)
-                    .height(AUTHOR_LINE),
+                    .height(author_height(ctx)),
             )
             .padding(Padding::ZERO.bottom(AUTHOR_GAP)),
         );
@@ -887,7 +892,7 @@ fn hidden_row<'a>(ctx: crate::ctx::Ctx<'a>, look: &RowLook, blocked: bool) -> El
                 .style(controls::ink_style(theme.link, theme.text)),
         ]
         .spacing(4)
-        .height(LINE_HEIGHT)
+        .height(line_height(ctx))
         .align_y(Alignment::Center),
     );
     container(row![container(gutter).width(avatar), content].spacing(16))
@@ -962,9 +967,15 @@ fn gutter<'a>(
             .cosmetics
             .decoration(message.decoration.as_deref());
         let pointed = ctx.pointed.message.as_deref() == Some(message.item.as_ref());
+        // The avatar and its decoration play while any message of the
+        // group is pointed at.
+        let group = ctx
+            .lanes
+            .group_pointed(index, ctx.pointed.message.as_deref());
         let face = ctx.face(
             Face::new(message.avatar.as_deref(), &message.author, avatar)
-                .decoration(decoration, pointed)
+                .decoration(decoration, group)
+                .animate(group)
                 .illuminated(pointed),
         );
         let face = mouse_area(face)
@@ -989,7 +1000,10 @@ fn gutter<'a>(
                     .size(theme.type_size("time", 12.0))
                     .font(theme.font("time", MEDIUM))
                     .color(theme.muted)
-                    .wrapping(text::Wrapping::None),
+                    .wrapping(text::Wrapping::None)
+                    // A clock too wide for the gutter, with seconds say,
+                    // grows to the left, never into the message.
+                    .align_x(Alignment::End),
             )
             .width(avatar)
             .align_x(Alignment::End),
@@ -1169,12 +1183,24 @@ fn used_line<'a>(
         .into()
 }
 
-/// Messages' text size, as Messages' settings chose it.
+/// Messages' text size, as Accessibility's text size in chat chose it.
 pub fn text_size(ctx: crate::ctx::Ctx<'_>) -> f32 {
-    ctx.look.theme.type_size(
-        "body",
-        crate::settings::message_size(ctx.layout.prefs.text_size),
-    )
+    ctx.look
+        .theme
+        .type_size("body", crate::settings::message_size(&ctx.layout.prefs))
+}
+
+/// A line of message text: 19.5 px, or 1.3 times the text where that's
+/// taller (16 px text and up), so larger text doesn't run into its next
+/// line.
+pub fn line_height(ctx: crate::ctx::Ctx<'_>) -> f32 {
+    LINE_HEIGHT.max((text_size(ctx) * 1.3).round())
+}
+
+/// The author's line over a group's text: 20 px, or 1.3 times the name
+/// where that's taller.
+fn author_height(ctx: crate::ctx::Ctx<'_>) -> f32 {
+    AUTHOR_LINE.max((ctx.look.theme.type_size("names", text_size(ctx)) * 1.3).round())
 }
 
 /// When the message at `index` was sent, on the clock Messages'
@@ -1246,7 +1272,7 @@ fn author_line<'a>(
             .size(name_size)
             .font(name_font)
             .color(color)
-            .line_height(AUTHOR_LINE)
+            .line_height(author_height(ctx))
             .light(crate::theme_effects::text_light(
                 ctx,
                 circord_core::themes::package::art::TextRole::Names,
@@ -1257,33 +1283,38 @@ fn author_line<'a>(
         }
         container(words).max_width(room).into()
     });
-    let mut name = Piece::new(
-        vec![span(shown_author).font({
-            let stock = style_font(style.as_ref().and_then(crate::looks::NameLook::font), 500);
-            if style.is_some() {
-                stock
-            } else {
-                theme.font("names", stock)
-            }
-        })],
-        index,
-        0,
-        Message::Link,
-        Message::Select,
-    )
-    .item(Some(ctx.row_item(index)))
-    .size(theme.type_size("names", text_size(ctx)), AUTHOR_LINE)
-    .color(color)
-    .light(crate::theme_effects::text_light(
-        ctx,
-        circord_core::themes::package::art::TextRole::Names,
-    ))
-    .starts(false)
-    .selection(
-        ctx.selected(index, 0),
-        ctx.lanes.timeline.selecting,
-        theme.token_colour("selection", theme.wash(0.2)),
-    );
+    // A gradient role colour runs across the name, letter by letter, as
+    // Discord draws it, unless the theme inks names itself; otherwise the
+    // one colour.
+    let spans = match cosmetics
+        .colours(message.color_end)
+        .filter(|_| message.color.is_some() && content.is_none())
+    {
+        Some(end) => crate::looks::gradient_letters(
+            &shown_author,
+            [color, hex(end.0)],
+            end.1.map(hex),
+            name_size * 0.6,
+        )
+        .into_iter()
+        .map(|(letter, ink)| span(letter).font(name_font).color(ink))
+        .collect(),
+        None => vec![span(shown_author).font(name_font)],
+    };
+    let mut name = Piece::new(spans, index, 0, Message::Link, Message::Select)
+        .item(Some(ctx.row_item(index)))
+        .size(theme.type_size("names", text_size(ctx)), author_height(ctx))
+        .color(color)
+        .light(crate::theme_effects::text_light(
+            ctx,
+            circord_core::themes::package::art::TextRole::Names,
+        ))
+        .starts(false)
+        .selection(
+            ctx.selected(index, 0),
+            ctx.lanes.timeline.selecting,
+            theme.token_colour("selection", theme.selection),
+        );
     if let Some(effect) = hover {
         name = name.hover_effect(effect);
     }
@@ -1298,7 +1329,7 @@ fn author_line<'a>(
                 ctx,
                 &author,
                 theme.type_size("names", text_size(ctx)) * 0.85,
-                Some(AUTHOR_LINE + 2.0),
+                Some(author_height(ctx) + 2.0),
             )
         })
         .flatten()
@@ -1317,8 +1348,9 @@ fn author_line<'a>(
     } else {
         let under = column![
             // Under the name's letters, and within the line at any size.
-            Space::new()
-                .height(((AUTHOR_LINE + text_size(ctx)) / 2.0 + 1.0).min(AUTHOR_LINE - 1.0)),
+            Space::new().height(
+                ((author_height(ctx) + text_size(ctx)) / 2.0 + 1.0).min(author_height(ctx) - 1.0)
+            ),
             controls::bar(color, Length::Fill, 1),
         ];
         crate::widgets::Hover::new(name, under).into()
@@ -1381,7 +1413,7 @@ fn author_line<'a>(
         ctx.lanes.timeline.selecting,
         theme.token_colour("selection", theme.wash(0.2)),
     );
-    line.push(time).height(AUTHOR_LINE).into()
+    line.push(time).height(author_height(ctx)).into()
 }
 
 /// A body that folds, when long messages fold: once it's a few lines past
@@ -1403,13 +1435,8 @@ fn folding<'a>(
     .padding(0)
     .on_press(Message::Timeline(crate::timeline::Event::Unfold(item)))
     .style(controls::ink_style(theme.link, theme.text));
-    Fold::new(
-        body,
-        more,
-        !whole,
-        (LINE_HEIGHT * 15.0, LINE_HEIGHT * 12.0, 3.0),
-    )
-    .into()
+    let line = line_height(ctx);
+    Fold::new(body, more, !whole, (line * 15.0, line * 12.0, 3.0)).into()
 }
 
 /// Before this thread (by its snowflake, July 2022), Discord counted a
@@ -1659,6 +1686,92 @@ fn delivery_line<'a>(
         );
     }
     Some(line.into())
+}
+
+/// A forwarded message's footer, as Discord's client words where the
+/// original came from: from this server, its channel (`#general`); from
+/// another server this account is in, or a channel of this one it doesn't
+/// list, that server's icon and name; then `•` and when the original was
+/// sent, and a chevron. Clicking it opens the original. A forward from a
+/// DM, or from a channel this account can't read, has none.
+fn forward_footer<'a>(
+    ctx: crate::ctx::Ctx<'a>,
+    look: &'a RowLook,
+    origin: &'a chat::ForwardOrigin,
+) -> Option<Element<'a, Message>> {
+    let theme = ctx.look.theme;
+    let state = ctx.state;
+    let room = state.rooms.iter().find(|room| room.id == origin.room);
+    if room.is_some_and(|room| room.direct) {
+        return None;
+    }
+    let server = match room {
+        Some(room) => state
+            .servers
+            .iter()
+            .find(|server| server.channels.contains(&room.id)),
+        None => circord_core::discord::parse_room(&origin.room)
+            .filter(|(guild, _)| *guild != circord_core::discord::DM_GUILD)
+            .and_then(|(guild, _)| {
+                let id = circord_core::discord::server_id(guild);
+                state.servers.iter().find(|server| server.id == id)
+            }),
+    }?;
+    let same_server = state
+        .selected
+        .as_ref()
+        .is_some_and(|open| server.channels.contains(open));
+    let (icon, label) = match room {
+        Some(room) if same_server => {
+            if room.locked {
+                return None;
+            }
+            let label = if room.parent.is_some() {
+                format!("\"{}\"", room.name)
+            } else if room.voice {
+                room.name.clone()
+            } else {
+                format!("#{}", room.name)
+            };
+            (None, label)
+        }
+        _ => (
+            Some(ctx.avatar(server.icon.as_deref(), &server.name, 16.0, 5.0, 1.0)),
+            server.name.clone(),
+        ),
+    };
+    let can_jump = match room {
+        Some(room) => !room.locked,
+        None => state.discord_online && !state.preview,
+    };
+    let label = match look.forward_time.as_deref() {
+        Some(time) => format!("{label}  \u{2022}  {time}"),
+        None => label,
+    };
+    let mut line = row![].spacing(6).align_y(Alignment::Center);
+    if let Some(icon) = icon {
+        line = line.push(icon);
+    }
+    let line = line
+        .push(
+            text(label)
+                .size(theme.type_size("small", 12.0))
+                .font(theme.font("small", MEDIUM))
+                .wrapping(text::Wrapping::None),
+        )
+        .push(ctx.look.glyph(Icon::ChevronRight, 14, theme.muted));
+    Some(
+        button(line)
+            .padding(0)
+            .on_press_maybe(can_jump.then(|| {
+                Message::Timeline(crate::timeline::Event::JumpInRoom {
+                    room: origin.room.clone(),
+                    item: origin.item.clone(),
+                })
+            }))
+            .style(controls::ink_style(theme.muted, theme.text))
+            .into(),
+    )
 }
 
 /// As Discord's client marks an answer only this account sees.

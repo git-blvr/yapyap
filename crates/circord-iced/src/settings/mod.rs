@@ -6,57 +6,87 @@
 //!
 //! It's a screen on the contract `docs/client/structure.md` describes: its
 //! state ([`Settings`]) lives in the app's slot only while it's open, and
-//! closing it lets go of the camera being tried, the microphone's gate
-//! meter and whatever the pages made. Its updates work through a [`Cx`]:
-//! what the pages change is kept at once in `layout.json` and handed to
-//! the core; what others show of it is told with [`Request::Changed`]. Its
-//! view reads a [`Ctx`], and its videos the camera being tried. The pages
-//! are built of the form kit (`form.rs`); each page's module holds its
-//! view and what its controls do.
+//! closing it lets go of the theme editor, the camera being tried, the
+//! microphone's gate meter and whatever the pages made. Its updates work
+//! through a [`Cx`]: what the pages change is kept at once in
+//! `layout.json` and handed to the core; what others show of it is told
+//! with [`Request::Changed`]. Its view reads a [`Ctx`]. The window's theme
+//! follows [`Settings::preview`] while the editor is open, and its videos
+//! the camera being tried. The pages are built of the form kit
+//! (`form.rs`); each page's module holds its view and what its controls
+//! do.
 
 mod appearance;
 mod customize;
+mod desktop_icons;
+mod font;
 pub mod keybinds;
 mod pages;
+pub(crate) mod theme_creator;
+mod theme_keys;
+pub(crate) mod theme_marketplace;
+mod theme_page;
+pub use theme_keys::ThemeKey;
+pub use theme_page::trial_banner;
 pub mod updates;
 
-pub use pages::message_size;
+pub use pages::{block_game, message_size, open_detected_games_menu, system_motion};
 pub mod voice;
 
 use crate::widgets::scroll_view;
-use circord_core::application::{Action, AppState};
-use circord_core::new_tags::{self, Page as NewPage};
 use iced::{
     Alignment, Color, Element, Length, Task,
     widget::{Space, button, column, container, row, text},
 };
+use circord_core::application::{Action, AppState};
+use circord_core::new_tags::{self, Page as NewPage};
 
 use crate::{
     app::Message,
     controls::{self, bar},
     ctx::{self, Ctx, Cx, Focus, Request, Screen},
+    desktop::Autostart,
     fonts::BOLD,
     form,
     pictures::Icon,
     slot::{Closes, Why},
     style::scrollbar,
+    theme::Theme,
 };
 
+use appearance::Editor;
+#[cfg(test)]
+pub(crate) use appearance::{COLOUR_CODE as THEME_COLOUR_CODE, Event as ThemeEvent};
+pub(crate) use font::FontEvent;
 #[cfg(test)]
 pub use appearance::Event as AppearanceEvent;
 #[cfg(test)]
 pub use customize::Event as CustomizeEvent;
 
-/// What an Appearance page event sends.
+/// What a theme editor's change sends.
 #[cfg(test)]
-pub fn appearance_event(event: AppearanceEvent) -> Message {
-    crate::app::settings(Event::Appearance(event))
+pub fn appearance_event(event: ThemeEvent) -> Message {
+    crate::app::settings(Event::Theme(event))
 }
 
 /// What a Customize page event sends.
 #[cfg(test)]
 pub fn customize_event(event: CustomizeEvent) -> Message {
     crate::app::settings(Event::Customize(event))
+}
+
+/// What a preference's change sends.
+#[cfg(test)]
+pub fn pref_message(pref: Pref) -> Message {
+    crate::app::settings(Event::Pref(pref))
+}
+#[cfg(test)]
+pub(crate) use pages::Pref;
+
+/// What a Font event sends.
+#[cfg(test)]
+pub fn font_message(event: FontEvent) -> Message {
+    crate::app::settings(Event::Font(event))
 }
 
 /// How far the card sits in from the window's edges, and the sections'
@@ -66,6 +96,8 @@ const NAV: f32 = 266.0;
 /// A section's row in the column, the page's header over it.
 const NAV_ROW: f32 = 40.0;
 const HEADER: f32 = 48.0;
+/// The theme editor's column, wider than a page's.
+const EDITOR_COLUMN: f32 = 960.0;
 /// The search's field, and the page's scrollable.
 pub const SEARCH: &str = "settings-search";
 const PAGE: &str = "settings-page";
@@ -76,11 +108,13 @@ pub enum Section {
     Account,
     Voice,
     Messages,
+    Accessibility,
     Notifications,
     Discord,
     Sounds,
     Advanced,
     Appearance,
+    Themes,
     Customize,
     Games,
     Keybinds,
@@ -102,11 +136,13 @@ impl Section {
             Section::Account => "My Account",
             Section::Voice => "Voice & Video",
             Section::Messages => "Messages",
+            Section::Accessibility => "Accessibility",
             Section::Notifications => "Notifications",
             Section::Discord => "Discord",
             Section::Sounds => "Sounds",
             Section::Advanced => "Advanced",
             Section::Appearance => "Appearance",
+            Section::Themes => "Themes",
             Section::Customize => "Customize",
             Section::Games => "Game Activity",
             Section::Keybinds => "Keybinds",
@@ -119,11 +155,13 @@ impl Section {
             Section::Account => Icon::User,
             Section::Voice => Icon::Mic,
             Section::Messages => Icon::MessageCircle,
+            Section::Accessibility => Icon::Accessibility,
             Section::Notifications => Icon::Bell,
             Section::Discord => Icon::Discord,
             Section::Sounds => Icon::Volume,
             Section::Advanced => Icon::Settings,
             Section::Appearance => Icon::Palette,
+            Section::Themes => Icon::Brush,
             Section::Customize => Icon::Brush,
             Section::Games => Icon::Play,
             Section::Keybinds => Icon::Keyboard,
@@ -144,7 +182,7 @@ const GROUPS: [(&str, &[Section]); 3] = [
             Section::Notifications,
             Section::Sounds,
             Section::Appearance,
-            Section::Customize,
+            Section::Accessibility,
         ],
     ),
     (
@@ -152,6 +190,8 @@ const GROUPS: [(&str, &[Section]); 3] = [
         &[
             Section::Discord,
             Section::Games,
+            Section::Themes,
+            Section::Customize,
             Section::Keybinds,
             Section::Advanced,
             Section::About,
@@ -166,7 +206,6 @@ pub enum Drop {
     Speaker,
     Camera,
     Entrance,
-    /// The entrance sounds' start, in Voice & Video.
     Start,
     /// Customize's font list.
     Font,
@@ -182,14 +221,29 @@ pub struct Settings {
     pub open: Option<Drop>,
     /// The version was copied a moment ago, which the stamp and About say.
     pub copied: bool,
+    /// Themes' editor while it's open, and the theme as edited,
+    /// which the window shows meanwhile.
+    pub editor: Option<Editor>,
+    /// How the last theme import or export went, under Appearance's title,
+    /// and whether it failed.
+    pub theme_note: Option<(String, bool)>,
+    /// The Slint build's guided, step-based creator. The palette editor above
+    /// remains available as the legacy Advanced fallback while this flow is
+    /// being ported.
+    pub creator: Option<theme_creator::Creator>,
+    /// Installed themes, marketplace, URL fetch and protected review state.
+    pub marketplace: theme_marketplace::Marketplace,
+    preview: Option<Theme>,
+    icons: Option<desktop_icons::Icons>,
     /// Customize's field texts while its page shows.
     pub customize_draft: Option<customize::Draft>,
-    /// The person's theme whose bin was pressed once in Appearance: the
-    /// next press deletes it.
-    pub delete_armed: Option<String>,
     /// Voice's state while it shows: the push-to-talk key being recorded,
     /// the camera being tried, the gate's meter, the entrance sounds.
     pub voice: voice::Voice,
+    /// What Appearance's Font says of the files just chosen that didn't
+    /// load, until the next change; none shows the standing note
+    /// (`custom_font::note`).
+    pub font_note: Option<String>,
     /// Game Activity's draft of a game.
     pub game: pages::GameDraft,
     /// The keybind being recorded, and the keys pressed so far.
@@ -205,7 +259,7 @@ pub struct Settings {
 /// the desktop can: none where they can't.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Platform {
-    pub autostart: Option<bool>,
+    pub autostart: Option<Autostart>,
     pub discord_links: Option<bool>,
 }
 
@@ -234,8 +288,13 @@ pub enum Event {
     Account(pages::AccountEvent),
     Game(pages::GameEvent),
     Voice(voice::Event),
-    Appearance(appearance::Event),
+    Theme(appearance::Event),
     Customize(customize::Event),
+    DesktopIcon(desktop_icons::Event),
+    /// Appearance's Font: choosing the font files, removing one, going back
+    /// to DM Sans.
+    Font(FontEvent),
+    Marketplace(theme_marketplace::Event),
     /// Recording a keybind starts or stops: push to talk's or a row's.
     Record(keybinds::Target, bool),
     /// A key went down or up, or the window lost the focus, while one is
@@ -244,6 +303,8 @@ pub enum Event {
     Keybind(keybinds::Event),
     /// Advanced's Restart Circord, after the GPU setting changed.
     Restart,
+    /// Tab, Shift+Tab, Enter or Space on Settings → Themes.
+    ThemeKey(ThemeKey),
 }
 
 impl Settings {
@@ -258,11 +319,13 @@ impl Settings {
             blocked_shown: pages::BLOCKED_STEP,
             ..Self::default()
         };
+        // Installed shows its themes as cards until the list is chosen.
+        settings.marketplace.gallery = true;
         settings.read_platform_choices(cx);
         settings
     }
 
-    /// Shows a section: Customize fills its fields from the choices kept,
+    /// Shows a section: leaving Themes cancels the theme being edited,
     /// leaving Voice stops what it ran; Voice & video also lists the
     /// devices again.
     pub fn show(&mut self, section: Section, cx: &mut Cx<'_>) -> Task<Message> {
@@ -270,12 +333,20 @@ impl Settings {
         self.section = Some(section);
         self.open = None;
         self.record = None;
-        self.delete_armed = None;
         if let Some(before) = before.filter(|before| *before != section) {
             leave_new(cx, before);
         }
         if section == Section::Customize {
             self.customize_draft = Some(customize::Draft::of(&cx.layout.customize, cx.theme));
+        }
+        if before == Some(Section::Themes) && section != Section::Themes {
+            self.cancel_theme(cx);
+        }
+        if before == Some(Section::Appearance) && section != Section::Appearance {
+            self.icons = None;
+        }
+        if section == Section::Appearance && before != Some(Section::Appearance) {
+            self.icons = desktop_icons::Icons::new(cx.client.root(), &cx.layout.prefs);
         }
         if before == Some(Section::Voice) && section != Section::Voice {
             self.end_mic_test(cx);
@@ -301,6 +372,11 @@ impl Settings {
             Event::Search(query) => self.query = query,
             Event::Drop(drop) => {
                 self.open = (self.open != Some(drop)).then_some(drop);
+                if self.open.is_some()
+                    && let Some(editor) = self.editor.as_mut()
+                {
+                    editor.picker = None;
+                }
                 // What opened may show pictures, such as the entrance
                 // sounds' soundboard.
                 cx.touch();
@@ -323,7 +399,37 @@ impl Settings {
             Event::Account(event) => self.account_event(event, cx),
             Event::Game(event) => self.game_event(event, cx),
             Event::Voice(event) => self.voice_event(event, cx),
-            Event::Appearance(event) => return self.appearance_event(event, cx),
+            Event::DesktopIcon(event) => return self.desktop_icon_event(event, cx),
+            Event::ThemeKey(key) => return self.theme_key(key, cx),
+            Event::Theme(event) => {
+                // A click puts the keys back where they were before Tab.
+                self.marketplace.focus = None;
+                let task = self.theme_event(event, cx);
+                if self.section != Some(Section::Appearance) {
+                    self.icons = None;
+                }
+                return task;
+            }
+            Event::Marketplace(event) => {
+                self.marketplace.focus = None;
+                let runtime = cx.client.shared_runtime();
+                let root = cx.client.root().to_owned();
+                let task = self
+                    .marketplace
+                    .update(event, runtime, &root, cx.layout, cx.themes)
+                    .map(|event| crate::app::settings(Event::Marketplace(event)));
+                self.marketplace.installed.take();
+                if std::mem::take(&mut self.marketplace.theme_applied) {
+                    cx.request(Request::ThemeApplied);
+                    cx.touch();
+                }
+                if std::mem::take(&mut self.marketplace.theme_changed) {
+                    cx.request(Request::Changed(ctx::Pref::Theme));
+                    cx.touch();
+                }
+                return task;
+            }
+            Event::Font(event) => return self.font_event(event, cx),
             Event::Customize(event) => return self.customize_event(event, cx),
             Event::Record(target, on) => self.record(target, on),
             Event::Heard(heard) => self.heard(heard, cx),
@@ -336,6 +442,11 @@ impl Settings {
     /// key, then closes Settings.
     pub fn escape(&mut self, cx: &mut Cx<'_>) {
         if self.open.take().is_some() {
+            return;
+        }
+        if let Some(editor) = self.editor.as_mut()
+            && editor.picker.take().is_some()
+        {
             return;
         }
         if self.record.take().is_some() {
@@ -352,28 +463,61 @@ impl Settings {
         }
     }
 
+    /// The theme the window shows while the editor is open: the theme as
+    /// edited, kept nowhere.
+    pub fn preview(&self) -> Option<&Theme> {
+        self.marketplace.protected_theme().or(self.preview.as_ref())
+    }
+
+    /// Lets go of the draft previewed, as Ctrl+Shift+T does. The editor or
+    /// creator stays open on it.
+    pub fn drop_preview(&mut self) {
+        self.preview = None;
+    }
+
+    /// Whether a theme's review is open, which shows in the stock look.
+    pub fn protected(&self) -> bool {
+        self.marketplace.protected_theme().is_some()
+    }
+
     /// Reads what the desktop says of starting at sign-in and Discord's
-    /// links, for Advanced. A Discord build only offers the links.
-    fn read_platform_choices(&mut self, cx: &Cx<'_>) {
+    /// links, for Advanced. A Discord build only offers the links. A startup
+    /// entry that's on says whether Circord starts minimized, which is kept
+    /// for when it's turned on again, after Task Manager or the installer
+    /// changed it too.
+    fn read_platform_choices(&mut self, cx: &mut Cx<'_>) {
         let desktop = crate::desktop::desktop();
         self.platform = Platform {
             autostart: desktop.autostart(),
             discord_links: desktop.discord_links(cx.client.root()),
         };
+        let minimized = match self.platform.autostart {
+            Some(Autostart::Tray) => true,
+            Some(Autostart::Window) => false,
+            Some(Autostart::Off) | None => return,
+        };
+        if cx.layout.prefs.start_minimized != minimized {
+            cx.layout.prefs.start_minimized = minimized;
+            cx.keep("start_minimized", minimized);
+        }
     }
 }
 
 impl Closes for Settings {
     const LEAVES: bool = true;
 
-    /// What its pages ran stops with it: the mic test ends, the camera
-    /// being tried, the gate's meter and the key's recording go with its
-    /// state, and linking Discord from its page stops.
+    /// What its pages ran stops with it: the theme being edited shows no
+    /// more, the mic test ends, the camera being tried, the gate's meter
+    /// and the key's recording go with its state, and linking Discord from
+    /// its page stops.
     fn close(&mut self, cx: &mut Cx<'_>, why: Why) {
         // The mic test's call hears again, muted as it was.
         self.end_mic_test(cx);
         if let Some(section) = self.section {
             leave_new(cx, section);
+        }
+        if self.preview.is_some() {
+            cx.request(Request::Changed(ctx::Pref::Theme));
         }
         if cx.state().discord_link.is_some() {
             cx.dispatch(Action::CancelDiscordLink);
@@ -436,11 +580,13 @@ impl<'a> Page<'a> {
             Section::Account => self.account_page(),
             Section::Voice => self.voice_page(),
             Section::Messages => self.messages_page(),
+            Section::Accessibility => self.accessibility_page(),
             Section::Notifications => self.notifications_page(),
             Section::Discord => self.discord_page(),
             Section::Sounds => self.sounds_page(),
             Section::Advanced => self.advanced_page(),
             Section::Appearance => self.appearance_page(),
+            Section::Themes => self.themes_page(),
             Section::Customize => self.customize_page(),
             Section::Games => self.games_page(),
             Section::Keybinds => self.keybinds_page(),
@@ -473,20 +619,41 @@ impl<'a> Page<'a> {
             .align_y(Alignment::Center),
             line
         ];
-        let body: Element<'a, Message> = scroll_view(
-            container(container(page).max_width(form::COLUMN))
-                .padding(iced::Padding {
-                    top: form::PAGE_TOP,
-                    right: form::PAGE_SIDE,
-                    bottom: form::PAGE_BOTTOM,
-                    left: form::PAGE_SIDE,
-                })
-                .center_x(Length::Fill),
-        )
-        .id(iced::widget::Id::new(PAGE))
-        .style(scrollbar(theme))
-        .height(Length::Fill)
-        .into();
+        // The theme editor fills the frame, wider and higher up, so its
+        // preview stays in sight beside the controls, which scroll alone.
+        let editing =
+            section == Section::Themes && (settings.creator.is_some() || settings.editor.is_some());
+        let body: Element<'a, Message> = if editing {
+            container(
+                container(page)
+                    .max_width(EDITOR_COLUMN)
+                    .height(Length::Fill),
+            )
+            .padding(iced::Padding {
+                top: 22.0,
+                right: form::PAGE_SIDE,
+                bottom: 0.0,
+                left: form::PAGE_SIDE,
+            })
+            .center_x(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        } else {
+            scroll_view(
+                container(container(page).max_width(form::COLUMN))
+                    .padding(iced::Padding {
+                        top: form::PAGE_TOP,
+                        right: form::PAGE_SIDE,
+                        bottom: form::PAGE_BOTTOM,
+                        left: form::PAGE_SIDE,
+                    })
+                    .center_x(Length::Fill),
+            )
+            .id(iced::widget::Id::new(PAGE))
+            .style(scrollbar(theme))
+            .height(Length::Fill)
+            .into()
+        };
         let surface = circord_core::themes::package::art::ArtSurface::Settings;
         let decorated =
             self.cx.themes.decorates(&theme.id, surface) || theme.package_paint("panel").is_some();
@@ -508,7 +675,7 @@ impl<'a> Page<'a> {
         // settings are glass.
         let glass = self.cx.themes.glass(&theme.id, surface).is_some();
         let chat: iced::Background = if !decorated {
-            crate::customize::chat_fill(&self.cx.layout.customize, theme)
+            theme.chat.into()
         } else if glass {
             iced::Color::TRANSPARENT.into()
         } else {
@@ -536,7 +703,23 @@ impl<'a> Page<'a> {
         } else {
             card
         };
-        crate::sheet::backdrop(theme, card, MARGIN, crate::app::settings(Event::Close))
+        let shown = crate::sheet::backdrop(theme, card, MARGIN, crate::app::settings(Event::Close));
+        let mut layers = vec![shown];
+        if let Some(review) = settings.marketplace.review_dialog(self.cx.look) {
+            let review = review.map(|event| crate::app::settings(Event::Marketplace(event)));
+            let stock = settings.marketplace.protected_theme().unwrap_or(theme);
+            let width = (self.cx.look.window.width - 32.0).min(560.0);
+            layers.push(crate::dialog::dialog(
+                stock,
+                review,
+                width,
+                crate::app::settings(Event::Marketplace(theme_marketplace::Event::CancelReview)),
+            ));
+        }
+        if layers.len() == 1 {
+            return layers.pop().expect("one layer");
+        }
+        iced::widget::Stack::with_children(layers).into()
     }
 
     /// The sections' column: the account with Edit Profile, the search,
