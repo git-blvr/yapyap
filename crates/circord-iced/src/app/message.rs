@@ -41,6 +41,8 @@ pub enum Message {
     /// prompt.
     SignIn(signin::Event),
     Mfa(mfa::Event),
+    /// Manage Accounts (`accounts.rs`).
+    Accounts(crate::accounts::Event),
     /// A command from the test display's control file.
     Control(String),
     /// The timeline: its scrolling, its rows and what's done on them
@@ -99,6 +101,10 @@ pub enum Message {
     FontsLoaded,
     /// The desktop's light/dark window preference, initially and on change.
     SystemTheme(iced::theme::Mode),
+    /// The quarter-second theme trial countdown.
+    ThemeTrialTick(std::time::Instant),
+    /// The trial banner's Keep (`true`) or Revert (`false`).
+    ThemeTrial(bool),
     /// Twice a second while `--theme-dev` watches a folder.
     ThemeDevTick,
     /// Frame tick for declared `Slot::Accent` colour animations.

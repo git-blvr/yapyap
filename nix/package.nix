@@ -20,6 +20,8 @@ rustPlatform.buildRustPackage {
     root = ../.;
     fileset = lib.fileset.unions [
       ../Cargo.toml ../Cargo.lock ../build.rs ../src ../crates ../vendor ../packaging
+      # Built into circord-core for `circord theme new`.
+      ../themes/template
       # A workspace member, which cargo reads even though the build leaves it out.
       ../testing/hosts/Cargo.toml ../testing/tray_host.rs ../testing/record_host.rs
     ];

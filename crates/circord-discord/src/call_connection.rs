@@ -6,6 +6,7 @@
 
 use std::{
     collections::{HashMap, VecDeque},
+    io,
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -20,6 +21,7 @@ use tokio::{
     sync::{mpsc, oneshot},
     time::{Instant, MissedTickBehavior},
 };
+use tokio_tungstenite::tungstenite::{Error as WebSocketError, error::ProtocolError};
 
 use crate::{
     call_stats::{CallStats, PING_EVERY, Reported},
@@ -76,13 +78,13 @@ const STALLED: Duration = Duration::from_millis(100);
 const STILL_DROPPING: u32 = 500;
 /// The most SSRCs whose audio is dropped that a call keeps count of.
 const MAX_DROPPED: usize = 64;
-/// Gateway drops in a row that resuming or reconnecting may follow.
+/// Recovery attempts before a call ends.
 const RETRIES: u32 = 3;
 /// How long a connection holds before its drop no longer counts with
 /// those before.
 const STEADY: Duration = Duration::from_secs(60);
-/// How much longer each resume after the first waits.
-const RESUME_WAIT: Duration = Duration::from_secs(1);
+/// How much longer each recovery attempt after the first waits.
+const RECOVERY_WAIT: Duration = Duration::from_secs(1);
 /// How often the call's audio is summed up in the log, at debug level.
 const DIAGNOSE_EVERY: Duration = Duration::from_secs(5);
 /// Ticks' lateness is counted in steps of this many microseconds, up to
@@ -178,20 +180,33 @@ async fn run(
             return;
         }
     };
-    let mut drops = 0;
-    loop {
+    let mut attempts = 0;
+    let mut interrupted = None;
+    'call: loop {
         let up = std::time::Instant::now();
-        let mut ended = media
-            .run(&mut connection, &listener, &sending, &mut orders)
-            .await;
+        let mut ended = match interrupted.take() {
+            Some(ended) => ended,
+            None => {
+                media
+                    .run(&mut connection, &listener, &sending, &mut orders)
+                    .await
+            }
+        };
         // Disconnected from the call: kicked from voice, or moved to a
         // channel on another voice server, which Discord names just after.
         // The call waits a while for the move before it ends.
         if let Ended::Dropped(error) = &ended
             && closed(error) == Some(4014)
         {
-            listener.disconnected(&format!("{error:#}"));
-            ended = media.wait_for_move(&connection, &mut orders).await;
+            ended = tokio::select! {
+                biased;
+                order = media.wait_for_order(connection.video, &mut orders) => order,
+                () = tokio::time::sleep(MOVE_GRACE) => {
+                    orders.close();
+                    listener.disconnected(&format!("{error:#}"));
+                    Ended::Left
+                }
+            };
         }
         match ended {
             Ended::Left => {
@@ -205,7 +220,7 @@ async fn run(
                         connection = moved;
                         identity = to;
                         media.reset();
-                        drops = 0;
+                        attempts = 0;
                         let _ = reply.send(Ok(()));
                     }
                     Err(error) => {
@@ -217,39 +232,66 @@ async fn run(
                 }
             }
             Ended::Dropped(error) => {
-                // Drops count in a row: a connection that held a while starts
-                // the count again, so a long call survives the odd blip.
                 if up.elapsed() >= STEADY {
-                    drops = 0;
+                    attempts = 0;
                 }
-                drops += 1;
-                // The session ended: final.
-                if closed(&error) == Some(4006) || drops > RETRIES {
+                if closed(&error) == Some(4006) || stops_recovery(&error) || attempts >= RETRIES {
                     listener.disconnected(&format!("{error:#}"));
                     return;
                 }
+                attempts += 1;
                 tracing::info!(
                     error = format!("{error:#}"),
                     "the call's voice connection dropped"
                 );
-                // The first try goes at once, so a blip passes unheard; the
-                // rest wait longer each time, rather than hammering a voice
-                // server that's struggling.
-                tokio::time::sleep(RESUME_WAIT * (drops - 1)).await;
-                if let Err(resume) = connection.resume(&identity).await {
+                let video = connection.video;
+                let recover = async {
+                    // The first try goes at once. Later tries give the server time.
+                    tokio::time::sleep(RECOVERY_WAIT * (attempts - 1)).await;
+                    let resume = match connection.resume(&identity).await {
+                        Ok(()) => return Ok(None),
+                        Err(resume) => resume,
+                    };
+                    if stops_recovery(&resume) {
+                        return Err(resume);
+                    }
                     tracing::info!(
                         error = format!("{resume:#}"),
                         "couldn't resume the call; connecting again"
                     );
-                    match Connection::open(&identity, codecs(), &[]).await {
-                        Ok(again) => {
-                            connection = again;
-                            media.reset();
+                    loop {
+                        let again = match Connection::open(&identity, codecs(), &[]).await {
+                            Ok(again) => return Ok(Some(again)),
+                            Err(again) => again,
+                        };
+                        if attempts >= RETRIES || !retryable_open(&again) {
+                            return Err(again);
                         }
-                        Err(again) => {
-                            listener.disconnected(&format!("{error:#}; then {again:#}"));
-                            return;
-                        }
+                        tracing::info!(code = ?closed(&again), "retrying the call's voice connection");
+                        attempts += 1;
+                        tokio::time::sleep(RECOVERY_WAIT * (attempts - 1)).await;
+                    }
+                };
+                let recovered = tokio::select! {
+                    biased;
+                    order = media.wait_for_order(video, &mut orders) => {
+                        interrupted = Some(order);
+                        continue 'call;
+                    }
+                    result = recover => result,
+                };
+                match recovered {
+                    Ok(None) => {}
+                    Ok(Some(again)) => {
+                        connection = again;
+                        media.reset();
+                    }
+                    Err(again) if closed(&again) == Some(4014) => {
+                        interrupted = Some(Ended::Dropped(again));
+                    }
+                    Err(again) => {
+                        listener.disconnected(&format!("{error:#}; then {again:#}"));
+                        return;
                     }
                 }
             }
@@ -269,7 +311,12 @@ fn take_frame(buffer: &mut VecDeque<f32>, pcm: &mut [f32]) -> bool {
     if buffer.len() < FRAME {
         return false;
     }
-    for (out, sample) in pcm.chunks_exact_mut(2).zip(buffer.drain(..FRAME)) {
+    for (out, sample) in pcm
+        .as_chunks_mut::<2>()
+        .0
+        .iter_mut()
+        .zip(buffer.drain(..FRAME))
+    {
         out.fill(sample);
     }
     true
@@ -280,6 +327,53 @@ fn closed(error: &anyhow::Error) -> Option<u16> {
     error
         .downcast_ref::<Closed>()
         .and_then(|closed| closed.code)
+}
+
+/// A kick, a terminal close or a rate limit ends recovery on this assignment.
+fn stops_recovery(error: &anyhow::Error) -> bool {
+    matches!(closed(error), Some(4004 | 4014 | 4021 | 4022))
+        || matches!(websocket_error(error), Some(WebSocketError::Http(response)) if response.status().as_u16() == 429)
+}
+
+fn websocket_error(error: &anyhow::Error) -> Option<&WebSocketError> {
+    error
+        .downcast_ref()
+        .or_else(|| error.downcast_ref::<Box<WebSocketError>>().map(Box::as_ref))
+}
+
+/// A new handshake is worth another try after a transport failure or a crash.
+fn retryable_open(error: &anyhow::Error) -> bool {
+    fn network(error: &io::Error) -> bool {
+        use io::ErrorKind::*;
+        matches!(
+            error.kind(),
+            ConnectionRefused
+                | ConnectionReset
+                | ConnectionAborted
+                | NotConnected
+                | BrokenPipe
+                | TimedOut
+                | UnexpectedEof
+                | HostUnreachable
+                | NetworkUnreachable
+        )
+    }
+
+    if let Some(closed) = error.downcast_ref::<Closed>() {
+        return matches!(closed.code, None | Some(4015));
+    }
+    match websocket_error(error) {
+        Some(WebSocketError::Io(error)) => network(error),
+        Some(WebSocketError::Http(response)) => response.status().is_server_error(),
+        Some(
+            WebSocketError::ConnectionClosed
+            | WebSocketError::Protocol(ProtocolError::ResetWithoutClosingHandshake),
+        ) => true,
+        Some(_) => false,
+        None => {
+            error.is::<tokio::time::error::Elapsed>() || error.downcast_ref().is_some_and(network)
+        }
+    }
 }
 
 /// What a call offers: Opus, H264 for the camera both ways, and VP8 to
@@ -300,6 +394,9 @@ struct Media {
     /// One frame of the microphone, in both channels, and its Opus packet.
     pcm: Vec<f32>,
     packet: Vec<u8>,
+    /// The RTP packet the microphone's sound goes out in, which keeps its
+    /// room from one frame to the next.
+    out: Vec<u8>,
     sequence: u16,
     /// Goes on 20 ms every tick, sending or not, as a microphone's clock
     /// does. WebRTC's jitter buffer, which plays this account in Discord's
@@ -323,6 +420,9 @@ struct Media {
     encrypting: Option<bool>,
     /// This account's camera, while it films, and everyone else's.
     filming: Option<call_video::Sending>,
+    /// The camera stopped while the call was disconnected: a resumed
+    /// connection still shows it until it hears so.
+    camera_stopped: bool,
     watching: Receiving,
     /// How the connection is doing, for Circord to show, and what Discord's
     /// last receiver reports said about this account's packets.
@@ -444,6 +544,7 @@ impl Media {
             encoder: opus::Encoder::new(2, opus::Application::Audio, BITRATE)?,
             pcm: vec![0.0; FRAME * 2],
             packet: vec![0; 1500],
+            out: Vec::new(),
             sequence: rand::random(),
             timestamp: rand::random(),
             speaking: false,
@@ -454,6 +555,7 @@ impl Media {
             dropped: HashMap::new(),
             encrypting: None,
             filming: None,
+            camera_stopped: false,
             watching: Receiving::new(video),
             stats,
             reported: Reported::default(),
@@ -467,6 +569,7 @@ impl Media {
         self.users.clear();
         self.dropped.clear();
         self.encrypting = None;
+        self.camera_stopped = false;
         self.speaking = false;
         self.silent = 0;
         self.watching.reset();
@@ -499,8 +602,11 @@ impl Media {
         let result: Result<Ended> = async {
             // A new connection hears about the camera again, and what's
             // wanted of others'.
+            let stopped = std::mem::take(&mut self.camera_stopped);
             if let Some(filming) = self.filming.as_mut() {
                 filming.announce(connection).await?;
+            } else if stopped {
+                call_video::Sending::clear(connection).await?;
             }
             self.watching.ask(connection).await?;
             loop {
@@ -509,7 +615,7 @@ impl Media {
                         None | Some(Order::Leave) => return Ok(Ended::Left),
                         Some(Order::Move(to, reply)) => return Ok(Ended::Moved(to, reply)),
                         Some(Order::Film(Some(camera))) => {
-                            let mut filming = call_video::Sending::new(camera, connection);
+                            let mut filming = call_video::Sending::new(camera, connection.video);
                             filming.announce(connection).await?;
                             self.filming = Some(filming);
                         }
@@ -557,7 +663,7 @@ impl Media {
                         let mut read = 0;
                         while catches_up(read, started.elapsed()) {
                             match connection.udp.try_recv(&mut datagram) {
-                                Ok(length) => self.receive(connection, &datagram[..length]).await?,
+                                Ok(length) => self.receive(connection, &mut datagram[..length]).await?,
                                 Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => break,
                                 Err(error) => return Err(error.into()),
                             }
@@ -594,7 +700,7 @@ impl Media {
                         }
                     }
                     length = connection.udp.recv(&mut datagram) => {
-                        self.receive(connection, &datagram[..length?]).await?;
+                        self.receive(connection, &mut datagram[..length?]).await?;
                     }
                 }
             }
@@ -603,28 +709,22 @@ impl Media {
         result.unwrap_or_else(Ended::Dropped)
     }
 
-    /// Waits, with no connection, for the call to move to another voice
-    /// server, for [`MOVE_GRACE`]; orders meanwhile apply once it's there.
-    /// Without a move it has ended.
-    async fn wait_for_move(
+    /// Waits for a leave or move while disconnected. Camera orders apply
+    /// when the call connects again.
+    async fn wait_for_order(
         &mut self,
-        connection: &Connection,
+        video: u32,
         orders: &mut mpsc::UnboundedReceiver<Order>,
     ) -> Ended {
-        let given_up = tokio::time::sleep(MOVE_GRACE);
-        tokio::pin!(given_up);
         loop {
-            tokio::select! {
-                order = orders.recv() => match order {
-                    None | Some(Order::Leave) => return Ended::Left,
-                    Some(Order::Move(to, reply)) => return Ended::Moved(to, reply),
-                    // Announced on the new connection.
-                    Some(Order::Film(camera)) => {
-                        self.filming = camera.map(|camera| call_video::Sending::new(camera, connection));
-                    }
-                    Some(Order::Want(wants)) => self.watching.want(wants),
-                },
-                () = &mut given_up => return Ended::Left,
+            match orders.recv().await {
+                None | Some(Order::Leave) => return Ended::Left,
+                Some(Order::Move(to, reply)) => return Ended::Moved(to, reply),
+                Some(Order::Film(camera)) => {
+                    self.camera_stopped |= camera.is_none() && self.filming.is_some();
+                    self.filming = camera.map(|camera| call_video::Sending::new(camera, video));
+                }
+                Some(Order::Want(wants)) => self.watching.want(wants),
             }
         }
     }
@@ -746,12 +846,28 @@ impl Media {
             let length = self.encoder.encode_float(&self.pcm, &mut self.packet)?;
             let opus = &self.packet[..length];
             if let Some(payload) = connection.dave.encrypt_opus(opus) {
-                self.transmit(connection, &payload, marker).await?;
+                Self::transmit(
+                    &mut self.sequence,
+                    self.timestamp,
+                    &mut self.out,
+                    connection,
+                    &payload,
+                    marker,
+                )
+                .await?;
             }
             self.silent = SILENT_FRAMES;
         } else if self.silent > 0 {
             if let Some(payload) = connection.dave.encrypt_opus(&SILENCE) {
-                self.transmit(connection, &payload, false).await?;
+                Self::transmit(
+                    &mut self.sequence,
+                    self.timestamp,
+                    &mut self.out,
+                    connection,
+                    &payload,
+                    false,
+                )
+                .await?;
             }
             self.silent -= 1;
             if self.silent == 0 {
@@ -768,36 +884,36 @@ impl Media {
         Ok(())
     }
 
+    /// Writes `payload` into this account's next audio packet and sends it,
+    /// numbered by `sequence`, which goes on to the next packet. The packet is
+    /// written into `out`, which the call keeps: a microphone sends 50 frames
+    /// a second, and the buffer keeps its room from one to the next.
     async fn transmit(
-        &mut self,
+        sequence: &mut u16,
+        timestamp: u32,
+        out: &mut Vec<u8>,
         connection: &mut Connection,
         payload: &[u8],
         marker: bool,
     ) -> Result<()> {
-        let mut packet = rtp::opus_packet(
-            connection.ssrc,
-            self.sequence,
-            self.timestamp,
-            marker,
-            payload,
-        );
-        self.sequence = self.sequence.wrapping_add(1);
-        let clear = rtp::rtp_clear_len(&packet).unwrap_or(packet.len());
-        connection.transport.seal(&mut packet, clear)?;
-        connection.udp.send(&packet).await?;
+        rtp::write_audio_into(out, connection.ssrc, *sequence, timestamp, marker, payload);
+        *sequence = sequence.wrapping_add(1);
+        let clear = rtp::rtp_clear_len(out).unwrap_or(out.len());
+        connection.transport.seal(out, clear)?;
+        connection.udp.send(out).await?;
         Ok(())
     }
 
     /// Queues a received Opus packet for its speaker, hands a camera's
     /// packet on, and reads RTCP about this account's packets: their loss,
     /// and what the camera's viewers ask of it.
-    async fn receive(&mut self, connection: &mut Connection, datagram: &[u8]) -> Result<()> {
+    async fn receive(&mut self, connection: &mut Connection, datagram: &mut [u8]) -> Result<()> {
         if rtp::is_rtcp(datagram) {
             if let Some(rtcp) = connection.transport.open(datagram, rtp::RTCP_CLEAR) {
                 let ours = [connection.ssrc, connection.video];
-                self.reported.learn(&self.stats, &rtcp, &ours);
+                self.reported.learn(&self.stats, rtcp, &ours);
                 if let Some(filming) = self.filming.as_mut() {
-                    filming.feedback(connection, &rtcp).await?;
+                    filming.feedback(connection, rtcp).await?;
                 }
             }
             return Ok(());
@@ -808,7 +924,7 @@ impl Media {
         let Some(plain) = connection.transport.open(datagram, clear) else {
             return Ok(());
         };
-        let Some(packet) = rtp::parse(&plain) else {
+        let Some(packet) = rtp::parse(plain) else {
             return Ok(());
         };
         if packet.payload_type != rtp::OPUS {
@@ -828,7 +944,7 @@ impl Media {
         };
         // Silence passes in the clear even while sealed audio fails.
         let sealed = packet.payload.ends_with(&[0xfa, 0xfa]);
-        let Some(opus) = connection.dave.decrypt_opus(user, packet.payload.to_vec()) else {
+        let Some(opus) = connection.dave.decrypt_opus(user, packet.payload) else {
             self.diagnostics.dave_dropped += 1;
             let reason = connection.dave.unreadable.take().unwrap_or_default();
             self.report_drop(packet.ssrc, &reason, &connection.dave, packet.payload);
@@ -860,7 +976,7 @@ impl Media {
             },
         };
         speaker.user = user;
-        speaker.push(packet.sequence, packet.timestamp, opus);
+        speaker.push(packet.sequence, packet.timestamp, opus.into_owned());
         Ok(())
     }
 
@@ -1112,10 +1228,24 @@ impl Speaker {
             }
         };
         match decoded {
-            Ok(samples) => Some(samples),
-            Err(error) => {
-                tracing::debug!(%error, "a call's audio packet didn't decode");
-                None
+            Ok(samples) if samples > 0 => Some(samples),
+            // A packet libopus can't read, or one that decodes to nothing,
+            // is a missing frame like any other: Opus conceals 20 ms on from
+            // the last frame that played, so the mix hears the sound carry on
+            // rather than a hole where a word was. A stream's playout
+            // conceals a broken frame the same way and for the same reason;
+            // this is the slot a decode error used to leave empty.
+            decoded => {
+                if let Err(error) = decoded {
+                    tracing::debug!(%error, "a call's audio packet didn't decode");
+                }
+                match self.decoder.conceal(&mut self.pcm[..frame]) {
+                    Ok(samples) => Some(samples),
+                    Err(error) => {
+                        tracing::debug!(%error, "couldn't conceal a call's audio frame");
+                        None
+                    }
+                }
             }
         }
     }
@@ -1232,6 +1362,80 @@ mod tests {
         let played = std::iter::from_fn(|| speaker.next().map(|_| ())).count();
         assert_eq!(played, usize::from(GONE) - 1);
         assert!(speaker.next.is_none());
+    }
+
+    #[test]
+    fn a_broken_packet_plays_concealment_rather_than_leaving_a_hole() {
+        // A packet Opus can't read is a missing frame, not a frame of silence:
+        // the mix hears the sound carry on from the last frame that played,
+        // where a hole would be 20 ms of nothing in the middle of a word.
+        let mut encoder = opus::Encoder::new(1, opus::Application::Voice, BITRATE).unwrap();
+        let mut speaker = Speaker::new(7).unwrap();
+        let packets: Vec<Vec<u8>> = (0..6).map(|frame| tone(&mut encoder, frame)).collect();
+        for sequence in 0..START as u16 {
+            speaker.push(
+                sequence,
+                at(sequence),
+                packets[usize::from(sequence)].clone(),
+            );
+        }
+        let mut played = Vec::new();
+        for _ in 0..START {
+            played.push(speaker.next().expect("a packet to play").to_vec());
+        }
+        speaker.push(START as u16, at(START as u16), vec![0xff]);
+        let concealed = speaker
+            .next()
+            .expect("a broken packet still gets its 20 ms")
+            .to_vec();
+        assert_eq!(concealed.len(), FRAME * 2);
+        assert!(
+            concealed.iter().any(|&sample| sample != 0),
+            "the slot was silence, not concealment"
+        );
+        assert_ne!(
+            concealed,
+            played[START - 1],
+            "the slot replayed the frame before it"
+        );
+        // The broken packet was its own slot, so the sound after it plays.
+        assert!(speaker.waiting.is_empty());
+        speaker.push(START as u16 + 1, at(START as u16 + 1), packets[4].clone());
+        assert!(speaker.next().is_some(), "packet 4 plays as itself");
+    }
+
+    #[test]
+    fn a_missing_packet_beside_a_broken_one_is_concealed_not_replayed() {
+        // Packet 3 is lost and packet 4, which would carry its forward error
+        // correction, can't be read: 3's slot is made up from the sound
+        // before it rather than played again, and 4 gets its own concealing
+        // turn, which is Opus's promise for a packet it can't read.
+        let mut encoder = opus::Encoder::new(1, opus::Application::Voice, BITRATE).unwrap();
+        let mut speaker = Speaker::new(7).unwrap();
+        let packets: Vec<Vec<u8>> = (0..6).map(|frame| tone(&mut encoder, frame)).collect();
+        for sequence in 0..START as u16 {
+            speaker.push(
+                sequence,
+                at(sequence),
+                packets[usize::from(sequence)].clone(),
+            );
+        }
+        let mut played = Vec::new();
+        for _ in 0..START {
+            played.push(speaker.next().expect("a packet to play").to_vec());
+        }
+        speaker.push(4, at(4), vec![0xff]);
+        let concealed = speaker.next().expect("3's slot, made up").to_vec();
+        assert_eq!(concealed.len(), FRAME * 2);
+        assert_ne!(concealed, played[START - 1], "3's slot replayed packet 2");
+        assert_eq!(
+            speaker.next().map(<[i16]>::len),
+            Some(FRAME * 2),
+            "4's slot, made up too"
+        );
+        assert!(speaker.waiting.is_empty());
+        speaker.push(5, at(5), packets[5].clone());
+        assert!(speaker.next().is_some(), "packet 5 plays as itself");
     }
 
     #[test]

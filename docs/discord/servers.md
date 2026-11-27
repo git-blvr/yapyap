@@ -52,11 +52,14 @@ copying them.
   editor](people.md#editing-ones-server-profile).
 - Roles needs Manage Roles in the server, whatever the channel's overwrites
   say. Its submenu lists the roles this account can give or take, highest
-  first, ticked where they hold it. A role at or above this account's highest,
+  first, ticked where they hold it, and scrolls when it's taller than the
+  window, as Discord's does. A role at or above this account's highest,
   or one an integration manages, shows only while they hold it, greyed, as in
   Discord's. Ticking one is `PUT` or `DELETE
   /guilds/{id}/members/{user}/roles/{role}`; the box changes at once and the
-  menu stays open.
+  menu stays open. Once Discord takes it, the member's known roles change,
+  and the member list with them, without waiting for GUILD_MEMBER_UPDATE,
+  as Discord's client does.
 - Time out needs Moderate Members and outranking them, and isn't offered for
   administrators, whom Discord doesn't let anyone time out. Its dialog offers
   Discord's lengths, 60 seconds to a week, and a reason, then `PATCH
@@ -626,15 +629,18 @@ message, or by when they were made if the forum sorts by creation, then
 "Older posts", the archived ones by latest message, then what a search of
 their titles finds while one shows. Each card shows, as Discord's list
 layout does: a pin for a pinned post and its first three tags, "+N" for
-more; its title, bright when the account opened it and has messages to
-read there, and "NEW" for a post made since the forum was last read that
-the account never opened (it has no read state of its own); the first
-message's author in their role colour and its text, or "Original message
-was deleted"; the reaction most given, with super reactions, or the
+more; its title and first message's author and preview, bright only for
+an active post with messages to read (one never opened has them all), so
+muted for a read post and for every archived one; "NEW" for a post made
+since the forum was last read that has no read state of its own; the
+reaction most given, with super reactions, or the
 forum's default reaction without a count; the replies; how long ago it was
 last active, or made; and its first picture, a 72px thumbnail from a file
 or an embed. Clicking a card opens the post beside the forum, as Discord's
 does, and Shift-click in its place.
+
+The author keeps their role colour on read cards too. A deleted first
+message shows "Original message was deleted" in the preview.
 
 First messages, as Discord's client gets them: an archived page or a
 search brings its posts' `first_messages`; the active posts' come from

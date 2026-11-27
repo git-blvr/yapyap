@@ -77,7 +77,7 @@ async fn cameras_in_call(
     let recorded = recording(Codec::H264);
     for (index, data) in recorded.iter().take(10).enumerate() {
         camera.send(Frame {
-            data: data.clone(),
+            data: data.clone().into(),
             codec: Codec::H264,
             timestamp: index as u32 * 9000,
             keyframe: index == 0,
@@ -315,9 +315,32 @@ fn watch_frames(
         }
     }
     assert_eq!(receiver.link(), Link::Connected);
-    let heard: Vec<Vec<u8>> = sounds.try_iter().collect();
+    // What the call's details show, which the connection copies out once a
+    // second.
+    while receiver.received().video_packets == 0 {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "no tally of what came"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let received = receiver.received();
+    assert!(received.video_bytes > 0, "{received:?}");
+    assert!(received.lost <= received.video_packets, "{received:?}");
+    let heard: Vec<_> = sounds.try_iter().collect();
     assert!(heard.len() >= 5, "only {} sounds arrived", heard.len());
-    assert!(heard.iter().all(|sound| sound == &[0xf8, 0xff, 0xfe]));
+    assert!(heard.iter().all(|sound| sound.opus == [0xf8, 0xff, 0xfe]));
+    // Each in its place in the streamer's numbering; a full queue drops
+    // some, so later is all that holds.
+    assert!(
+        heard.windows(2).all(|pair| pair[1]
+            .sequence
+            .wrapping_sub(pair[0].sequence)
+            .wrapping_sub(1)
+            < 0x8000),
+        "{:?}",
+        heard.iter().map(|sound| sound.sequence).collect::<Vec<_>>()
+    );
     frames
 }
 
@@ -345,7 +368,7 @@ async fn streams_gpu_codec_until_a_viewer_cant_decode_it(
     let send = |codec, from: usize| {
         for (index, data) in recording(codec).into_iter().take(3).enumerate() {
             sender.send(Frame {
-                data,
+                data: data.into(),
                 codec,
                 timestamp: (from + index) as u32 * 3000,
                 keyframe: index == 0,
@@ -461,7 +484,7 @@ async fn send_recording(sender: &StreamSender, codec: Codec, from: usize, count:
     );
     for (index, data) in frames.into_iter().take(count).enumerate() {
         sender.send(Frame {
-            data,
+            data: data.into(),
             codec,
             timestamp: (from + index) as u32 * 3000,
             keyframe: index == 0,
@@ -662,6 +685,49 @@ async fn streams_av1_with_viewer_fallback_and_encoder_withdrawal(
 /// Tells the fake which codec Bob streams in.
 fn stream_codec(server: &str, codec: &str) {
     post_control(server, "/_control/stream-codec", codec);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "starts testing/fake_discord.ts with bun; run scripts/test-fake-discord"]
+async fn call_reconnects_after_a_voice_server_restart() {
+    let Fixture {
+        _fake,
+        discord,
+        server,
+        guild,
+        lounge,
+        ..
+    } = Fixture::start("call_reconnects_after_a_voice_server_restart").await;
+    let assigned = discord.join(&guild, &lounge).await.unwrap();
+    let mut call = timeout(
+        WAIT,
+        Call::connect(&assigned, &guild, &lounge, Arc::new(Quiet)),
+    )
+    .await
+    .expect("timed out connecting to voice")
+    .unwrap();
+    let (microphone, input) = circord_discord::voice::live_microphone();
+    let track = call.play(input);
+
+    // A restarting server rejects both the resume and the first fresh connection.
+    post_control(server, "/_control/voice-drop?failures=2", "");
+    until("the call identified again", || {
+        let identifies: Vec<String> =
+            serde_json::from_str(&control(server, "GET", "/_control/voice-identifies", ""))
+                .unwrap();
+        identifies == [assigned.token.as_str(), assigned.token.as_str()]
+    })
+    .await;
+    say(&microphone, 15).await;
+    until("audio went out after reconnecting", || {
+        call_audio(server, &assigned.token)["packets"]
+            .as_u64()
+            .unwrap_or(0)
+            >= 10
+    })
+    .await;
+    track.pause().unwrap();
+    call.leave();
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -932,7 +998,7 @@ async fn calls_and_goes_live() {
     let sound = sender.sound();
     for (index, data) in recording(SEND_CODEC).into_iter().take(5).enumerate() {
         sender.send(Frame {
-            data,
+            data: data.into(),
             codec: SEND_CODEC,
             timestamp: index as u32 * 3000,
             keyframe: index == 0,
@@ -1016,10 +1082,11 @@ async fn calls_and_goes_live() {
         video["announced"],
         serde_json::json!({"type": "fixed", "width": 320, "height": 180})
     );
-    // What the call's details show: the video's bytes, and the one packet
-    // the fake reported lost, resent.
+    // What the call's details show: the video's bytes and packets, and the
+    // one packet the fake reported lost, resent.
     let sent = sender.sent();
     assert!(sent.video_bytes > 1000, "{sent:?}");
+    assert!(sent.video_packets > 1, "{sent:?}");
     assert_eq!(sent.resent, 1);
     drop(sender);
     for codec in [Codec::Av1, Codec::H265] {
@@ -1125,6 +1192,48 @@ impl Listener for Dropping {
     }
 }
 
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "starts testing/fake_discord.ts with bun; run scripts/test-fake-discord"]
+async fn two_streams_at_once() {
+    let Fixture {
+        _fake,
+        discord,
+        server,
+        guild,
+        lounge,
+        bob,
+        ..
+    } = Fixture::start("two_streams_at_once").await;
+    let assigned = discord.join(&guild, &lounge).await.unwrap();
+    let _call = timeout(
+        WAIT,
+        Call::connect(&assigned, &guild, &lounge, Arc::new(Quiet)),
+    )
+    .await
+    .expect("timed out connecting to voice")
+    .unwrap();
+    let bobs = stream::key(&guild, &lounge, &bob);
+    let carols = control(server, "POST", "/_control/stream-start?user=carol", "");
+    let carols = carols.trim();
+    // Discord answers each on its own, as a click on Watch all asks at once,
+    // and each gets a connection and its pictures while the other's go on.
+    let (first, second) = tokio::join!(discord.watch(&bobs), discord.watch(carols));
+    let (first, second) = (first.unwrap(), second.unwrap());
+    assert_eq!(first.stream_key, bobs);
+    assert_eq!(second.stream_key, carols);
+    let decodes = || vec![Codec::H264, Codec::Vp8];
+    let watching = |watched: circord_discord::stream::StreamServer| {
+        tokio::task::spawn_blocking(move || watch_frames(&watched, decodes(), 12))
+    };
+    let (mine, hers) = tokio::join!(watching(first), watching(second.clone()));
+    assert_eq!(mine.unwrap().len(), 12);
+    assert_eq!(hers.unwrap().len(), 12);
+    // One ending leaves the other watched.
+    discord.end_stream(&bobs);
+    let hers = tokio::task::spawn_blocking(move || watch_frames(&second, decodes(), 12));
+    assert_eq!(hers.await.unwrap().len(), 12);
+}
+
 /// Joins the Lounge, connecting a call that reports to `listener`.
 async fn join_lounge(
     fixture: &Fixture,
@@ -1143,6 +1252,73 @@ async fn join_lounge(
     .expect("timed out connecting to voice")
     .unwrap();
     (assigned, call)
+}
+
+fn voice_recovery(server: &str) -> serde_json::Value {
+    serde_json::from_str(&control(server, "GET", "/_control/voice-drop", "")).unwrap()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "starts testing/fake_discord.ts with bun; run scripts/test-fake-discord"]
+async fn a_call_moves_while_resume_waits_for_an_answer() {
+    let fixture = Fixture::start("a_call_moves_while_resume_waits_for_an_answer").await;
+    let server = fixture.server;
+    let listener = Arc::new(Dropping::default());
+    let (_, mut call) = join_lounge(&fixture, listener.clone()).await;
+    let mut live = fixture.discord.live();
+
+    post_control(server, "/_control/voice-drop?hold-resume", "");
+    until("the voice server received Resume", || {
+        voice_recovery(server)["resumes"] == 1
+    })
+    .await;
+    post_control(server, "/_control/voice-move", "");
+    let moved = live_where(&mut live, |event| match event {
+        Live::VoiceMoved { guild, server } if guild == fixture.guild => Some(server),
+        _ => None,
+    })
+    .await;
+    timeout(WAIT, call.move_to(&moved, &fixture.lounge))
+        .await
+        .expect("an unanswered Resume blocked the move")
+        .unwrap();
+    assert!(listener.dropped.lock().unwrap().is_empty());
+    call.leave();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "starts testing/fake_discord.ts with bun; run scripts/test-fake-discord"]
+async fn a_terminated_call_does_not_resume() {
+    let fixture = Fixture::start("a_terminated_call_does_not_resume").await;
+    let listener = Arc::new(Dropping::default());
+    let (_, _call) = join_lounge(&fixture, listener.clone()).await;
+    post_control(fixture.server, "/_control/voice-drop?code=4022", "");
+    until("the call ended or tried to resume", || {
+        !listener.dropped.lock().unwrap().is_empty()
+            || voice_recovery(fixture.server)["resumes"] != 0
+    })
+    .await;
+    assert_eq!(voice_recovery(fixture.server)["resumes"], 0);
+    assert!(listener.dropped.lock().unwrap()[0].contains("4022"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "starts testing/fake_discord.ts with bun; run scripts/test-fake-discord"]
+async fn a_rate_limited_reconnect_does_not_retry() {
+    let fixture = Fixture::start("a_rate_limited_reconnect_does_not_retry").await;
+    let listener = Arc::new(Dropping::default());
+    let (_, _call) = join_lounge(&fixture, listener.clone()).await;
+    post_control(
+        fixture.server,
+        "/_control/voice-drop?failures=1&rate-limit-reconnect",
+        "",
+    );
+    until("the call ended after hitting the rate limit", || {
+        !listener.dropped.lock().unwrap().is_empty()
+    })
+    .await;
+    assert_eq!(voice_recovery(fixture.server)["limited"], 1);
+    assert!(listener.dropped.lock().unwrap()[0].contains("429"));
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -1184,11 +1360,6 @@ async fn a_call_follows_a_move_to_another_voice_server() {
     })
     .await;
     assert_eq!(moved.session_id, assigned.session_id);
-    until("the old connection closed", || {
-        !listener.dropped.lock().unwrap().is_empty()
-    })
-    .await;
-    assert!(listener.dropped.lock().unwrap()[0].contains("4014"));
     // The call waited, and carries on there: Bob's tone comes through.
     timeout(WAIT, call.move_to(&moved, &to))
         .await
@@ -1208,7 +1379,10 @@ async fn a_call_follows_a_move_to_another_voice_server() {
             > 3_000
     })
     .await;
-    assert_eq!(listener.dropped.lock().unwrap().len(), 1);
+    assert!(
+        listener.dropped.lock().unwrap().is_empty(),
+        "the old server reported a disconnect after a successful move"
+    );
     call.leave();
 }
 
@@ -1219,15 +1393,18 @@ async fn a_call_disconnected_from_voice_ends_after_the_grace() {
     let listener = Arc::new(Dropping::default());
     let (assigned, mut call) = join_lounge(&fixture, listener.clone()).await;
     // Someone disconnects Alice from voice: 4014, and no new server.
+    let kicked = std::time::Instant::now();
     post_control(fixture.server, "/_control/voice-kick", "");
     until("the connection closed", || {
         !listener.dropped.lock().unwrap().is_empty()
     })
     .await;
-    tokio::time::sleep(circord_discord::voice::MOVE_GRACE + Duration::from_millis(500)).await;
+    assert!(kicked.elapsed() >= circord_discord::voice::MOVE_GRACE);
     let late = call.move_to(&assigned, &fixture.lounge).await.unwrap_err();
     assert_eq!(late.to_string(), "the call has ended");
-    assert_eq!(listener.dropped.lock().unwrap().len(), 1);
+    let reasons = listener.dropped.lock().unwrap();
+    assert_eq!(reasons.len(), 1);
+    assert!(reasons[0].contains("4014"));
 }
 
 #[tokio::test(flavor = "multi_thread")]

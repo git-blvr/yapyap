@@ -26,6 +26,9 @@ const ZOOM_NOTE_TOP: f32 = 12.0;
 
 impl App {
     pub fn view(&self) -> Element<'_, Message> {
+        crate::widgets::flick::set_scroll_speed(
+            f32::from(self.layout.prefs.scroll_speed()) / 100.0,
+        );
         // Whatever this returns, what it no longer shows goes at its end.
         let _viewing = self.win.pictures.view();
         if !crate::signin::workspace(self) {
@@ -552,10 +555,12 @@ impl App {
         if let Some(viewer) = crate::image_viewer::view(&self.viewer, self.ctx()) {
             layers = layers.push(viewer);
         }
+        // A menu opened from the inbox shows over it (`frame_layers`).
         if let Some(menu) = self
             .win
             .menu
             .as_ref()
+            .filter(|_| !crate::window_bar::inbox_shown(self))
             .and_then(|menu| crate::menus::view(menu, self.ctx()))
         {
             layers = layers
@@ -583,8 +588,15 @@ impl App {
         if let Some(drop) = crate::uploads::drop_view(self.ctx()) {
             layers = layers.push(drop);
         }
+        if let Some(dialog) = crate::accounts::view(&self.accounts, self.ctx()) {
+            layers = layers.push(self.popup(L(Layer::ManageAccounts), dialog));
+        }
         if let Some(prompt) = crate::mfa::view(&self.mfa, self.ctx()) {
             layers = layers.push(self.popup(L(Layer::Mfa), prompt));
+        }
+        // A theme on trial's banner, over everything as Slint's is.
+        if let Some(banner) = crate::settings::trial_banner(self.ctx()) {
+            layers = layers.push(banner);
         }
         // While the keys are on the messages a press says so, for one off
         // the list to take them (`timeline::keys::follow_press`).
@@ -634,6 +646,20 @@ impl App {
         }
         if let Some(inbox) = crate::window_bar::inbox_view(self) {
             layers = layers.push(inbox);
+            // Its filter menu, over it.
+            if let Some(menu) = self
+                .win
+                .menu
+                .as_ref()
+                .and_then(|menu| crate::menus::view(menu, self.ctx()))
+            {
+                layers = layers
+                    .push(crate::controls::outside(
+                        Message::Menu(crate::menus::Event::Close),
+                        false,
+                    ))
+                    .push(menu);
+            }
         }
         if let Some(bar) = crate::window_bar::window_bar(self) {
             layers = layers.push(column![bar, Space::new().height(Length::Fill)]);
@@ -641,7 +667,13 @@ impl App {
         if let Some(edges) = crate::window_bar::resize_edges(self) {
             layers = layers.push(edges);
         }
-        crate::widgets::CtrlWheel::new(layers, zoom_turn, circord_core::zoom::Wheel::reset).into()
+        let frame =
+            crate::widgets::CtrlWheel::new(layers, zoom_turn, circord_core::zoom::Wheel::reset);
+        // A display change can alter the logical layout independently of
+        // a window resize event. Fit the overlays to the room iced lays out.
+        iced::widget::sensor(frame)
+            .on_resize(|size| Message::Shell(crate::shell::Event::Resized(size)))
+            .into()
     }
 
     /// The zoom level, a moment after it changes.
@@ -729,6 +761,11 @@ impl App {
             || self.leaving.is_some()
             || state.oauth.is_some()
             || state.gift.is_some()
+            || self
+                .win
+                .settings
+                .get()
+                .is_some_and(crate::settings::Settings::protected)
     }
 
     /// The theme the window should show now: the stock look on a protected
@@ -738,8 +775,14 @@ impl App {
         if self.protected() {
             return crate::themes::stock_theme();
         }
-        let mut theme = self.themes.shown();
-        // A theme kept since may have older metrics than its package.
+        let mut theme = self
+            .win
+            .settings
+            .get()
+            .and_then(crate::settings::Settings::preview)
+            .cloned()
+            .unwrap_or_else(|| self.themes.shown());
+        // A preview kept since may have older metrics than its package.
         self.themes.refresh_metrics(&mut theme);
         crate::customize::applied(theme, &self.layout.customize)
     }
@@ -752,8 +795,17 @@ impl App {
         let chosen = self.themes.chosen_package();
         let tried = self.themes.trial().is_some();
         let dev = self.themes.dev_shown();
-        if !chosen && !tried && !dev {
+        let previewed = self
+            .win
+            .settings
+            .get()
+            .and_then(crate::settings::Settings::preview)
+            .is_some_and(Theme::packaged);
+        if !chosen && !tried && !dev && !previewed {
             return;
+        }
+        if let Some(settings) = self.win.settings.get_mut() {
+            settings.drop_preview();
         }
         self.themes.clear_creator_preview();
         if self.themes.revert_trial().is_some() {

@@ -101,10 +101,10 @@ pub(crate) struct Sending {
 }
 
 impl Sending {
-    pub fn new(camera: Camera, connection: &Connection) -> Self {
+    pub fn new(camera: Camera, video: u32) -> Self {
         Self {
             camera,
-            packetizer: Packetizer::new(connection.video, SEND_CODEC),
+            packetizer: Packetizer::new(video, SEND_CODEC),
             history: rtp::History::default(),
             packets: 0,
             octets: 0,
@@ -134,11 +134,12 @@ impl Sending {
         let Some(payload) = connection.dave.encrypt(SEND_CODEC, &frame.data) else {
             return Ok(());
         };
+        let sent_at = std::time::Instant::now();
         for mut packet in self
             .packetizer
             .packets(&payload, frame.timestamp, frame.keyframe)
         {
-            self.history.remember(&packet);
+            self.history.remember(&packet, sent_at);
             let clear = rtp::rtp_clear_len(&packet).unwrap_or(packet.len());
             self.packets = self.packets.wrapping_add(1);
             self.octets = self.octets.wrapping_add((packet.len() - clear) as u32);
@@ -166,13 +167,14 @@ impl Sending {
         if rtp::wants_keyframe(rtcp) {
             self.camera.keyframe.store(true, Ordering::Relaxed);
         }
+        let now = std::time::Instant::now();
         for lost in rtp::nacked(rtcp, connection.video)
             .into_iter()
             .take(RESENDS)
         {
             let Some(mut again) = self
                 .history
-                .get(lost)
+                .get(lost, now)
                 .and_then(|original| self.packetizer.retransmit(original, connection.rtx))
             else {
                 continue;
